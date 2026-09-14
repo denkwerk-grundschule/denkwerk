@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRESCH-Strategien</title>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --card-bg: #ffffff;
+    --text: #2b2b2b;
+    --text-soft: #5a5a5a;
+    --accent: #3d6b5c;
+    --accent-dark: #2a4d41;
+    --focus: #1a56db;
+    --border: #d9d4cc;
+    --radius: 18px;
+
+    --schwingen: #7bc46c;
+    --schwingen-dark: #2e7d32;
+    --schwingen-bg: #e3f5e0;
+
+    --verlaengern: #5b9bd5;
+    --verlaengern-dark: #1f5fa8;
+    --verlaengern-bg: #dcebfa;
+
+    --ableiten: #f2d93b;
+    --ableiten-dark: #8a6d00;
+    --ableiten-bg: #fbf3c7;
+
+    --merken: #e0527a;
+    --merken-dark: #9c2f52;
+    --merken-bg: #fbe0ea;
+
+    --grossklein: #c58fe0;
+    --grossklein-dark: #6a3690;
+    --grossklein-bg: #efe0f7;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  [hidden] { display: none !important; }
+
+  h1 {
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    margin: 0.2em 0 0.1em;
+  }
+
+  h2 {
+    font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+    margin: 0 0 0.4em;
+  }
+
+  .subtitle {
+    font-size: clamp(1.05rem, 2.1vw, 1.3rem);
+    color: var(--text-soft);
+    margin: 0 0 0.5em;
+  }
+
+  .explanation {
+    font-size: clamp(1rem, 1.7vw, 1.15rem);
+    color: var(--text-soft);
+    max-width: 640px;
+    margin: 0 0 1.6em;
+    line-height: 1.55;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  button:focus-visible {
+    outline: 4px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+    font-weight: 600;
+    padding: 0.85em 2em;
+    box-shadow: 0 6px 0 var(--accent-dark);
+  }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-dark); }
+
+  .btn-secondary {
+    background: #fff;
+    color: var(--accent-dark);
+    border: 2px solid var(--accent);
+    font-size: clamp(0.95rem, 1.7vw, 1.1rem);
+    font-weight: 600;
+    padding: 0.65em 1.5em;
+  }
+  .btn-secondary:hover { background: #eef4f1; }
+
+  .nav-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: center;
+    margin: 1.4rem 0 0.4rem;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 30, 30, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+
+  .modal-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+    padding: 1.8rem;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .modal-card p {
+    font-size: 1.1rem;
+    margin: 0 0 1.4rem;
+    color: var(--text);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .weekly-words {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 0 1.6em;
+    text-align: left;
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 0.2rem 1.2rem;
+  }
+  .weekly-words summary {
+    cursor: pointer;
+    font-weight: 700;
+    padding: 0.9rem 0;
+    color: var(--accent-dark);
+  }
+  .weekly-words-hint {
+    font-size: 0.92rem;
+    color: var(--text-soft);
+    line-height: 1.5;
+    margin: 0 0 1rem;
+  }
+  .weekly-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1.2rem;
+  }
+  .weekly-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+  .weekly-field textarea {
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 400;
+    padding: 0.5em 0.7em;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    resize: vertical;
+  }
+  .weekly-schwingen span { color: var(--schwingen-dark); }
+  .weekly-schwingen textarea { border-color: var(--schwingen); }
+  .weekly-verlaengern span { color: var(--verlaengern-dark); }
+  .weekly-verlaengern textarea { border-color: var(--verlaengern); }
+  .weekly-ableiten span { color: var(--ableiten-dark); }
+  .weekly-ableiten textarea { border-color: var(--ableiten); }
+  .weekly-merken span { color: var(--merken-dark); }
+  .weekly-merken textarea { border-color: var(--merken); }
+  .weekly-grossklein span { color: var(--grossklein-dark); }
+  .weekly-grossklein textarea { border-color: var(--grossklein); }
+
+  .icon {
+    width: 44px;
+    height: 44px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Strategie-Übersicht */
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.2rem;
+    width: 100%;
+    margin-bottom: 1.6rem;
+  }
+
+  .strategy-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.1);
+    padding: 1.6rem 1.3rem;
+    border-top: 8px solid var(--card-color);
+    text-align: left;
+  }
+
+  .strategy-card .icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--card-color);
+    color: #fff;
+    margin-bottom: 0.7rem;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+  }
+  .strategy-card .icon-wrap .icon {
+    filter: drop-shadow(0 0 1px rgba(0,0,0,0.35));
+  }
+
+  .strategy-card h3 {
+    font-size: 1.25rem;
+    margin: 0 0 0.4em;
+    color: var(--card-color-dark);
+  }
+
+  .strategy-card p {
+    font-size: 0.98rem;
+    color: var(--text-soft);
+    line-height: 1.5;
+    margin: 0 0 0.7em;
+  }
+
+  .example-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .example-chip {
+    background: var(--card-bg-tint);
+    color: var(--card-color-dark);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.25em 0.7em;
+    border-radius: 999px;
+  }
+
+  /* Übungsmodus */
+  .practice-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .score-pill {
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 0.4em 1.1em;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-soft);
+  }
+
+  .score-pill.points-pill {
+    background: var(--accent);
+    border-color: var(--accent-dark);
+    color: #fff;
+    font-size: 1.05rem;
+    transition: transform 0.2s ease;
+  }
+  .score-pill.points-pill.bump { transform: scale(1.12); }
+
+  .score-pill.streak-pill {
+    background: #fff4de;
+    border-color: #eda039;
+    color: #a8650f;
+  }
+
+  .word-text .hl {
+    background: #fff3b0;
+    border-radius: 4px;
+    padding: 0 0.06em;
+    text-decoration: underline;
+    text-decoration-thickness: 4px;
+    text-underline-offset: 4px;
+  }
+
+  .word-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    padding: clamp(1.6rem, 4vw, 2.6rem);
+    max-width: 560px;
+    width: 100%;
+    margin: 0.5rem auto 1.4rem;
+  }
+
+  .word-prompt {
+    font-size: 1.05rem;
+    color: var(--text-soft);
+    margin: 0 0 0.3em;
+  }
+
+  .word-text {
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    font-weight: 700;
+    margin: 0.1em 0 0.7em;
+  }
+
+  .answer-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.8rem;
+  }
+  .answer-btn { flex: 1 1 200px; max-width: 260px; }
+
+  @media (max-width: 480px) {
+    .answer-btn { flex-basis: 100%; max-width: none; }
+  }
+
+  .answer-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    justify-content: center;
+    background: var(--btn-bg, #fff);
+    border: 2px solid var(--btn-border, var(--border));
+    color: var(--btn-color, var(--text));
+    border-radius: 14px;
+    padding: 0.8em 0.9em;
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    font-weight: 700;
+  }
+  .answer-btn:hover:not(:disabled) { transform: translateY(-2px); }
+  .answer-btn:disabled { cursor: default; }
+  .answer-btn .icon { width: 26px; height: 26px; }
+
+  .answer-btn.correct-answer {
+    background: #e3f5e6;
+    border-color: #4f9d5c;
+    color: #2b6b37;
+  }
+  .answer-btn.wrong-answer {
+    background: #fbe4e2;
+    border-color: #cf4a4a;
+    color: #963434;
+  }
+
+  .feedback {
+    margin-top: 1.2rem;
+    padding: 1rem 1.2rem;
+    border-radius: 14px;
+    font-size: 1rem;
+    line-height: 1.5;
+    text-align: left;
+  }
+  .feedback.correct { background: #e3f5e6; color: #2b6b37; }
+  .feedback.wrong { background: #fbe4e2; color: #963434; }
+
+  .feedback strong { display: block; margin-bottom: 0.2em; font-size: 1.05rem; }
+</style>
+</head>
+<body>
+
+  <!-- Startbildschirm -->
+  <main class="screen" id="start-screen">
+    <h1>Unsere Rechtschreibtipps</h1>
+    <p class="subtitle">Schwingen · Verlängern · Ableiten · Merken · Groß oder klein?</p>
+    <p class="explanation">
+      Fünf Strategien helfen dabei, die Schreibweise eines Wortes selbst zu erschließen.
+      Zuerst lernt ihr die Strategien kennen, danach übt ihr, Wörter der passenden
+      Strategie zuzuordnen.
+    </p>
+    <details class="weekly-words">
+      <summary>Wörter der Woche einstellen (optional)</summary>
+      <p class="weekly-words-hint">
+        Leer lassen, um mit dem vollen Grundwortschatz zu üben. Trägt ihr hier eigene
+        Wörter ein, wird für diese Strategie <strong>nur</strong> eure Liste verwendet
+        (Wörter durch Komma oder Zeilenumbruch trennen). Bei Verlängern/Ableiten/Merken
+        bitte die Form eintragen, in der man die Schwierigkeit sieht (z. B. bei Ableiten
+        „Bäume" statt „Baum").
+      </p>
+      <div class="weekly-fields">
+        <label class="weekly-field weekly-schwingen">
+          <span>🟢 Schwingen</span>
+          <textarea id="weekly-schwingen" rows="2" placeholder="z. B. Hammer, Bett, Sonne"></textarea>
+        </label>
+        <label class="weekly-field weekly-verlaengern">
+          <span>🔵 Verlängern</span>
+          <textarea id="weekly-verlaengern" rows="2" placeholder="z. B. Hund, Tag, Weg"></textarea>
+        </label>
+        <label class="weekly-field weekly-ableiten">
+          <span>🟡 Ableiten</span>
+          <textarea id="weekly-ableiten" rows="2" placeholder="z. B. Bäume, Häuser, hält"></textarea>
+        </label>
+        <label class="weekly-field weekly-merken">
+          <span>🔴 Merken</span>
+          <textarea id="weekly-merken" rows="2" placeholder="z. B. Uhr, Reh, Herbst"></textarea>
+        </label>
+        <label class="weekly-field weekly-grossklein">
+          <span>🟣 Groß oder klein?</span>
+          <textarea id="weekly-grossklein" rows="2" placeholder="z. B. Tisch, Schule, Lehrer"></textarea>
+        </label>
+      </div>
+    </details>
+
+    <button type="button" class="btn-primary" id="start-btn">Strategien entdecken</button>
+  </main>
+
+  <!-- Übersichtsbildschirm -->
+  <main class="screen" id="overview-screen" hidden>
+    <h1>Unsere Rechtschreibtipps</h1>
+    <p class="explanation">Tippt euch durch – jede Strategie hilft bei einer anderen Art von Schreibproblem.</p>
+
+    <div class="strategy-grid" id="strategy-grid"></div>
+
+    <div class="nav-row">
+      <button type="button" class="btn-primary" id="to-practice-btn">Zum Übungsmodus</button>
+      <button type="button" class="btn-secondary" id="overview-back-btn">Zurück zum Start</button>
+    </div>
+  </main>
+
+  <!-- Übungsmodus -->
+  <main class="screen" id="practice-screen" hidden>
+    <h1>Übungsmodus</h1>
+    <p class="explanation">Welche Strategie hilft euch, dieses Wort richtig zu schreiben?</p>
+
+    <div class="practice-header">
+      <span class="score-pill points-pill" id="points-pill">🏆 0 Punkte</span>
+      <span class="score-pill streak-pill" id="streak-pill" hidden>🔥 Serie: 0</span>
+      <span class="score-pill" id="correct-pill">Richtig: 0 von 0</span>
+    </div>
+
+    <section class="word-card" id="word-card" aria-labelledby="word-text">
+      <p class="word-prompt">Euer Wort</p>
+      <p class="word-text" id="word-text">Hammer</p>
+
+      <div class="answer-grid" id="answer-grid"></div>
+
+      <div class="feedback" id="feedback" hidden></div>
+    </section>
+
+    <div id="live-region" class="visually-hidden" role="status" aria-live="polite"></div>
+
+    <div class="nav-row">
+      <button type="button" class="btn-primary" id="next-word-btn" hidden>Nächstes Wort</button>
+      <button type="button" class="btn-secondary" id="practice-overview-btn">Zur Übersicht</button>
+      <button type="button" class="btn-secondary" id="practice-reset-btn">Neu starten</button>
+    </div>
+  </main>
+
+  <!-- Eigenes Bestätigungsfenster (statt window.confirm, das in manchen eingebetteten
+       Ansichten blockiert oder unterdrückt wird) -->
+  <div class="modal-overlay" id="confirm-overlay" hidden>
+    <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text">
+      <p id="confirm-text">Übung wirklich neu starten? Der Punktestand wird zurückgesetzt.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="confirm-cancel-btn">Abbrechen</button>
+        <button type="button" class="btn-primary" id="confirm-ok-btn">Ja, zurücksetzen</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- SVG-Icons je Strategie (angelehnt an die Klassenkarten) ----
+  const icons = {
+    // Lächeln/Sprechwelle: Sprechen - hören - schwingen
+    schwingen: `<svg class="icon" viewBox="0 0 24 24">
+      <path d="M2.5 14c1.8-4 4.3-4 6-1.5s4.2 2.5 6-1s4.2-2.5 6-1.5"/>
+    </svg>`,
+    // Hakenpfeil: Weiterschwingen - das Wort "verlängern"
+    verlaengern: `<svg class="icon" viewBox="0 0 24 24">
+      <path d="M8 4v6.5A5.5 5.5 0 0 0 13.5 16H18"/>
+      <path d="M15 12.5l3.5 3.5-3.5 3.5"/>
+    </svg>`,
+    // Zickzack-Blitz: Ableiten
+    ableiten: `<svg class="icon" viewBox="0 0 24 24">
+      <path d="M12 2.5v4l-4.5 2.2 9 3.6-4.5 2.2v4"/>
+      <path d="M8.5 18.5l3.5 3.5 3.5-3.5"/>
+    </svg>`,
+    // Buchstabe M: Merken
+    merken: `<svg class="icon" viewBox="0 0 24 24">
+      <path d="M5 18V6.5l6 8 6-8V18"/>
+    </svg>`,
+    // Aa: Groß- oder Kleinschreibung
+    grossklein: `<svg class="icon" viewBox="0 0 24 24">
+      <text x="12" y="17" text-anchor="middle" font-size="13.5" font-weight="700"
+            font-family="Arial, sans-serif" fill="currentColor" stroke="none">Aa</text>
+    </svg>`
+  };
+
+  // ---- Strategien: Erklärung + Beispiele ----
+  const strategies = [
+    {
+      id: "schwingen",
+      name: "Schwingen",
+      color: "schwingen",
+      short: "Das Wort in Silben zerlegen und dabei mitklatschen oder mitschwingen. So hört man, ob nach einem kurzen, betonten Selbstlaut ein doppelter Mitlaut kommt.",
+      examples: ["Mutter", "Sommer", "Wasser", "Schlüssel", "Teller", "Sonne"]
+    },
+    {
+      id: "verlaengern",
+      name: "Verlängern",
+      color: "verlaengern",
+      short: "Das Wort verlängern (z. B. in die Mehrzahl setzen), um den Laut am Wortende deutlich zu hören – er klingt am Wortende oft anders, als er geschrieben wird.",
+      examples: ["Hund → Hunde", "Kind → Kinder", "Tag → Tage", "Weg → Wege", "Freund → Freunde", "Berg → Berge"]
+    },
+    {
+      id: "ableiten",
+      name: "Ableiten",
+      color: "ableiten",
+      short: "Ein verwandtes Wort aus derselben Wortfamilie suchen, in dem man den Laut klar hört – zum Beispiel um zu wissen, ob ä oder e geschrieben wird.",
+      examples: ["Wald → Wälder", "Hand → Hände", "Land → Länder", "Apfel → Äpfel", "halten → hält", "Haus → Häuser"]
+    },
+    {
+      id: "merken",
+      name: "Merken",
+      color: "merken",
+      short: "Manche Wörter folgen keiner Regel. Sie lassen sich weder schwingen noch verlängern noch ableiten – man muss sie sich einfach einprägen.",
+      examples: ["Uhr", "Ohr", "Jahr", "Reh", "Schuh", "nah"]
+    },
+    {
+      id: "grossklein",
+      name: "Groß oder klein?",
+      color: "grossklein",
+      short: "Großschreiben nur bei Nomen und am Satzanfang. Ob ein Wort ein Nomen ist, erkennt man am Artikel oder an der Mehrzahl.",
+      examples: ["der Tisch – die Tische", "das Fenster – die Fenster", "die Nase – die Nasen", "Satzanfang: Ich hole mein Heft."]
+    }
+  ];
+
+  const strategyGrid = document.getElementById("strategy-grid");
+  strategies.forEach(s => {
+    const card = document.createElement("article");
+    card.className = "strategy-card";
+    card.style.setProperty("--card-color", `var(--${s.color})`);
+    card.style.setProperty("--card-color-dark", `var(--${s.color}-dark)`);
+    card.style.setProperty("--card-bg-tint", `var(--${s.color}-bg)`);
+    card.innerHTML = `
+      <div class="icon-wrap">${icons[s.id]}</div>
+      <h3>${s.name}</h3>
+      <p>${s.short}</p>
+      <div class="example-chips">
+        ${s.examples.map(e => `<span class="example-chip">${e}</span>`).join("")}
+      </div>
+    `;
+    strategyGrid.appendChild(card);
+  });
+
+  // ---- Wortpool für den Übungsmodus ----
+  // Handverlesene Wörter mit eigener Erklärung (pädagogisch beste Beispiele je Strategie)
+  const curatedWords = [
+    { word: "Mutter", strategy: "schwingen", hl: [2,2], note: "Mut-ter: beim Schwingen hört man das doppelte t." },
+    { word: "Sommer", strategy: "schwingen", hl: [2,2], note: "Som-mer: beim Schwingen hört man das doppelte m." },
+    { word: "Wasser", strategy: "schwingen", hl: [2,2], note: "Was-ser: beim Schwingen hört man das doppelte s." },
+    { word: "Schlüssel", strategy: "schwingen", hl: [5,2], note: "Schlüs-sel: beim Schwingen hört man das doppelte s." },
+    { word: "Teller", strategy: "schwingen", hl: [2,2], note: "Tel-ler: beim Schwingen hört man das doppelte l." },
+    { word: "Sonne", strategy: "schwingen", hl: [2,2], note: "Son-ne: beim Schwingen hört man das doppelte n." },
+
+    { word: "Hund", strategy: "verlaengern", hl: [3,1], note: "Hund → Hunde: verlängert hört man deutlich das d." },
+    { word: "Kind", strategy: "verlaengern", hl: [3,1], note: "Kind → Kinder: verlängert hört man deutlich das d." },
+    { word: "Tag", strategy: "verlaengern", hl: [2,1], note: "Tag → Tage: verlängert hört man deutlich das g." },
+    { word: "Weg", strategy: "verlaengern", hl: [2,1], note: "Weg → Wege: verlängert hört man deutlich das g." },
+    { word: "Freund", strategy: "verlaengern", hl: [5,1], note: "Freund → Freunde: verlängert hört man deutlich das d." },
+    { word: "Berg", strategy: "verlaengern", hl: [3,1], note: "Berg → Berge: verlängert hört man deutlich das g." },
+
+    { word: "Wälder", strategy: "ableiten", hl: [1,1], note: "Wälder kommt von Wald – das ä hört man dort als a." },
+    { word: "Hände", strategy: "ableiten", hl: [1,1], note: "Hände kommt von Hand – das ä hört man dort als a." },
+    { word: "Länder", strategy: "ableiten", hl: [1,1], note: "Länder kommt von Land – das ä hört man dort als a." },
+    { word: "Äpfel", strategy: "ableiten", hl: [0,1], note: "Äpfel kommt von Apfel – das ä hört man dort als a." },
+    { word: "hält", strategy: "ableiten", hl: [1,1], note: "hält kommt von halten – das ä hört man dort als a." },
+    { word: "Häuser", strategy: "ableiten", hl: [1,2], note: "Häuser kommt von Haus – das äu hört man dort als au." },
+
+    { word: "Uhr", strategy: "merken", hl: [1,1], note: "Dehnungs-h nach langem Vokal – lässt sich nicht ableiten oder verlängern, ein Merkwort." },
+    { word: "Ohr", strategy: "merken", hl: [1,1], note: "Dehnungs-h nach langem Vokal – lässt sich nicht ableiten oder verlängern, ein Merkwort." },
+    { word: "Jahr", strategy: "merken", hl: [2,1], note: "Dehnungs-h nach langem Vokal – lässt sich nicht ableiten oder verlängern, ein Merkwort." },
+    { word: "Reh", strategy: "merken", hl: [2,1], note: "Silbentrennendes h – lässt sich nicht ableiten oder verlängern, ein Merkwort." },
+    { word: "Schuh", strategy: "merken", hl: [4,1], note: "Silbentrennendes h – lässt sich nicht ableiten oder verlängern, ein Merkwort." },
+    { word: "nah", strategy: "merken", hl: [2,1], note: "Silbentrennendes h – lässt sich nicht ableiten oder verlängern, ein Merkwort." },
+
+    { word: "Tisch", strategy: "grossklein", hl: [0,1], note: "der Tisch – ein Nomen, deshalb großgeschrieben. Das ist bei jedem Nomen so, unabhängig von anderen Rechtschreibtricks im Wort." },
+    { word: "Baum", strategy: "grossklein", hl: [0,1], note: "der Baum – ein Nomen, deshalb großgeschrieben. Das ist bei jedem Nomen so, unabhängig von anderen Rechtschreibtricks im Wort." },
+    { word: "Fenster", strategy: "grossklein", hl: [0,1], note: "das Fenster – ein Nomen, deshalb großgeschrieben. Das ist bei jedem Nomen so, unabhängig von anderen Rechtschreibtricks im Wort." },
+    { word: "Nase", strategy: "grossklein", hl: [0,1], note: "die Nase – ein Nomen, deshalb großgeschrieben. Das ist bei jedem Nomen so, unabhängig von anderen Rechtschreibtricks im Wort." },
+    { word: "Hose", strategy: "grossklein", hl: [0,1], note: "die Hose – ein Nomen, deshalb großgeschrieben. Das ist bei jedem Nomen so, unabhängig von anderen Rechtschreibtricks im Wort." },
+    { word: "Ich hole mein Heft.", strategy: "grossklein", hl: [0,1], note: "Am Satzanfang schreibt man immer groß – ganz gleich, welches Wort dort steht." }
+  ];
+
+  // Restliche Wörter aus dem Grundwortschatz Hessen je Kategorie (Handreichung, Anhang
+  // S. 107–117) – Hervorhebung und Erklärung werden automatisch erzeugt.
+  const bulkWordSources = {
+    // Nur mehrsilbige Wörter mit einem echten Doppelbuchstaben (mm, ss, tt, ll, ff, nn, pp),
+    // bei dem nach dem Klatschen noch eine Silbe mit Vokal folgt. Einsilbige Wörter
+    // (z. B. "Rock") und ck/tz-Schreibungen (klingen beim Schwingen nicht eindeutig
+    // doppelt) sind bewusst ausgeschlossen.
+    schwingen: [
+      "Affe","alle","besser","bitten","brennen",
+      "Brille","Butter","doppelt","flüssig","fressen","Füller",
+      "Hessen","Himmel","hoffen","kennen","Klasse",
+      "klettern","kommen","können","lassen","Löffel","messen","Messer",
+      "Mitte","Nummer","offen","passen",
+      "Puppe","Qualle","Quelle","rennen","rollen",
+      "sammeln","schaffen",
+      "schütteln","schwimmen","Sessel","sollen",
+      "Spinne","stellen","Stimme","Tanne","Tasse",
+      "treffen","Zimmer",
+      "allein","bekommen","Donnerstag","erinnern",
+      "hallo","herstellen","hoffentlich","innerhalb","interessant",
+      "Mittag","passieren",
+      "Pullover","Pommes","vergessen",
+      "vielleicht","zusammen"
+    ],
+    verlaengern: [
+      "Abend","Bild","blind","Feld","fremd","gelb","genug","gesund","Grund","Hemd",
+      "klug","Krieg","lieb","Lied","Mund","Pferd","rund","tausend","Tod","Urlaub","wild",
+      "Wind","Zug",
+      "Fahrrad","Flugzeug","Montag","Dienstag","Freitag","Samstag"
+    ],
+    ableiten: [
+      "Bäder","Brände","Räder","Strände",
+      "Ärzte","Äste","Dächer","Fächer","Gärten","Gräser","Hälse","Nächte","Säfte",
+      "älter","härter","Kälte","kämpfen","Länge","Schärfe","schlägt","schlängeln",
+      "schwärzen","Stärke","trägt","Wärme","wächst","wäscht","zählen",
+      "Bälle","Bänke","Blätter","Drähte","fährt","Fahrräder","erkältet","fällt",
+      "gefährlich","jährlich","Kämme","Kätzchen","kränker","lässt","näher","Nässe",
+      "Gepäck","Pässe","Plätze","Sätze","Schätze","Schränke","Späße","Stämme","Tännchen",
+      "Väter","Gewässer","Zähne",
+      "äußerlich","Gebäude","bläulich","bräunlich","Fräulein","Verkäufer","Kräuter",
+      "Läufer","läuten","Mäuse","Räume","Sträucher","Zäune"
+    ],
+    merken: [
+      "blühen","drehen","früh","gehen","Kuh","Reihe","Ruhe","sehen","stehen","Zeh","ziehen",
+      "Bahn","bohren","fahren","fehlen","Fehler","fühlen","Höhle","Huhn","kühl","Lehrer",
+      "nehmen","rühren","Stuhl","wohl","wohnen","Zahl","Zahn","zehn",
+      "ähnlich","bezahlen","erzählen","Frühling","Frühstück","Gefahr","ungefähr","Verkehr",
+      "während","Weihnachten",
+      "bald","deshalb","endlich","Ergebnis","Herbst","irgend","jemand","Jugend","Mädchen",
+      "niemand","Obst","Ordnung","Sand","selbst","unterwegs"
+    ],
+    grossklein: [
+      "Ampel","Gabel","Insel","Nebel","Nudel","Pinsel","Schnabel","Tafel","Teufel","Windel",
+      "Zwiebel","Ameise","Auge","Biene","Blume","Blüte","Ente","Eule","Gemüse","Hase",
+      "Junge","Küche","Name","Ochse","Pflaume","Raupe","Riese","Sache","Schere","Schlange",
+      "Seife","Seite","Tante","Tasche","Wiese","Woche","Bruder","Feuer","Finger","Hunger",
+      "Kleber","Leiter","Meter","Pflaster","Schwester","Tochter","Bier","Flur","Papier",
+      "Schnur","Tier","Tor","Tür","Igel","Tiger","Liter","Maschine","Käfer","Vogel",
+      "Vulkan","Onkel","Schrank","Stern","Spiegel","Sturm"
+    ]
+  };
+
+  // Manuelle Ausnahmen für Wörter, bei denen die automatische Erkennung
+  // (siehe unten) auf die falsche Stelle zeigen würde.
+  const HIGHLIGHT_OVERRIDES = {
+    // "h" ist hier ein normaler Anlaut/Bestandteil eines Wortbausteins,
+    // nicht das eigentliche Merkmal – die Auslautverhärtung am Wortende ist gemeint.
+    "deshalb": [6, 1],
+    "Herbst": [3, 1]
+  };
+
+  function detectHighlight(word, strategyId) {
+    if (HIGHLIGHT_OVERRIDES[word]) return HIGHLIGHT_OVERRIDES[word];
+
+    if (strategyId === "schwingen") {
+      // Nur ein echter Doppelbuchstabe (mm, ss, tt, ...), auf den direkt ein
+      // Vokal folgt, lässt sich beim Klatschen eindeutig als Silbengrenze
+      // hören (Mut-ter). Folgt kein Vokal - z. B. bei zusammengesetzten
+      // Wörtern wie "Sonn-tag" oder "biss-chen" - passt Schwingen nicht.
+      const m = word.match(/(.)\1(?=[aeiouäöüAEIOUÄÖÜ])/);
+      if (m) return [m.index, 2];
+      return [0, 1];
+    }
+    if (strategyId === "verlaengern") {
+      return [word.length - 1, 1];
+    }
+    if (strategyId === "ableiten") {
+      const lower = word.toLowerCase();
+      let idx = lower.lastIndexOf("äu");
+      if (idx !== -1) return [idx, 2];
+      idx = lower.lastIndexOf("ä");
+      if (idx !== -1) return [idx, 1];
+      return [0, 1];
+    }
+    if (strategyId === "merken") {
+      // Nur ein "h" zählt, das für sich allein steht (Dehnungs-h oder
+      // silbentrennendes h) - ein "h" als Teil von ch/sch oder am
+      // Wortanfang ist ein ganz normaler Buchstabe und nicht gemeint.
+      const lower = word.toLowerCase();
+      for (let i = lower.length - 1; i >= 1; i--) {
+        if (lower[i] === "h" && lower[i - 1] !== "c" && lower[i - 1] !== "s") {
+          return [i, 1];
+        }
+      }
+      return [word.length - 1, 1];
+    }
+    return [0, 1]; // grossklein: erster Buchstabe
+  }
+
+  function autoNote(word, strategyId, hl) {
+    const marked = word.slice(hl[0], hl[0] + hl[1]);
+    switch (strategyId) {
+      case "schwingen":
+        if (hl[1] < 2) {
+          return `Achtung: Für dieses Wort wurde kein eindeutiger Doppellaut zum Schwingen gefunden – bitte prüfen, ob es zu dieser Strategie passt.`;
+        }
+        return `Beim Schwingen hört man den doppelten Mitlaut „${marked}".`;
+      case "verlaengern":
+        return `Verlängert (z. B. in die Mehrzahl gesetzt) hört man das „${marked}" am Wortende deutlicher.`;
+      case "ableiten":
+        return `„${marked}" lässt sich meist von einem verwandten Wort mit a oder au ableiten.`;
+      case "merken":
+        return `Diese Stelle („${marked}") lässt sich nicht ableiten oder verlängern – ein Merkwort.`;
+      case "grossklein":
+        return `„${word}" wird großgeschrieben – Nomen und Satzanfänge schreibt man groß.`;
+      default:
+        return "";
+    }
+  }
+
+  function makeItem(word, strategyId) {
+    const hl = detectHighlight(word, strategyId);
+    return { word, strategy: strategyId, hl, note: autoNote(word, strategyId, hl) };
+  }
+
+  function parseWeeklyWords(raw) {
+    return raw.split(/[,\n]/).map(w => w.trim()).filter(Boolean);
+  }
+
+  function buildWordPool() {
+    const pool = [];
+    strategies.forEach(s => {
+      const raw = el(`weekly-${s.id}`).value.trim();
+      if (raw) {
+        parseWeeklyWords(raw).forEach(w => pool.push(makeItem(w, s.id)));
+      } else {
+        const curated = curatedWords.filter(item => item.strategy === s.id);
+        const curatedWordStrings = new Set(curated.map(item => item.word));
+        const bulk = (bulkWordSources[s.id] || [])
+          .filter(w => !curatedWordStrings.has(w))
+          .map(w => makeItem(w, s.id));
+        pool.push(...curated, ...bulk);
+      }
+    });
+    return pool;
+  }
+
+  let wordPool = [];
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  let bag = shuffle(wordPool);
+  let currentItem = null;
+  let score = { correct: 0, total: 0 };
+  let answered = false;
+  let points = 0;
+  let streak = 0;
+  const STREAK_BONUS_AT = 3;
+  const STREAK_BONUS_POINTS = 5;
+  const CORRECT_POINTS = 10;
+
+  const el = (id) => document.getElementById(id);
+
+  const startScreen = el("start-screen");
+  const overviewScreen = el("overview-screen");
+  const practiceScreen = el("practice-screen");
+
+  const startBtn = el("start-btn");
+  const toPracticeBtn = el("to-practice-btn");
+  const overviewBackBtn = el("overview-back-btn");
+  const practiceOverviewBtn = el("practice-overview-btn");
+  const practiceResetBtn = el("practice-reset-btn");
+  const nextWordBtn = el("next-word-btn");
+
+  const confirmOverlay = el("confirm-overlay");
+  const confirmOkBtn = el("confirm-ok-btn");
+  const confirmCancelBtn = el("confirm-cancel-btn");
+
+  function showConfirm(onConfirm) {
+    confirmOverlay.hidden = false;
+    confirmOkBtn.focus();
+
+    function cleanup() {
+      confirmOverlay.hidden = true;
+      confirmOkBtn.removeEventListener("click", onOk);
+      confirmCancelBtn.removeEventListener("click", onCancel);
+    }
+    function onOk() { cleanup(); onConfirm(); }
+    function onCancel() { cleanup(); }
+
+    confirmOkBtn.addEventListener("click", onOk);
+    confirmCancelBtn.addEventListener("click", onCancel);
+  }
+
+  const wordText = el("word-text");
+  const answerGrid = el("answer-grid");
+  const feedback = el("feedback");
+  const correctPill = el("correct-pill");
+  const pointsPill = el("points-pill");
+  const streakPill = el("streak-pill");
+  const liveRegion = el("live-region");
+
+  function showScreen(screen) {
+    [startScreen, overviewScreen, practiceScreen].forEach(s => { s.hidden = (s !== screen); });
+  }
+
+  function buildAnswerButtons() {
+    answerGrid.innerHTML = "";
+    strategies.forEach(s => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "answer-btn";
+      btn.dataset.strategy = s.id;
+      btn.style.setProperty("--btn-border", `var(--${s.color})`);
+      btn.style.setProperty("--btn-color", `var(--${s.color}-dark)`);
+      btn.innerHTML = `${icons[s.id]}<span>${s.name}</span>`;
+      btn.addEventListener("click", () => handleAnswer(s.id, btn));
+      answerGrid.appendChild(btn);
+    });
+  }
+
+  function renderWord(item) {
+    const word = item.word;
+    if (!item.hl) {
+      wordText.textContent = word;
+      return;
+    }
+    const [start, len] = item.hl;
+    const before = word.slice(0, start);
+    const marked = word.slice(start, start + len);
+    const after = word.slice(start + len);
+    wordText.innerHTML =
+      `${escapeHtml(before)}<span class="hl">${escapeHtml(marked)}</span>${escapeHtml(after)}`;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  }
+
+  function drawWord() {
+    if (bag.length === 0) bag = shuffle(wordPool);
+    currentItem = bag.pop();
+    renderWord(currentItem);
+    feedback.hidden = true;
+    feedback.className = "feedback";
+    nextWordBtn.hidden = true;
+    answered = false;
+    Array.from(answerGrid.children).forEach(btn => {
+      btn.disabled = false;
+      btn.classList.remove("correct-answer", "wrong-answer");
+    });
+  }
+
+  function updateScorePill() {
+    correctPill.textContent = `Richtig: ${score.correct} von ${score.total}`;
+  }
+
+  function updatePointsPill() {
+    pointsPill.textContent = `🏆 ${points} ${points === 1 ? "Punkt" : "Punkte"}`;
+    pointsPill.classList.add("bump");
+    window.setTimeout(() => pointsPill.classList.remove("bump"), 250);
+  }
+
+  function updateStreakPill() {
+    if (streak >= 2) {
+      streakPill.hidden = false;
+      streakPill.textContent = `🔥 Serie: ${streak}`;
+    } else {
+      streakPill.hidden = true;
+    }
+  }
+
+  function handleAnswer(strategyId, btnEl) {
+    if (answered) return;
+    answered = true;
+    score.total++;
+
+    const isCorrect = strategyId === currentItem.strategy;
+    if (isCorrect) score.correct++;
+    updateScorePill();
+
+    let earned = 0;
+    let bonusText = "";
+    if (isCorrect) {
+      streak++;
+      earned = CORRECT_POINTS;
+      if (streak >= STREAK_BONUS_AT) {
+        earned += STREAK_BONUS_POINTS;
+        bonusText = ` 🔥 Serie x${streak}: +${STREAK_BONUS_POINTS} Bonus!`;
+      }
+    } else {
+      streak = 0;
+    }
+    points += earned;
+    updatePointsPill();
+    updateStreakPill();
+
+    Array.from(answerGrid.children).forEach(btn => {
+      btn.disabled = true;
+      if (btn.dataset.strategy === currentItem.strategy) {
+        btn.classList.add("correct-answer");
+      } else if (btn === btnEl && !isCorrect) {
+        btn.classList.add("wrong-answer");
+      }
+    });
+
+    const strategyName = strategies.find(s => s.id === currentItem.strategy).name;
+    feedback.hidden = false;
+    feedback.classList.add(isCorrect ? "correct" : "wrong");
+    feedback.innerHTML = `<strong>${isCorrect ? `Richtig! 🎉 (+${earned} Punkte)${bonusText}` : `Nicht ganz – hier hilft „${strategyName}“.`}</strong>${currentItem.note}`;
+
+    liveRegion.textContent = isCorrect
+      ? `Richtig. ${currentItem.note}`
+      : `Falsch. Richtig wäre ${strategyName}. ${currentItem.note}`;
+
+    nextWordBtn.hidden = false;
+    nextWordBtn.focus();
+  }
+
+  startBtn.addEventListener("click", () => {
+    wordPool = buildWordPool();
+    bag = shuffle(wordPool);
+    showScreen(overviewScreen);
+  });
+  overviewBackBtn.addEventListener("click", () => showScreen(startScreen));
+  practiceOverviewBtn.addEventListener("click", () => showScreen(overviewScreen));
+
+  toPracticeBtn.addEventListener("click", () => {
+    showScreen(practiceScreen);
+    buildAnswerButtons();
+    drawWord();
+  });
+
+  nextWordBtn.addEventListener("click", drawWord);
+
+  practiceResetBtn.addEventListener("click", () => {
+    showConfirm(() => {
+      score = { correct: 0, total: 0 };
+      points = 0;
+      streak = 0;
+      updateScorePill();
+      updatePointsPill();
+      updateStreakPill();
+      bag = shuffle(wordPool);
+      drawWord();
+    });
+  });
+})();
+</script>
+</body>
+</html>
