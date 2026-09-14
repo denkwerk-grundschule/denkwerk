@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zahlenstrahl bis 100</title>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --card-bg: #ffffff;
+    --text: #2b2b2b;
+    --text-soft: #5a5a5a;
+    --accent: #3d6b5c;
+    --accent-dark: #2a4d41;
+    --focus: #1a56db;
+    --border: #d9d4cc;
+    --radius: 18px;
+    --guess: #4f8fd1;
+    --guess-dark: #2f5f97;
+    --target: #e8735a;
+    --target-dark: #b8492f;
+    --decade-color: #c62828;
+    --five-color: #1565c0;
+    --unit-color: #b9b3aa;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  [hidden] { display: none !important; }
+
+  h1 {
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    margin: 0.2em 0 0.1em;
+  }
+
+  .subtitle {
+    font-size: clamp(1.05rem, 2.1vw, 1.3rem);
+    color: var(--text-soft);
+    margin: 0 0 0.5em;
+  }
+
+  .explanation {
+    font-size: clamp(1rem, 1.7vw, 1.15rem);
+    color: var(--text-soft);
+    max-width: 640px;
+    margin: 0 0 1.6em;
+    line-height: 1.55;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  button:focus-visible { outline: 4px solid var(--focus); outline-offset: 3px; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+    font-weight: 600;
+    padding: 0.85em 2em;
+    box-shadow: 0 6px 0 var(--accent-dark);
+  }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-dark); }
+  .btn-primary:disabled { background: #a9b8b3; box-shadow: 0 6px 0 #8a978f; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: #fff;
+    color: var(--accent-dark);
+    border: 2px solid var(--accent);
+    font-size: clamp(0.95rem, 1.7vw, 1.1rem);
+    font-weight: 600;
+    padding: 0.65em 1.5em;
+  }
+  .btn-secondary:hover { background: #eef4f1; }
+
+  .stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .stat-pill {
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 0.4em 1.1em;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-soft);
+  }
+
+  .stat-pill.points-pill {
+    background: var(--accent);
+    border-color: var(--accent-dark);
+    color: #fff;
+    font-size: 1.05rem;
+    transition: transform 0.2s ease;
+  }
+  .stat-pill.points-pill.bump {
+    transform: scale(1.12);
+  }
+
+  .stat-pill.streak-pill {
+    background: #fff4de;
+    border-color: #eda039;
+    color: #a8650f;
+  }
+
+  .target-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    padding: 1.2rem 2rem;
+    margin-bottom: 2.4rem;
+  }
+
+  .target-prompt {
+    font-size: 1.1rem;
+    color: var(--text-soft);
+    margin: 0 0 0.2em;
+  }
+
+  .target-number {
+    font-size: clamp(2.6rem, 6vw, 3.6rem);
+    font-weight: 700;
+    color: var(--target-dark);
+    margin: 0;
+  }
+
+  /* Zahlenstrahl */
+  .line-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    padding: 0 10px;
+  }
+
+  .track-area {
+    position: relative;
+    height: 210px;
+  }
+
+  .track {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, #dce9f8, #e6f2ee, #fbe9d2);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .ticks-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .tick {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 2px;
+  }
+  .tick.unit {
+    width: 1px;
+    height: 12px;
+    background: var(--unit-color);
+  }
+  .tick.five {
+    width: 2px;
+    height: 26px;
+    background: var(--five-color);
+  }
+  .tick.decade {
+    width: 3px;
+    height: 42px;
+    background: var(--decade-color);
+  }
+
+  .tick-label {
+    position: absolute;
+    transform: translateX(-50%);
+    font-weight: 800;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .tick-label.five {
+    top: calc(50% + 16px);
+    font-size: 0.78rem;
+    color: var(--five-color);
+  }
+  .tick-label.decade {
+    top: calc(50% + 24px);
+    font-size: 1.05rem;
+    color: var(--decade-color);
+  }
+
+  @media (max-width: 600px) {
+    .tick-label.five { display: none; }
+  }
+
+  /* Tropfen/Pins schweben über dem Strich und zeigen nach unten auf die Stelle,
+     statt die Zahlen darunter zu verdecken. */
+  .pin {
+    position: absolute;
+    top: calc(50% - 26px);
+    width: 30px;
+    height: 30px;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    border-radius: 50% 50% 50% 0;
+    transform-origin: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    pointer-events: none;
+    transition: left 0.5s ease;
+  }
+  .pin::after {
+    content: "";
+    width: 8px; height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    transform: rotate(45deg);
+  }
+  .pin.guess-pin {
+    background: var(--guess);
+    border: 3px solid #fff;
+    z-index: 3;
+    transition: none;
+  }
+  .pin.target-pin {
+    background: var(--target);
+    border: 3px solid #fff;
+    z-index: 2;
+  }
+
+  .range-slider {
+    position: absolute;
+    top: calc(50% - 26px);
+    left: 0;
+    width: 100%;
+    height: 44px;
+    transform: translateY(-50%);
+    margin: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    z-index: 4;
+  }
+  .range-slider::-webkit-slider-runnable-track {
+    height: 44px;
+    background: transparent;
+  }
+  /* Der native Thumb bleibt für Maus/Touch/Tastatur bedienbar, ist aber unsichtbar –
+     sichtbar ist stattdessen der per JS exakt auf dieselbe Prozent-Skala wie die
+     Striche positionierte #guess-pin, damit beide Positionsangaben immer übereinstimmen. */
+  .range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 34px;
+    height: 34px;
+    margin-top: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: grab;
+    opacity: 0;
+  }
+  .range-slider::-moz-range-thumb {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    cursor: grab;
+    opacity: 0;
+  }
+  .range-slider::-moz-range-track { background: transparent; height: 44px; border: none; }
+
+  .distance-label {
+    position: absolute;
+    top: calc(50% - 92px);
+    transform: translateX(-50%);
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 0.2em 0.8em;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .feedback {
+    min-height: 2.6em;
+    font-size: clamp(1.1rem, 2.2vw, 1.35rem);
+    font-weight: 700;
+    margin: 0.4rem 0 1.6rem;
+  }
+  .feedback.great { color: #2b6b37; }
+  .feedback.good { color: #a86f22; }
+  .feedback.ok { color: #33628f; }
+  .feedback.far { color: #963434; }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .legend {
+    display: flex;
+    gap: 1.4rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2.2rem;
+    font-size: 0.95rem;
+    color: var(--text-soft);
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Startbildschirm -->
+  <main class="screen" id="start-screen">
+    <h1>Zahlenstrahl bis 100</h1>
+    <p class="subtitle">Schätzen, wo eine Zahl steht</p>
+    <p class="explanation">
+      Die Zehnerzahlen sind groß und rot markiert, die Fünferzahlen mittelgroß und blau.
+      Verschiebt den Punkt dorthin, wo die genannte Zahl steht, und prüft dann eure Schätzung.
+    </p>
+    <button type="button" class="btn-primary" id="start-btn">Los geht's</button>
+  </main>
+
+  <!-- Übungsbildschirm -->
+  <main class="screen" id="game-screen" hidden>
+    <h1 class="visually-hidden">Zahlenstrahl bis 100</h1>
+
+    <div class="stats-row">
+      <span class="stat-pill points-pill" id="score-pill">🏆 0 Punkte</span>
+      <span class="stat-pill streak-pill" id="streak-pill" hidden>🔥 Serie: 0</span>
+      <span class="stat-pill" id="round-pill">Aufgabe 1</span>
+      <span class="stat-pill" id="avg-pill">Ø Abweichung: –</span>
+    </div>
+
+    <div class="target-card">
+      <p class="target-prompt">Wo steht diese Zahl auf dem Zahlenstrahl?</p>
+      <p class="target-number" id="target-number">37</p>
+    </div>
+
+    <div class="line-wrap">
+      <div class="track-area" id="track-area">
+        <div class="track"></div>
+        <div class="ticks-layer" id="ticks-layer"></div>
+
+        <div class="pin target-pin" id="target-pin" hidden></div>
+        <div class="distance-label" id="distance-label" hidden></div>
+
+        <div class="pin guess-pin" id="guess-pin"></div>
+        <input type="range" class="range-slider" id="guess-slider" min="0" max="100" step="1" value="50"
+               aria-label="Deine Schätzung auf dem Zahlenstrahl von 0 bis 100">
+      </div>
+    </div>
+
+    <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+
+    <div class="controls-row">
+      <button type="button" class="btn-primary" id="check-btn">Schätzung prüfen</button>
+      <button type="button" class="btn-primary" id="next-btn" hidden>Nächste Zahl</button>
+      <button type="button" class="btn-secondary" id="reset-btn">Neu starten</button>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--guess)"></span> Deine Schätzung</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--target)"></span> Richtige Stelle</span>
+    </div>
+  </main>
+
+<script>
+(function () {
+  "use strict";
+
+  let round = 0;
+  let totalDeviation = 0;
+  let currentTarget = null;
+  let checked = false;
+  let score = 0;
+  let streak = 0;
+
+  const el = (id) => document.getElementById(id);
+
+  const startScreen = el("start-screen");
+  const gameScreen = el("game-screen");
+  const startBtn = el("start-btn");
+
+  const scorePill = el("score-pill");
+  const streakPill = el("streak-pill");
+  const roundPill = el("round-pill");
+  const avgPill = el("avg-pill");
+  const targetNumberEl = el("target-number");
+  const slider = el("guess-slider");
+  const guessPin = el("guess-pin");
+  const targetPin = el("target-pin");
+  const distanceLabel = el("distance-label");
+  const feedback = el("feedback");
+  const checkBtn = el("check-btn");
+  const nextBtn = el("next-btn");
+  const resetBtn = el("reset-btn");
+
+  function buildTicks() {
+    const layer = el("ticks-layer");
+    const frag = document.createDocumentFragment();
+    for (let n = 0; n <= 100; n++) {
+      const tick = document.createElement("div");
+      tick.style.left = n + "%";
+      if (n % 10 === 0) {
+        tick.className = "tick decade";
+        const label = document.createElement("div");
+        label.className = "tick-label decade";
+        label.style.left = n + "%";
+        label.textContent = n;
+        frag.appendChild(label);
+      } else if (n % 5 === 0) {
+        tick.className = "tick five";
+        const label = document.createElement("div");
+        label.className = "tick-label five";
+        label.style.left = n + "%";
+        label.textContent = n;
+        frag.appendChild(label);
+      } else {
+        tick.className = "tick unit";
+      }
+      frag.appendChild(tick);
+    }
+    layer.appendChild(frag);
+  }
+
+  function updateGuessPin() {
+    guessPin.style.left = slider.value + "%";
+  }
+  slider.addEventListener("input", updateGuessPin);
+
+  function randomTarget() {
+    let n;
+    do {
+      n = Math.floor(Math.random() * 99) + 1; // 1–99
+    } while (n === currentTarget);
+    return n;
+  }
+
+  function feedbackFor(distance) {
+    if (distance <= 2) return { text: `Sehr genau! Nur ${distance} daneben.`, cls: "great", points: 10 };
+    if (distance <= 5) return { text: `Gut geschätzt – ${distance} daneben.`, cls: "good", points: 6 };
+    if (distance <= 10) return { text: `Kommt hin – ${distance} daneben.`, cls: "ok", points: 3 };
+    return { text: `${distance} daneben – schau beim nächsten Mal genauer hin.`, cls: "far", points: 0 };
+  }
+
+  const STREAK_BONUS_AT = 3;
+  const STREAK_BONUS_POINTS = 5;
+
+  function updateScorePill() {
+    scorePill.textContent = `🏆 ${score} ${score === 1 ? "Punkt" : "Punkte"}`;
+    scorePill.classList.add("bump");
+    window.setTimeout(() => scorePill.classList.remove("bump"), 250);
+  }
+
+  function updateStreakPill() {
+    if (streak >= 2) {
+      streakPill.hidden = false;
+      streakPill.textContent = `🔥 Serie: ${streak}`;
+    } else {
+      streakPill.hidden = true;
+    }
+  }
+
+  function startRound() {
+    round++;
+    currentTarget = randomTarget();
+    checked = false;
+
+    targetNumberEl.textContent = currentTarget;
+    roundPill.textContent = `Aufgabe ${round}`;
+    slider.value = 50;
+    slider.disabled = false;
+    updateGuessPin();
+
+    targetPin.hidden = true;
+    distanceLabel.hidden = true;
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    checkBtn.hidden = false;
+    checkBtn.disabled = false;
+    nextBtn.hidden = true;
+  }
+
+  function checkGuess() {
+    if (checked) return;
+    checked = true;
+
+    const guess = parseInt(slider.value, 10);
+    const distance = Math.abs(guess - currentTarget);
+    totalDeviation += distance;
+
+    targetPin.style.left = currentTarget + "%";
+    targetPin.hidden = false;
+
+    const midPercent = (guess + currentTarget) / 2;
+    distanceLabel.style.left = midPercent + "%";
+    distanceLabel.textContent = distance === 0 ? "genau getroffen!" : `${distance} daneben`;
+    distanceLabel.hidden = false;
+
+    const fb = feedbackFor(distance);
+
+    if (fb.points > 0) {
+      streak++;
+    } else {
+      streak = 0;
+    }
+    let earned = fb.points;
+    let bonusText = "";
+    if (fb.points > 0 && streak >= STREAK_BONUS_AT) {
+      earned += STREAK_BONUS_POINTS;
+      bonusText = ` 🔥 Serie x${streak}: +${STREAK_BONUS_POINTS} Bonus!`;
+    }
+    score += earned;
+
+    feedback.textContent = `${fb.text} (+${earned} Punkte)${bonusText}`;
+    feedback.classList.add(fb.cls);
+
+    updateScorePill();
+    updateStreakPill();
+
+    avgPill.textContent = `Ø Abweichung: ${(totalDeviation / round).toFixed(1)}`;
+
+    slider.disabled = true;
+    checkBtn.hidden = true;
+    nextBtn.hidden = false;
+    nextBtn.focus();
+  }
+
+  function resetAll() {
+    const confirmed = window.confirm("Übung wirklich neu starten? Der Punktestand wird zurückgesetzt.");
+    if (!confirmed) return;
+    round = 0;
+    totalDeviation = 0;
+    score = 0;
+    streak = 0;
+    avgPill.textContent = "Ø Abweichung: –";
+    updateScorePill();
+    updateStreakPill();
+    currentTarget = null;
+    startRound();
+  }
+
+  checkBtn.addEventListener("click", checkGuess);
+  nextBtn.addEventListener("click", startRound);
+  resetBtn.addEventListener("click", resetAll);
+
+  startBtn.addEventListener("click", () => {
+    startScreen.hidden = true;
+    gameScreen.hidden = false;
+    buildTicks();
+    startRound();
+    slider.focus();
+  });
+})();
+</script>
+</body>
+</html>

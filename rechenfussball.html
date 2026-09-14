@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rechenfußball</title>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --card-bg: #ffffff;
+    --text: #2b2b2b;
+    --text-soft: #5a5a5a;
+    --accent: #3d6b5c;
+    --accent-dark: #2a4d41;
+    --focus: #1a56db;
+    --border: #d9d4cc;
+    --radius: 18px;
+    --team1: #e8735a;
+    --team1-dark: #b8492f;
+    --team1-bg: #fde3dc;
+    --team2: #4f8fd1;
+    --team2-dark: #2f5f97;
+    --team2-bg: #dcebfa;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  [hidden] { display: none !important; }
+
+  h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin: 0.2em 0 0.1em;
+  }
+
+  .subtitle {
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+    color: var(--text-soft);
+    margin: 0 0 0.5em;
+  }
+
+  .explanation {
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
+    color: var(--text-soft);
+    max-width: 640px;
+    margin: 0 0 1.6em;
+    line-height: 1.5;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 4px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+    font-weight: 600;
+    padding: 0.9em 2.2em;
+    box-shadow: 0 6px 0 var(--accent-dark);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-dark); }
+
+  .btn-secondary {
+    background: #fff;
+    color: var(--accent-dark);
+    border: 2px solid var(--accent);
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    font-weight: 600;
+    padding: 0.7em 1.6em;
+  }
+
+  .btn-secondary:hover { background: #eef4f1; }
+
+  .link-button {
+    background: none;
+    color: var(--text-soft);
+    font-size: 1rem;
+    text-decoration: underline;
+    padding: 0.5em 1em;
+  }
+
+  .link-button:hover { color: var(--text); }
+
+  .btn-correct {
+    background: #4f9d5c;
+    color: #fff;
+    box-shadow: 0 6px 0 #35733e;
+    font-size: clamp(1.2rem, 2.6vw, 1.7rem);
+    font-weight: 700;
+    padding: 0.8em 2em;
+  }
+  .btn-correct:hover { transform: translateY(-2px); }
+  .btn-correct:active { transform: translateY(3px); box-shadow: 0 2px 0 #35733e; }
+
+  .btn-wrong {
+    background: #cf4a4a;
+    color: #fff;
+    box-shadow: 0 6px 0 #983434;
+    font-size: clamp(1.2rem, 2.6vw, 1.7rem);
+    font-weight: 700;
+    padding: 0.8em 2em;
+  }
+  .btn-wrong:hover { transform: translateY(-2px); }
+  .btn-wrong:active { transform: translateY(3px); box-shadow: 0 2px 0 #983434; }
+
+  /* Start screen form */
+  .setup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 1.6em;
+    text-align: left;
+  }
+
+  .team-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .team-field label {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  .team-field.team1 label { color: var(--team1-dark); }
+  .team-field.team2 label { color: var(--team2-dark); }
+
+  .team-field input, .setup-form select {
+    font-family: inherit;
+    font-size: 1.1rem;
+    padding: 0.6em 0.8em;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: #fff;
+  }
+
+  .team-field.team1 input { border-color: var(--team1); }
+  .team-field.team2 input { border-color: var(--team2); }
+
+  .length-field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .length-field label { font-weight: 700; font-size: 1.05rem; }
+
+  /* Scoreboard */
+  .scoreboard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    margin-bottom: 1.2em;
+    flex-wrap: wrap;
+  }
+
+  .score-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5em 1.1em;
+    border-radius: 999px;
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+    font-weight: 700;
+  }
+
+  .score-pill.team1 { background: var(--team1-bg); color: var(--team1-dark); }
+  .score-pill.team2 { background: var(--team2-bg); color: var(--team2-dark); }
+
+  .score-pill .score-num {
+    font-size: 1.3em;
+    background: #fff;
+    border-radius: 8px;
+    padding: 0.05em 0.4em;
+  }
+
+  .score-divider { font-size: 1.4rem; color: var(--text-soft); font-weight: 700; }
+
+  /* Field */
+  .field-wrap {
+    width: 100%;
+    max-width: 900px;
+    margin: 0.5em auto 1.6em;
+    padding: 0 22px;
+  }
+
+  .field {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    max-height: 380px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #6fb872, #5aa25e);
+    border-radius: 12px;
+    border: 5px solid #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    overflow: visible;
+  }
+
+  .pitch-marking {
+    position: absolute;
+    pointer-events: none;
+    border-color: rgba(255,255,255,0.65);
+  }
+
+  .halfway-line {
+    left: 50%;
+    top: 5%;
+    bottom: 5%;
+    width: 2px;
+    background: rgba(255,255,255,0.65);
+    transform: translateX(-50%);
+  }
+
+  .center-circle {
+    left: 50%;
+    top: 50%;
+    width: 24%;
+    aspect-ratio: 1 / 1;
+    border: 2px solid rgba(255,255,255,0.65);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .center-spot {
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.75);
+    transform: translate(-50%, -50%);
+  }
+
+  .penalty-box {
+    top: 16%;
+    bottom: 16%;
+    width: 15%;
+    border: 2px solid rgba(255,255,255,0.65);
+  }
+  .penalty-box.left { left: 0; border-left: none; border-radius: 0 4px 4px 0; }
+  .penalty-box.right { right: 0; border-right: none; border-radius: 4px 0 0 4px; }
+
+  .goal-box {
+    top: 34%;
+    bottom: 34%;
+    width: 5.5%;
+    border: 2px solid rgba(255,255,255,0.65);
+  }
+  .goal-box.left { left: 0; border-left: none; border-radius: 0 3px 3px 0; }
+  .goal-box.right { right: 0; border-right: none; border-radius: 3px 0 0 3px; }
+
+  .goal-frame {
+    position: absolute;
+    top: 30%;
+    bottom: 30%;
+    width: clamp(10px, 2vw, 16px);
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.9) 0 2px, transparent 2px 7px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.9) 0 2px, transparent 2px 7px);
+    background-color: rgba(255,255,255,0.18);
+    border: 2px solid #fff;
+  }
+  .goal-frame.left { left: clamp(-16px, -2vw, -12px); border-right: none; border-radius: 3px 0 0 3px; }
+  .goal-frame.right { right: clamp(-16px, -2vw, -12px); border-left: none; border-radius: 0 3px 3px 0; }
+
+  .pads-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .pad {
+    width: 2px;
+    height: clamp(16px, 8%, 40px);
+    background: rgba(255,255,255,0.5);
+  }
+
+  .ball {
+    position: absolute;
+    top: 50%;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    transform: translate(-50%, -50%);
+    transition: left 0.7s cubic-bezier(0.34, 1.2, 0.4, 1);
+    filter: drop-shadow(0 3px 3px rgba(0,0,0,0.3));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ball { transition: left 0.2s linear; }
+  }
+
+  /* Question card */
+  .question-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    padding: clamp(1.5rem, 4vw, 2.6rem);
+    max-width: 560px;
+    width: 100%;
+    margin: 0.5rem auto;
+    border-top: 10px solid var(--turn-color, var(--accent));
+  }
+
+  .turn-label {
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.4em;
+  }
+
+  .question-text {
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    font-weight: 700;
+    margin: 0.2em 0 0.5em;
+  }
+
+  .solution-toggle-row {
+    margin-bottom: 1em;
+  }
+
+  .solution-text {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-soft);
+    margin: 0.3em 0 1em;
+  }
+
+  .judge-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1.4rem;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Goal celebration */
+  .goal-banner {
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 800;
+    color: var(--accent-dark);
+    margin: 0.6em 0;
+  }
+
+  @media (max-width: 480px) {
+    .judge-buttons { flex-direction: column; width: 100%; }
+    .judge-buttons button { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Startbildschirm -->
+  <main class="screen" id="start-screen">
+    <h1>Rechenfußball</h1>
+    <p class="subtitle">Kleines und großes 1×1 im Mannschaftsduell</p>
+    <p class="explanation">
+      Zwei Mannschaften treten gegeneinander an. Wer eine Aufgabe richtig löst, schießt den
+      Ball ein Feld weiter Richtung gegnerisches Tor. Bei einer falschen Antwort übernimmt die
+      andere Mannschaft den Ball.
+    </p>
+
+    <form class="setup-form" id="setup-form">
+      <div class="team-field team1">
+        <label for="team1-name">Name Mannschaft 1</label>
+        <input type="text" id="team1-name" value="Mannschaft Rot" maxlength="24">
+      </div>
+      <div class="team-field team2">
+        <label for="team2-name">Name Mannschaft 2</label>
+        <input type="text" id="team2-name" value="Mannschaft Blau" maxlength="24">
+      </div>
+      <div class="length-field">
+        <label for="field-length">Spielfeldlänge</label>
+        <select id="field-length">
+          <option value="7">Kurz (3 Treffer bis zum Tor)</option>
+          <option value="9" selected>Normal (4 Treffer bis zum Tor)</option>
+          <option value="11">Lang (5 Treffer bis zum Tor)</option>
+        </select>
+      </div>
+    </form>
+
+    <button type="button" class="btn-primary" id="start-btn">Spiel starten</button>
+  </main>
+
+  <!-- Spielbildschirm -->
+  <main class="screen" id="game-screen" hidden>
+    <h1 class="visually-hidden">Rechenfußball</h1>
+
+    <div class="scoreboard">
+      <div class="score-pill team1">
+        <span id="score-team1-name">Mannschaft Rot</span>
+        <span class="score-num" id="score-team1-num">0</span>
+      </div>
+      <span class="score-divider">Tore</span>
+      <div class="score-pill team2">
+        <span id="score-team2-name">Mannschaft Blau</span>
+        <span class="score-num" id="score-team2-num">0</span>
+      </div>
+    </div>
+
+    <div class="field-wrap">
+      <div class="field" aria-hidden="true">
+        <div class="goal-frame left"></div>
+        <div class="goal-frame right"></div>
+        <div class="pitch-marking halfway-line"></div>
+        <div class="pitch-marking center-circle"></div>
+        <div class="pitch-marking center-spot"></div>
+        <div class="pitch-marking penalty-box left"></div>
+        <div class="pitch-marking penalty-box right"></div>
+        <div class="pitch-marking goal-box left"></div>
+        <div class="pitch-marking goal-box right"></div>
+        <div class="pads-track" id="pads-track">
+          <div class="ball" id="ball">⚽</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="live-region" class="visually-hidden" role="status" aria-live="polite"></div>
+
+    <p class="goal-banner" id="goal-banner" hidden></p>
+
+    <!-- Frage-Karte -->
+    <section class="question-card" id="question-card" aria-labelledby="turn-label">
+      <p class="turn-label" id="turn-label">Mannschaft Rot ist dran</p>
+      <p class="question-text" id="question-text">7 × 8</p>
+
+      <div class="solution-toggle-row">
+        <button type="button" class="btn-secondary" id="show-solution-btn">Lösung zeigen</button>
+        <p class="solution-text" id="solution-text" hidden></p>
+      </div>
+
+      <div class="judge-buttons">
+        <button type="button" class="btn-correct" id="correct-btn">Richtig ✅</button>
+        <button type="button" class="btn-wrong" id="wrong-btn">Falsch ❌</button>
+      </div>
+    </section>
+
+    <div class="controls-row">
+      <button type="button" class="btn-secondary" id="reset-btn">Neues Spiel</button>
+      <button type="button" class="link-button" id="skip-btn">Aufgabe überspringen</button>
+    </div>
+  </main>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Aufgabenpool: kleines + großes 1x1 gemischt (Faktoren 2–10) ----
+  function buildTaskPool() {
+    const pool = [];
+    for (let a = 2; a <= 10; a++) {
+      for (let b = a; b <= 10; b++) {
+        pool.push([a, b]);
+      }
+    }
+    return pool;
+  }
+  const fullTaskPool = buildTaskPool();
+  let taskBag = shuffle(fullTaskPool.slice());
+  let lastTask = null;
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function drawTask() {
+    if (taskBag.length === 0) {
+      taskBag = shuffle(fullTaskPool.slice());
+    }
+    let task = taskBag.pop();
+    if (lastTask && task[0] === lastTask[0] && task[1] === lastTask[1] && taskBag.length > 0) {
+      const swapWith = taskBag.pop();
+      taskBag.unshift(task);
+      task = swapWith;
+    }
+    lastTask = task;
+    return Math.random() < 0.5 ? [task[0], task[1]] : [task[1], task[0]];
+  }
+
+  // ---- Spielzustand ----
+  let fieldLength = 9;       // Anzahl Positionen, ungerade
+  let position = 4;          // aktuelle Ballposition (Index)
+  let currentTeam = 1;       // 1 oder 2
+  let scores = { 1: 0, 2: 0 };
+  let teamNames = { 1: "Mannschaft Rot", 2: "Mannschaft Blau" };
+  let currentA = 0, currentB = 0;
+  let busy = false;
+
+  const el = (id) => document.getElementById(id);
+
+  const startScreen = el("start-screen");
+  const gameScreen = el("game-screen");
+  const startBtn = el("start-btn");
+  const team1Input = el("team1-name");
+  const team2Input = el("team2-name");
+  const fieldLengthSelect = el("field-length");
+
+  const scoreTeam1Name = el("score-team1-name");
+  const scoreTeam2Name = el("score-team2-name");
+  const scoreTeam1Num = el("score-team1-num");
+  const scoreTeam2Num = el("score-team2-num");
+
+  const padsTrack = el("pads-track");
+  const ballEl = el("ball");
+  const goalBanner = el("goal-banner");
+  const liveRegion = el("live-region");
+
+  const questionCard = el("question-card");
+  const turnLabel = el("turn-label");
+  const questionText = el("question-text");
+  const showSolutionBtn = el("show-solution-btn");
+  const solutionText = el("solution-text");
+  const correctBtn = el("correct-btn");
+  const wrongBtn = el("wrong-btn");
+  const resetBtn = el("reset-btn");
+  const skipBtn = el("skip-btn");
+
+  function buildField() {
+    padsTrack.innerHTML = "";
+    for (let i = 0; i < fieldLength; i++) {
+      const pad = document.createElement("div");
+      pad.className = "pad";
+      padsTrack.appendChild(pad);
+    }
+    padsTrack.appendChild(ballEl);
+    updateBallPosition(false);
+  }
+
+  function updateBallPosition(animate) {
+    const pct = (position / (fieldLength - 1)) * 100;
+    ballEl.style.transition = animate
+      ? undefined
+      : "none";
+    ballEl.style.left = pct + "%";
+    if (!animate) {
+      // force reflow so the "none" transition applies before we restore it
+      void ballEl.offsetWidth;
+      ballEl.style.transition = "";
+    }
+  }
+
+  function newQuestion() {
+    const [a, b] = drawTask();
+    currentA = a;
+    currentB = b;
+    questionText.textContent = `${a} × ${b}`;
+    solutionText.hidden = true;
+    solutionText.textContent = "";
+    updateTurnUI();
+  }
+
+  function updateTurnUI() {
+    const name = teamNames[currentTeam];
+    turnLabel.textContent = `${name} ist dran`;
+    turnLabel.style.color = currentTeam === 1 ? "var(--team1-dark)" : "var(--team2-dark)";
+    questionCard.style.setProperty("--turn-color", currentTeam === 1 ? "var(--team1)" : "var(--team2)");
+  }
+
+  function updateScoreboard() {
+    scoreTeam1Name.textContent = teamNames[1];
+    scoreTeam2Name.textContent = teamNames[2];
+    scoreTeam1Num.textContent = scores[1];
+    scoreTeam2Num.textContent = scores[2];
+  }
+
+  function announce(msg) {
+    liveRegion.textContent = msg;
+  }
+
+  function showGoalBanner(msg) {
+    goalBanner.textContent = msg;
+    goalBanner.hidden = false;
+    window.setTimeout(() => { goalBanner.hidden = true; }, 2600);
+  }
+
+  function handleCorrect() {
+    if (busy) return;
+    busy = true;
+    const direction = currentTeam === 1 ? 1 : -1;
+    position += direction;
+    updateBallPosition(true);
+
+    const scoredTeam = position >= fieldLength - 1 ? 1 : (position <= 0 ? 2 : null);
+
+    window.setTimeout(() => {
+      if (scoredTeam) {
+        scores[scoredTeam]++;
+        updateScoreboard();
+        showGoalBanner(`⚽ Tor für ${teamNames[scoredTeam]}!`);
+        announce(`Tor für ${teamNames[scoredTeam]}. Spielstand ${scores[1]} zu ${scores[2]}.`);
+        position = Math.floor((fieldLength - 1) / 2);
+        currentTeam = scoredTeam === 1 ? 2 : 1; // Gegner kickt an
+        updateBallPosition(false);
+      } else {
+        announce(`Richtig. ${teamNames[currentTeam]} bleibt am Ball.`);
+      }
+      newQuestion();
+      busy = false;
+    }, 750);
+  }
+
+  function handleWrong() {
+    if (busy) return;
+    busy = true;
+    const otherTeam = currentTeam === 1 ? 2 : 1;
+    announce(`Leider falsch. Ballbesitz wechselt zu ${teamNames[otherTeam]}.`);
+    currentTeam = otherTeam;
+    window.setTimeout(() => {
+      newQuestion();
+      busy = false;
+    }, 300);
+  }
+
+  function skipQuestion() {
+    if (busy) return;
+    newQuestion();
+  }
+
+  function resetGame(startingLengthChange) {
+    if (gameScreen.hidden === false) {
+      const confirmed = window.confirm("Neues Spiel starten? Spielstand und Ballposition werden zurückgesetzt.");
+      if (!confirmed) return;
+    }
+    scores = { 1: 0, 2: 0 };
+    position = Math.floor((fieldLength - 1) / 2);
+    currentTeam = 1;
+    updateScoreboard();
+    buildField();
+    newQuestion();
+    announce("Neues Spiel gestartet.");
+  }
+
+  showSolutionBtn.addEventListener("click", () => {
+    solutionText.hidden = false;
+    solutionText.textContent = `= ${currentA * currentB}`;
+  });
+
+  correctBtn.addEventListener("click", handleCorrect);
+  wrongBtn.addEventListener("click", handleWrong);
+  skipBtn.addEventListener("click", skipQuestion);
+  resetBtn.addEventListener("click", resetGame);
+
+  startBtn.addEventListener("click", () => {
+    teamNames[1] = team1Input.value.trim() || "Mannschaft Rot";
+    teamNames[2] = team2Input.value.trim() || "Mannschaft Blau";
+    fieldLength = parseInt(fieldLengthSelect.value, 10);
+    position = Math.floor((fieldLength - 1) / 2);
+    currentTeam = 1;
+    scores = { 1: 0, 2: 0 };
+
+    startScreen.hidden = true;
+    gameScreen.hidden = false;
+
+    updateScoreboard();
+    buildField();
+    newQuestion();
+    correctBtn.focus();
+  });
+})();
+</script>
+</body>
+</html>

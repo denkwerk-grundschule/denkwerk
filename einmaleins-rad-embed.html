@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Einmaleins-Rad (16:9)</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #f3ead9;
+    overflow: hidden;
+  }
+  .frame {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 100vh;
+    max-width: 177.78vh;
+    margin: 0 auto;
+    background: #f3ead9;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .bar {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+  .bar-top { height: 5.5%; background: #4c9a5b; }
+  .bar-bottom { height: 5.5%; background: #e08a2b; }
+  .viewport {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3ead9;
+  }
+  iframe {
+    border: 0;
+    display: block;
+    background: #f7f5f2;
+    width: 1060px;
+    height: 740px;
+    flex: 0 0 auto;
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="bar bar-top"></div>
+    <div class="viewport" id="viewport">
+      <iframe id="app-frame" src="einmaleins-rad.html" title="Einmaleins-Rad" scrolling="no"></iframe>
+    </div>
+    <div class="bar bar-bottom"></div>
+  </div>
+
+<script>
+  (function () {
+    var NATIVE_W = 1060;
+    var FALLBACK_H = 740;
+    var currentH = FALLBACK_H;
+    var viewport = document.getElementById('viewport');
+    var iframe = document.getElementById('app-frame');
+
+    function fit() {
+      var vw = viewport.clientWidth;
+      var vh = viewport.clientHeight;
+      var scale = Math.min(vw / NATIVE_W, vh / currentH);
+      iframe.style.height = currentH + 'px';
+      iframe.style.transform = 'scale(' + scale + ')';
+      iframe.style.transformOrigin = 'center center';
+    }
+
+    // Passt die Boxhöhe live an den jeweils sichtbaren Bildschirm der App an
+    // (Start, Spiel, Übersicht ...), statt dauerhaft auf die höchste Ansicht
+    // ausgelegt zu sein. Funktioniert, weil App und Rahmen von derselben
+    // Adresse geladen werden (same-origin) - schlägt das fehl, bleibt die
+    // feste Ersatzhöhe FALLBACK_H erhalten.
+    function attachObserver() {
+      try {
+        var body = iframe.contentDocument.body;
+        var ro = new ResizeObserver(function () {
+          var h = body.scrollHeight;
+          if (h > 40) { currentH = h; }
+          fit();
+        });
+        ro.observe(body);
+        currentH = body.scrollHeight || FALLBACK_H;
+        fit();
+      } catch (e) {
+        fit();
+      }
+    }
+
+    iframe.addEventListener('load', attachObserver);
+    window.addEventListener('resize', fit);
+    fit();
+  })();
+</script>
+</body>
+</html>

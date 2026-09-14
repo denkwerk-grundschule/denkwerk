@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Einmaleins-Rad</title>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --card-bg: #ffffff;
+    --text: #2b2b2b;
+    --text-soft: #5a5a5a;
+    --accent: #3d6b5c;
+    --accent-dark: #2a4d41;
+    --focus: #1a56db;
+    --border: #d9d4cc;
+    --radius: 18px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  [hidden] { display: none !important; }
+
+  h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin: 0.2em 0 0.1em;
+  }
+
+  .subtitle {
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+    color: var(--text-soft);
+    margin: 0 0 0.5em;
+  }
+
+  .explanation {
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
+    color: var(--text-soft);
+    max-width: 620px;
+    margin: 0 0 2em;
+    line-height: 1.5;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  button:focus-visible {
+    outline: 4px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+    font-weight: 600;
+    padding: 0.9em 2.2em;
+    box-shadow: 0 6px 0 var(--accent-dark);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-dark); }
+
+  .btn-primary:disabled {
+    background: #a9b8b3;
+    box-shadow: 0 6px 0 #8a978f;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    background: #fff;
+    color: var(--accent-dark);
+    border: 2px solid var(--accent);
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    font-weight: 600;
+    padding: 0.7em 1.6em;
+  }
+
+  .btn-secondary:hover { background: #eef4f1; }
+
+  .link-button {
+    background: none;
+    color: var(--text-soft);
+    font-size: 1rem;
+    text-decoration: underline;
+    padding: 0.5em 1em;
+  }
+
+  .link-button:hover { color: var(--text); }
+
+  /* Wheel area */
+  .wheel-wrap {
+    position: relative;
+    width: min(70vw, 480px);
+    height: min(70vw, 480px);
+    margin: 1.5rem auto 2rem;
+  }
+
+  .pointer {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 22px solid transparent;
+    border-right: 22px solid transparent;
+    border-top: 38px solid var(--accent-dark);
+    z-index: 5;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+  }
+
+  .wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    border: 8px solid #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 0 0 4px var(--border);
+    will-change: transform;
+  }
+
+  .wheel-segment-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .wheel-segment-label span {
+    position: absolute;
+    display: block;
+    top: 16%;
+    left: 50%;
+  }
+
+  .wheel-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 22%;
+    height: 22%;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 4;
+  }
+
+  .counter {
+    font-size: 1.05rem;
+    color: var(--text-soft);
+    margin: 0.5em 0 1.2em;
+  }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.5rem;
+  }
+
+  /* Result card */
+  .result-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    padding: clamp(1.5rem, 4vw, 3rem);
+    max-width: 560px;
+    width: 100%;
+    margin: 1rem auto;
+    border-top: 10px solid var(--card-accent, var(--accent));
+  }
+
+  .result-emoji {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .result-category {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0.4em 0 0.2em;
+  }
+
+  .result-heading {
+    font-size: 1.3rem;
+    margin: 0.6em 0 0.3em;
+    color: var(--text);
+  }
+
+  .result-content {
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-weight: 700;
+    margin: 0.3em 0 0.4em;
+  }
+
+  .hint {
+    font-size: 0.95rem;
+    color: var(--text-soft);
+    font-style: italic;
+    margin: 0.2em 0 1em;
+  }
+
+  .answer {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 700;
+    color: var(--accent-dark);
+    margin: 0.4em 0 1em;
+  }
+
+  .result-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-top: 1.4em;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wheel { transition: transform 0.3s linear !important; }
+  }
+
+  @media (max-width: 480px) {
+    .wheel-wrap { width: 82vw; height: 82vw; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Startbildschirm -->
+  <main class="screen" id="start-screen">
+    <h1>Einmaleins-Rad</h1>
+    <p class="subtitle">Kleines und großes 1×1 – kunterbunt gemischt</p>
+    <p class="explanation">
+      Dreht das Rad, landet auf einer Reihe und rechnet die Aufgabe im Kopf.
+      Erst überlegen, dann die Lösung aufdecken.
+    </p>
+    <button type="button" class="btn-primary" id="start-btn">Rad starten</button>
+  </main>
+
+  <!-- Radbildschirm -->
+  <main class="screen" id="wheel-screen" hidden>
+    <h1 class="visually-hidden">Einmaleins-Rad</h1>
+    <div class="wheel-wrap">
+      <div class="pointer" aria-hidden="true"></div>
+      <div class="wheel" id="wheel"></div>
+      <div class="wheel-hub" aria-hidden="true"></div>
+    </div>
+
+    <p class="counter" id="counter">Gezogene Aufgaben: 0</p>
+
+    <div class="controls-row">
+      <button type="button" class="btn-primary" id="spin-btn">Drehen</button>
+      <button type="button" class="btn-secondary" id="reset-btn">Neu starten</button>
+    </div>
+
+    <div id="live-region" class="visually-hidden" role="status" aria-live="polite"></div>
+
+    <!-- Ergebniskarte -->
+    <section class="result-card" id="result-card" hidden aria-labelledby="result-heading">
+      <div class="result-emoji" id="result-emoji" aria-hidden="true"></div>
+      <p class="result-category" id="result-category"></p>
+      <h2 class="result-heading" id="result-heading">Deine Aufgabe</h2>
+      <p class="result-content" id="result-content"></p>
+      <p class="hint" id="hint-text">Erst rechnen, dann prüfen</p>
+      <button type="button" class="btn-secondary" id="show-answer-btn">Lösung zeigen</button>
+      <p class="answer" id="result-answer" hidden></p>
+
+      <div class="result-actions">
+        <button type="button" class="btn-primary" id="spin-again-btn">Noch einmal drehen</button>
+        <button type="button" class="btn-secondary" id="other-content-btn">Andere Aufgabe aus dieser Reihe</button>
+      </div>
+      <button type="button" class="link-button" id="skip-btn">Überspringen</button>
+    </section>
+  </main>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Inhalte: Kategorien = 1x1-Reihen, Inhalte = Aufgaben (kleines + großes 1x1 gemischt) ----
+  const categories = [
+    { name: "2er-Reihe",  emoji: "2️⃣", color: "#FFD6D6", pairs: [[2,1],[2,9],[2,6],[2,4],[2,8],[2,3],[2,7],[2,10]] },
+    { name: "3er-Reihe",  emoji: "3️⃣", color: "#FFE8C8", pairs: [[3,2],[3,9],[3,6],[3,4],[3,8],[3,7],[3,5],[3,10]] },
+    { name: "4er-Reihe",  emoji: "4️⃣", color: "#FFF6C2", pairs: [[4,3],[4,9],[4,6],[4,8],[4,2],[4,7],[4,5],[4,10]] },
+    { name: "5er-Reihe",  emoji: "5️⃣", color: "#E3F2C8", pairs: [[5,3],[5,9],[5,6],[5,8],[5,4],[5,7],[5,2],[5,10]] },
+    { name: "6er-Reihe",  emoji: "6️⃣", color: "#C8F0D9", pairs: [[6,3],[6,9],[6,7],[6,8],[6,4],[6,2],[6,5],[6,10]] },
+    { name: "7er-Reihe",  emoji: "7️⃣", color: "#C8F0F0", pairs: [[7,3],[7,8],[7,6],[7,9],[7,4],[7,2],[7,5],[7,10]] },
+    { name: "8er-Reihe",  emoji: "8️⃣", color: "#C9E0FF", pairs: [[8,3],[8,7],[8,6],[8,9],[8,4],[8,2],[8,5],[8,10]] },
+    { name: "9er-Reihe",  emoji: "9️⃣", color: "#DCC9FF", pairs: [[9,3],[9,7],[9,6],[9,8],[9,4],[9,2],[9,5],[9,10]] },
+    { name: "10er-Reihe", emoji: "🔟", color: "#F3C9F0", pairs: [[10,3],[10,7],[10,6],[10,8],[10,4],[10,2],[10,5],[10,9]] }
+  ];
+
+  const segmentCount = categories.length;
+  const segmentAngle = 360 / segmentCount;
+
+  // Un-benutzte Aufgaben je Kategorie (Index in pairs)
+  let remaining = categories.map(c => shuffle(c.pairs.map((_, i) => i)));
+
+  let currentRotation = 0;
+  let spinning = false;
+  let drawCount = 0;
+  let currentCategoryIndex = null;
+  let currentPairIndex = null;
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ---- Rad aufbauen ----
+  const wheelEl = document.getElementById("wheel");
+
+  function buildWheel() {
+    const gradientParts = categories.map((c, i) => {
+      const start = (i * segmentAngle).toFixed(3);
+      const end = ((i + 1) * segmentAngle).toFixed(3);
+      return `${c.color} ${start}deg ${end}deg`;
+    });
+    wheelEl.style.background = `conic-gradient(${gradientParts.join(", ")})`;
+
+    categories.forEach((c, i) => {
+      const centerAngle = i * segmentAngle + segmentAngle / 2;
+      const labelWrap = document.createElement("div");
+      labelWrap.className = "wheel-segment-label";
+      labelWrap.style.transform = `rotate(${centerAngle}deg)`;
+
+      const span = document.createElement("span");
+      span.textContent = c.emoji;
+      span.style.transform = `translate(-50%, -50%) rotate(${-centerAngle}deg)`;
+      span.setAttribute("aria-hidden", "true");
+
+      labelWrap.appendChild(span);
+      wheelEl.appendChild(labelWrap);
+    });
+  }
+
+  buildWheel();
+
+  // ---- Auswahl-Logik ----
+  function pickCategoryIndex() {
+    // bevorzugt eine Kategorie, die noch unbenutzte Aufgaben hat
+    const withRemaining = categories.map((_, i) => i).filter(i => remaining[i].length > 0);
+    const pool = withRemaining.length > 0 ? withRemaining : categories.map((_, i) => i);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function drawPairIndex(categoryIndex) {
+    if (remaining[categoryIndex].length === 0) {
+      remaining[categoryIndex] = shuffle(categories[categoryIndex].pairs.map((_, i) => i));
+    }
+    return remaining[categoryIndex].pop();
+  }
+
+  // ---- Drehen ----
+  const spinBtn = document.getElementById("spin-btn");
+  const spinAgainBtn = document.getElementById("spin-again-btn");
+  const resetBtn = document.getElementById("reset-btn");
+  const otherContentBtn = document.getElementById("other-content-btn");
+  const skipBtn = document.getElementById("skip-btn");
+  const showAnswerBtn = document.getElementById("show-answer-btn");
+
+  const resultCard = document.getElementById("result-card");
+  const resultEmoji = document.getElementById("result-emoji");
+  const resultCategory = document.getElementById("result-category");
+  const resultContent = document.getElementById("result-content");
+  const resultAnswer = document.getElementById("result-answer");
+  const hintText = document.getElementById("hint-text");
+  const counterEl = document.getElementById("counter");
+  const liveRegion = document.getElementById("live-region");
+
+  function normalize(angle) {
+    return ((angle % 360) + 360) % 360;
+  }
+
+  function spin() {
+    if (spinning) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    spinAgainBtn.disabled = true;
+    resultCard.hidden = true;
+
+    const targetCategoryIndex = pickCategoryIndex();
+    const centerAngle = targetCategoryIndex * segmentAngle + segmentAngle / 2;
+
+    // Pointer zeigt bei 0 Grad (oben) auf das Segment. Wir drehen so, dass
+    // das Zentrum des Zielsegments exakt unter dem Pointer landet.
+    const desiredFinalMod = normalize(-centerAngle);
+    const currentMod = normalize(currentRotation);
+    let diff = normalize(desiredFinalMod - currentMod);
+    const extraSpins = 5 + Math.floor(Math.random() * 3); // 5–7 volle Umdrehungen
+
+    const newRotation = currentRotation + diff + extraSpins * 360;
+
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    wheelEl.style.transition = prefersReduced
+      ? "transform 0.3s linear"
+      : "transform 4.6s cubic-bezier(0.15, 0.65, 0.15, 1)";
+    wheelEl.style.transform = `rotate(${newRotation}deg)`;
+    currentRotation = newRotation;
+
+    const onEnd = () => {
+      wheelEl.removeEventListener("transitionend", onEnd);
+      spinning = false;
+      spinBtn.disabled = false;
+      spinAgainBtn.disabled = false;
+      showResultForCategory(targetCategoryIndex);
+    };
+    wheelEl.addEventListener("transitionend", onEnd);
+  }
+
+  function showResultForCategory(categoryIndex) {
+    const pairIdx = drawPairIndex(categoryIndex);
+    currentCategoryIndex = categoryIndex;
+    currentPairIndex = pairIdx;
+    renderResult();
+    drawCount++;
+    counterEl.textContent = `Gezogene Aufgaben: ${drawCount}`;
+  }
+
+  function renderResult() {
+    const cat = categories[currentCategoryIndex];
+    const [a, b] = cat.pairs[currentPairIndex];
+
+    resultCard.style.setProperty("--card-accent", cat.color);
+    resultEmoji.textContent = cat.emoji;
+    resultCategory.textContent = cat.name;
+    resultContent.textContent = `${a} × ${b}`;
+    resultAnswer.textContent = `= ${a * b}`;
+    resultAnswer.hidden = true;
+    hintText.hidden = false;
+    resultCard.hidden = false;
+
+    liveRegion.textContent = `${cat.name}: Aufgabe ${a} mal ${b}.`;
+  }
+
+  function otherContentFromSameCategory() {
+    if (currentCategoryIndex === null) return;
+    const pairIdx = drawPairIndex(currentCategoryIndex);
+    currentPairIndex = pairIdx;
+    renderResult();
+  }
+
+  function resetAll() {
+    const confirmed = window.confirm("Zähler und Fortschritt wirklich zurücksetzen?");
+    if (!confirmed) return;
+    remaining = categories.map(c => shuffle(c.pairs.map((_, i) => i)));
+    drawCount = 0;
+    counterEl.textContent = "Gezogene Aufgaben: 0";
+    resultCard.hidden = true;
+    currentCategoryIndex = null;
+    currentPairIndex = null;
+    liveRegion.textContent = "Zurückgesetzt.";
+  }
+
+  spinBtn.addEventListener("click", spin);
+  spinAgainBtn.addEventListener("click", spin);
+  resetBtn.addEventListener("click", resetAll);
+  otherContentBtn.addEventListener("click", otherContentFromSameCategory);
+  skipBtn.addEventListener("click", () => { resultCard.hidden = true; });
+  showAnswerBtn.addEventListener("click", () => {
+    resultAnswer.hidden = false;
+    liveRegion.textContent = `Lösung: ${resultContent.textContent} ${resultAnswer.textContent}`;
+  });
+
+  // ---- Start ----
+  const startScreen = document.getElementById("start-screen");
+  const wheelScreen = document.getElementById("wheel-screen");
+  const startBtn = document.getElementById("start-btn");
+
+  startBtn.addEventListener("click", () => {
+    startScreen.hidden = true;
+    wheelScreen.hidden = false;
+    spinBtn.focus();
+  });
+})();
+</script>
+</body>
+</html>
