@@ -15,6 +15,10 @@
     --focus: #1a56db;
     --border: #d9d4cc;
     --radius: 18px;
+    --good: #2f8f57;
+    --good-bg: #e1f2e7;
+    --bad: #c0453a;
+    --bad-bg: #fbe6e3;
   }
 
   * { box-sizing: border-box; }
@@ -34,9 +38,24 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 24px 16px 48px;
+    padding: 16px;
   }
 
+  [hidden] { display: none !important; }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  button:focus-visible, input:focus-visible {
+    outline: 4px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  /* ---------- Startbildschirm ---------- */
   .screen {
     width: 100%;
     max-width: 900px;
@@ -46,52 +65,48 @@
     text-align: center;
   }
 
-  [hidden] { display: none !important; }
-
-  h1 {
-    font-size: clamp(2rem, 4vw, 3rem);
-    margin: 0.2em 0 0.1em;
-  }
-
-  .subtitle {
-    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
-    color: var(--text-soft);
-    margin: 0 0 0.5em;
-  }
-
+  h1 { font-size: clamp(2rem, 4vw, 3rem); margin: 0.2em 0 0.1em; }
+  .subtitle { font-size: clamp(1.1rem, 2.2vw, 1.4rem); color: var(--text-soft); margin: 0 0 0.5em; }
   .explanation {
     font-size: clamp(1rem, 1.8vw, 1.2rem);
     color: var(--text-soft);
     max-width: 620px;
-    margin: 0 0 2em;
+    margin: 0 0 1.6em;
     line-height: 1.5;
   }
 
-  button {
-    font-family: inherit;
-    cursor: pointer;
-    border: none;
-    border-radius: 999px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-  }
+  fieldset { border: none; padding: 0; margin: 0 0 1.6em; }
+  legend { font-weight: 700; font-size: 1.02rem; margin-bottom: 0.5em; padding: 0; }
 
-  button:focus-visible {
-    outline: 4px solid var(--focus);
-    outline-offset: 3px;
+  .segmented { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .segmented label { position: relative; }
+  .segmented input {
+    position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer;
+  }
+  .segmented span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px; border: 2px solid var(--border); border-radius: 10px;
+    font-weight: 600; font-size: 0.98rem; color: var(--text-soft); background: #fff;
+  }
+  .segmented input:checked + span { border-color: var(--accent); background: #eef4f1; color: var(--accent-dark); }
+  .segmented input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .highscore-note {
+    font-size: 0.92rem;
+    color: var(--text-soft);
+    margin: -0.8em 0 1.6em;
   }
 
   .btn-primary {
     background: var(--accent);
     color: #fff;
-    font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+    font-size: clamp(1rem, 2vw, 1.4rem);
     font-weight: 600;
-    padding: 0.9em 2.2em;
+    padding: 0.8em 2em;
     box-shadow: 0 6px 0 var(--accent-dark);
   }
-
   .btn-primary:hover { transform: translateY(-2px); }
   .btn-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-dark); }
-
   .btn-primary:disabled {
     background: #a9b8b3;
     box-shadow: 0 6px 0 #8a978f;
@@ -103,41 +118,109 @@
     background: #fff;
     color: var(--accent-dark);
     border: 2px solid var(--accent);
-    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    font-size: clamp(0.75rem, 1.4vw, 1rem);
     font-weight: 600;
-    padding: 0.7em 1.6em;
+    padding: 0.55em 1.2em;
   }
-
   .btn-secondary:hover { background: #eef4f1; }
 
   .link-button {
     background: none;
     color: var(--text-soft);
-    font-size: 1rem;
+    font-size: clamp(0.7rem, 1.2vw, 0.9rem);
     text-decoration: underline;
-    padding: 0.5em 1em;
+    padding: 0.4em 0.8em;
   }
-
   .link-button:hover { color: var(--text); }
 
-  /* Wheel area */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* ---------- Spielbildschirm: feste 16:9-Bühne, Rad links / Aufgabe rechts ---------- */
+  .stage-outer { width: 100%; display: flex; justify-content: center; }
+
+  .stage {
+    position: relative;
+    width: min(96vw, 1400px);
+    aspect-ratio: 16 / 9;
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 10px 34px rgba(0,0,0,0.14);
+    display: flex;
+    flex-direction: column;
+    padding: 1.6% 2%;
+    gap: 1%;
+    overflow: hidden;
+  }
+
+  .top-row {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 2vw, 28px);
+    min-height: 1.6em;
+  }
+  .counter { font-size: clamp(0.75rem, 1.4vw, 1rem); color: var(--text-soft); margin: 0; }
+
+  .sprint-stats {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 2vw, 24px);
+    font-weight: 700;
+  }
+  .sprint-timer {
+    font-size: clamp(1.1rem, 2.6vw, 1.6rem);
+    padding: 0.15em 0.6em;
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--accent-dark);
+    min-width: 2.4em;
+    text-align: center;
+  }
+  .sprint-timer.low { background: var(--bad-bg); color: var(--bad); }
+  .sprint-stat { font-size: clamp(0.8rem, 1.5vw, 1.05rem); color: var(--text-soft); }
+  .sprint-stat strong { color: var(--text); }
+
+  .main-row {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: stretch;
+    gap: clamp(10px, 2vw, 28px);
+    min-height: 0;
+  }
+
+  /* Rad-Spalte (links) */
+  .wheel-col {
+    flex: 0 0 44%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(6px, 1.2vh, 14px);
+    min-width: 0;
+    min-height: 0;
+  }
+
   .wheel-wrap {
     position: relative;
-    width: min(70vw, 480px);
-    height: min(70vw, 480px);
-    margin: 1.5rem auto 2rem;
+    width: min(100%, 62vh);
+    aspect-ratio: 1 / 1;
+    flex: 0 1 auto;
   }
 
   .pointer {
     position: absolute;
-    top: -6px;
+    top: -4%;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 22px solid transparent;
-    border-right: 22px solid transparent;
-    border-top: 38px solid var(--accent-dark);
+    border-left: clamp(12px, 2.2vh, 22px) solid transparent;
+    border-right: clamp(12px, 2.2vh, 22px) solid transparent;
+    border-top: clamp(20px, 3.6vh, 38px) solid var(--accent-dark);
     z-index: 5;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
   }
@@ -147,22 +230,18 @@
     height: 100%;
     border-radius: 50%;
     position: relative;
-    border: 8px solid #fff;
+    border: clamp(4px, 0.8vh, 8px) solid #fff;
     box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 0 0 4px var(--border);
     will-change: transform;
   }
 
   .wheel-segment-label {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+    top: 0; left: 0; width: 100%; height: 100%;
+    font-size: clamp(1rem, 3.4vh, 1.8rem);
     line-height: 1;
     pointer-events: none;
   }
-
   .wheel-segment-label span {
     position: absolute;
     display: block;
@@ -172,108 +251,138 @@
 
   .wheel-hub {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    width: 22%;
-    height: 22%;
+    width: 22%; height: 22%;
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     z-index: 4;
   }
 
-  .counter {
-    font-size: 1.05rem;
-    color: var(--text-soft);
-    margin: 0.5em 0 1.2em;
-  }
-
-  .controls-row {
+  /* Aufgaben-Spalte (rechts) */
+  .result-col {
+    flex: 1 1 56%;
     display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    margin-top: 0.5rem;
+    justify-content: center;
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 2% 3%;
+    min-width: 0;
+    min-height: 0;
+    text-align: center;
+    border-top: clamp(6px, 1vh, 10px) solid var(--card-accent, var(--accent));
+    transition: background 0.2s ease;
+  }
+  .result-col.flash-good { background: var(--good-bg); }
+  .result-col.flash-bad { background: var(--bad-bg); }
+
+  .placeholder-text {
+    font-size: clamp(1rem, 2.2vw, 1.4rem);
+    color: var(--text-soft);
+    max-width: 30ch;
   }
 
-  /* Result card */
-  .result-card {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    padding: clamp(1.5rem, 4vw, 3rem);
-    max-width: 560px;
-    width: 100%;
-    margin: 1rem auto;
-    border-top: 10px solid var(--card-accent, var(--accent));
-  }
-
-  .result-emoji {
-    font-size: 3rem;
-    line-height: 1;
-  }
-
+  .result-emoji { font-size: clamp(1.6rem, 4vh, 2.6rem); line-height: 1; }
   .result-category {
-    font-size: 1.1rem;
+    font-size: clamp(0.75rem, 1.4vw, 1rem);
     font-weight: 600;
     color: var(--text-soft);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin: 0.4em 0 0.2em;
+    margin: 0.3em 0 0.1em;
   }
-
-  .result-heading {
-    font-size: 1.3rem;
-    margin: 0.6em 0 0.3em;
-    color: var(--text);
-  }
-
   .result-content {
-    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-size: clamp(1.8rem, 6vh, 3.4rem);
     font-weight: 700;
-    margin: 0.3em 0 0.4em;
+    margin: 0.15em 0 0.25em;
   }
-
   .hint {
-    font-size: 0.95rem;
+    font-size: clamp(0.75rem, 1.3vw, 0.95rem);
     color: var(--text-soft);
     font-style: italic;
-    margin: 0.2em 0 1em;
+    margin: 0.1em 0 0.6em;
   }
-
   .answer {
-    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-size: clamp(1.2rem, 3.2vh, 1.9rem);
     font-weight: 700;
     color: var(--accent-dark);
-    margin: 0.4em 0 1em;
+    margin: 0.2em 0 0.6em;
   }
-
   .result-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.8rem;
+    gap: 0.6em;
     justify-content: center;
-    margin-top: 1.4em;
+    margin-top: 0.6em;
   }
 
-  .visually-hidden {
+  .sprint-answer-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    margin: 0.4em 0 0.3em;
+  }
+  .sprint-answer-row input {
+    width: 6em;
+    font-size: clamp(1.3rem, 3.6vh, 1.8rem);
+    font-weight: 700;
+    text-align: center;
+    padding: 0.2em 0.3em;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+  }
+  .sprint-feedback {
+    font-size: clamp(0.85rem, 1.6vw, 1.05rem);
+    font-weight: 700;
+    min-height: 1.4em;
+    margin: 0.2em 0 0;
+  }
+  .sprint-feedback.good { color: var(--good); }
+  .sprint-feedback.bad { color: var(--bad); }
+
+  .summary-heading { font-size: clamp(1.1rem, 2.6vh, 1.5rem); font-weight: 800; margin: 0 0 0.3em; }
+  .summary-score { font-size: clamp(1.8rem, 5vh, 2.6rem); font-weight: 800; color: var(--accent-dark); margin: 0.1em 0; }
+  .summary-detail { font-size: clamp(0.8rem, 1.5vw, 1rem); color: var(--text-soft); margin: 0 0 0.6em; }
+  .summary-record { font-size: clamp(0.85rem, 1.6vw, 1.05rem); font-weight: 700; margin: 0.2em 0 0.8em; }
+  .summary-record.new { color: var(--good); }
+
+  .bottom-row {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+  }
+
+  #live-region { position: absolute; width: 1px; height: 1px; overflow: hidden; }
+
+  .countdown-overlay {
     position: absolute;
-    width: 1px; height: 1px;
-    padding: 0; margin: -1px;
-    overflow: hidden;
-    clip: rect(0,0,0,0);
-    white-space: nowrap;
-    border: 0;
+    inset: 0;
+    background: rgba(255,255,255,0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(3rem, 14vh, 7rem);
+    font-weight: 800;
+    color: var(--accent-dark);
+    z-index: 10;
+    border-radius: 20px;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .wheel { transition: transform 0.3s linear !important; }
   }
 
-  @media (max-width: 480px) {
-    .wheel-wrap { width: 82vw; height: 82vw; }
+  @media (max-width: 700px) {
+    .stage { aspect-ratio: auto; min-height: 94vh; padding: 3% 4%; }
+    .main-row { flex-direction: column; }
+    .wheel-col { flex: 0 0 auto; }
+    .wheel-wrap { width: min(60vw, 260px); }
+    .result-col { flex: 1 1 auto; }
   }
 </style>
 </head>
@@ -285,50 +394,106 @@
     <p class="subtitle">Kleines und großes 1×1 – kunterbunt gemischt</p>
     <p class="explanation">
       Dreht das Rad, landet auf einer Reihe und rechnet die Aufgabe im Kopf.
-      Erst überlegen, dann die Lösung aufdecken.
+      Im freien Modus erst überlegen, dann die Lösung aufdecken. Im Sprint zählt jede
+      richtige Antwort gegen die Uhr.
     </p>
+
+    <fieldset>
+      <legend>Modus</legend>
+      <div class="segmented" id="mode-group">
+        <label><input type="radio" name="mode" value="free" checked><span>Frei üben</span></label>
+        <label><input type="radio" name="mode" value="sprint"><span>60-Sekunden-Sprint</span></label>
+      </div>
+    </fieldset>
+    <p class="highscore-note" id="highscore-note" hidden></p>
+
     <button type="button" class="btn-primary" id="start-btn">Rad starten</button>
   </main>
 
-  <!-- Radbildschirm -->
-  <main class="screen" id="wheel-screen" hidden>
+  <!-- Spielbildschirm: 16:9-Bühne -->
+  <div class="stage-outer" id="wheel-screen" hidden>
     <h1 class="visually-hidden">Einmaleins-Rad</h1>
-    <div class="wheel-wrap">
-      <div class="pointer" aria-hidden="true"></div>
-      <div class="wheel" id="wheel"></div>
-      <div class="wheel-hub" aria-hidden="true"></div>
-    </div>
+    <div class="stage">
 
-    <p class="counter" id="counter">Gezogene Aufgaben: 0</p>
-
-    <div class="controls-row">
-      <button type="button" class="btn-primary" id="spin-btn">Drehen</button>
-      <button type="button" class="btn-secondary" id="reset-btn">Neu starten</button>
-    </div>
-
-    <div id="live-region" class="visually-hidden" role="status" aria-live="polite"></div>
-
-    <!-- Ergebniskarte -->
-    <section class="result-card" id="result-card" hidden aria-labelledby="result-heading">
-      <div class="result-emoji" id="result-emoji" aria-hidden="true"></div>
-      <p class="result-category" id="result-category"></p>
-      <h2 class="result-heading" id="result-heading">Deine Aufgabe</h2>
-      <p class="result-content" id="result-content"></p>
-      <p class="hint" id="hint-text">Erst rechnen, dann prüfen</p>
-      <button type="button" class="btn-secondary" id="show-answer-btn">Lösung zeigen</button>
-      <p class="answer" id="result-answer" hidden></p>
-
-      <div class="result-actions">
-        <button type="button" class="btn-primary" id="spin-again-btn">Noch einmal drehen</button>
-        <button type="button" class="btn-secondary" id="other-content-btn">Andere Aufgabe aus dieser Reihe</button>
+      <div class="top-row">
+        <p class="counter" id="counter" hidden>Gezogene Aufgaben: 0</p>
+        <div class="sprint-stats" id="sprint-stats" hidden>
+          <span class="sprint-timer" id="sprint-timer">60</span>
+          <span class="sprint-stat">✅ Richtig: <strong id="sprint-correct">0</strong></span>
+          <span class="sprint-stat">Aufgaben: <strong id="sprint-total">0</strong></span>
+        </div>
       </div>
-      <button type="button" class="link-button" id="skip-btn">Überspringen</button>
-    </section>
-  </main>
+
+      <div class="main-row">
+        <div class="wheel-col">
+          <div class="wheel-wrap">
+            <div class="pointer" aria-hidden="true"></div>
+            <div class="wheel" id="wheel"></div>
+            <div class="wheel-hub" aria-hidden="true"></div>
+          </div>
+          <button type="button" class="btn-primary" id="spin-btn">Drehen</button>
+        </div>
+
+        <div class="result-col" id="result-col">
+          <p class="placeholder-text" id="placeholder-text">Drehe das Rad – deine Aufgabe erscheint hier.</p>
+
+          <div id="result-content-wrap" hidden>
+            <div class="result-emoji" id="result-emoji" aria-hidden="true"></div>
+            <p class="result-category" id="result-category"></p>
+            <p class="result-content" id="result-content"></p>
+
+            <!-- Freier Modus -->
+            <div id="free-controls" hidden>
+              <p class="hint" id="hint-text">Erst rechnen, dann prüfen</p>
+              <button type="button" class="btn-secondary" id="show-answer-btn">Lösung zeigen</button>
+              <p class="answer" id="result-answer" hidden></p>
+              <div class="result-actions">
+                <button type="button" class="btn-secondary" id="other-content-btn">Andere Aufgabe aus dieser Reihe</button>
+                <button type="button" class="link-button" id="skip-btn">Überspringen</button>
+              </div>
+            </div>
+
+            <!-- Sprint-Modus -->
+            <div id="sprint-controls" hidden>
+              <div class="sprint-answer-row">
+                <label for="sprint-answer-input" class="visually-hidden">Antwort</label>
+                <input type="number" id="sprint-answer-input" inputmode="numeric" autocomplete="off">
+                <button type="button" class="btn-primary" id="sprint-check-btn">Prüfen</button>
+              </div>
+              <p class="sprint-feedback" id="sprint-feedback"></p>
+            </div>
+          </div>
+
+          <!-- Sprint-Zusammenfassung -->
+          <div id="sprint-summary" hidden>
+            <p class="summary-heading">Zeit abgelaufen!</p>
+            <p class="summary-score" id="summary-score">0 richtig</p>
+            <p class="summary-detail" id="summary-detail"></p>
+            <p class="summary-record" id="summary-record"></p>
+            <div class="result-actions">
+              <button type="button" class="btn-primary" id="sprint-again-btn">Nochmal sprinten</button>
+              <button type="button" class="btn-secondary" id="back-to-menu-btn">Zurück zum Menü</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-row">
+        <button type="button" class="btn-secondary" id="reset-btn">Neu starten</button>
+      </div>
+
+      <div id="live-region" class="visually-hidden" role="status" aria-live="polite"></div>
+      <div class="countdown-overlay" id="countdown-overlay" hidden></div>
+    </div>
+  </div>
 
 <script>
 (function () {
   "use strict";
+
+  const HIGHSCORE_KEY = "einmaleinsRadSprintHighscore";
+  const SPRINT_SECONDS = 60;
+  const SPRINT_SPIN_DURATION = 0.7; // Sekunden – schnelle Drehung im Sprint
 
   // ---- Inhalte: Kategorien = 1x1-Reihen, Inhalte = Aufgaben (kleines + großes 1x1 gemischt) ----
   const categories = [
@@ -346,7 +511,6 @@
   const segmentCount = categories.length;
   const segmentAngle = 360 / segmentCount;
 
-  // Un-benutzte Aufgaben je Kategorie (Index in pairs)
   let remaining = categories.map(c => shuffle(c.pairs.map((_, i) => i)));
 
   let currentRotation = 0;
@@ -354,6 +518,14 @@
   let drawCount = 0;
   let currentCategoryIndex = null;
   let currentPairIndex = null;
+
+  let mode = "free"; // "free" | "sprint"
+  let sprintActive = false;
+  let sprintLocked = false;
+  let sprintTimeLeft = SPRINT_SECONDS;
+  let sprintTimerId = null;
+  let sprintCorrect = 0;
+  let sprintTotal = 0;
 
   function shuffle(arr) {
     const a = arr.slice();
@@ -364,7 +536,14 @@
     return a;
   }
 
-  // ---- Rad aufbauen ----
+  function getHighscore() {
+    const v = parseInt(localStorage.getItem(HIGHSCORE_KEY), 10);
+    return Number.isInteger(v) ? v : 0;
+  }
+  function setHighscore(v) {
+    try { localStorage.setItem(HIGHSCORE_KEY, String(v)); } catch (e) { /* ignore */ }
+  }
+
   const wheelEl = document.getElementById("wheel");
 
   function buildWheel() {
@@ -393,9 +572,7 @@
 
   buildWheel();
 
-  // ---- Auswahl-Logik ----
   function pickCategoryIndex() {
-    // bevorzugt eine Kategorie, die noch unbenutzte Aufgaben hat
     const withRemaining = categories.map((_, i) => i).filter(i => remaining[i].length > 0);
     const pool = withRemaining.length > 0 ? withRemaining : categories.map((_, i) => i);
     return pool[Math.floor(Math.random() * pool.length)];
@@ -408,15 +585,15 @@
     return remaining[categoryIndex].pop();
   }
 
-  // ---- Drehen ----
   const spinBtn = document.getElementById("spin-btn");
-  const spinAgainBtn = document.getElementById("spin-again-btn");
   const resetBtn = document.getElementById("reset-btn");
   const otherContentBtn = document.getElementById("other-content-btn");
   const skipBtn = document.getElementById("skip-btn");
   const showAnswerBtn = document.getElementById("show-answer-btn");
 
-  const resultCard = document.getElementById("result-card");
+  const placeholderText = document.getElementById("placeholder-text");
+  const resultContentWrap = document.getElementById("result-content-wrap");
+  const resultCol = document.getElementById("result-col");
   const resultEmoji = document.getElementById("result-emoji");
   const resultCategory = document.getElementById("result-category");
   const resultContent = document.getElementById("result-content");
@@ -425,33 +602,45 @@
   const counterEl = document.getElementById("counter");
   const liveRegion = document.getElementById("live-region");
 
-  function normalize(angle) {
-    return ((angle % 360) + 360) % 360;
-  }
+  const freeControls = document.getElementById("free-controls");
+  const sprintControls = document.getElementById("sprint-controls");
+  const sprintStats = document.getElementById("sprint-stats");
+  const sprintTimerEl = document.getElementById("sprint-timer");
+  const sprintCorrectEl = document.getElementById("sprint-correct");
+  const sprintTotalEl = document.getElementById("sprint-total");
+  const sprintAnswerInput = document.getElementById("sprint-answer-input");
+  const sprintCheckBtn = document.getElementById("sprint-check-btn");
+  const sprintFeedback = document.getElementById("sprint-feedback");
+  const sprintSummary = document.getElementById("sprint-summary");
+  const summaryScore = document.getElementById("summary-score");
+  const summaryDetail = document.getElementById("summary-detail");
+  const summaryRecord = document.getElementById("summary-record");
+  const sprintAgainBtn = document.getElementById("sprint-again-btn");
+  const backToMenuBtn = document.getElementById("back-to-menu-btn");
+  const countdownOverlay = document.getElementById("countdown-overlay");
+  const highscoreNote = document.getElementById("highscore-note");
+
+  function normalize(angle) { return ((angle % 360) + 360) % 360; }
 
   function spin() {
     if (spinning) return;
     spinning = true;
     spinBtn.disabled = true;
-    spinAgainBtn.disabled = true;
-    resultCard.hidden = true;
 
     const targetCategoryIndex = pickCategoryIndex();
     const centerAngle = targetCategoryIndex * segmentAngle + segmentAngle / 2;
 
-    // Pointer zeigt bei 0 Grad (oben) auf das Segment. Wir drehen so, dass
-    // das Zentrum des Zielsegments exakt unter dem Pointer landet.
     const desiredFinalMod = normalize(-centerAngle);
     const currentMod = normalize(currentRotation);
     let diff = normalize(desiredFinalMod - currentMod);
-    const extraSpins = 5 + Math.floor(Math.random() * 3); // 5–7 volle Umdrehungen
+    const extraSpins = mode === "sprint" ? 1 : 5 + Math.floor(Math.random() * 3);
 
     const newRotation = currentRotation + diff + extraSpins * 360;
 
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    wheelEl.style.transition = prefersReduced
-      ? "transform 0.3s linear"
-      : "transform 4.6s cubic-bezier(0.15, 0.65, 0.15, 1)";
+    const duration = prefersReduced ? 0.3 : (mode === "sprint" ? SPRINT_SPIN_DURATION : 4.6);
+    const easing = mode === "sprint" ? "ease-out" : "cubic-bezier(0.15, 0.65, 0.15, 1)";
+    wheelEl.style.transition = `transform ${duration}s ${prefersReduced ? "linear" : easing}`;
     wheelEl.style.transform = `rotate(${newRotation}deg)`;
     currentRotation = newRotation;
 
@@ -459,7 +648,6 @@
       wheelEl.removeEventListener("transitionend", onEnd);
       spinning = false;
       spinBtn.disabled = false;
-      spinAgainBtn.disabled = false;
       showResultForCategory(targetCategoryIndex);
     };
     wheelEl.addEventListener("transitionend", onEnd);
@@ -478,14 +666,31 @@
     const cat = categories[currentCategoryIndex];
     const [a, b] = cat.pairs[currentPairIndex];
 
-    resultCard.style.setProperty("--card-accent", cat.color);
+    resultCol.style.setProperty("--card-accent", cat.color);
+    resultCol.classList.remove("flash-good", "flash-bad");
     resultEmoji.textContent = cat.emoji;
     resultCategory.textContent = cat.name;
     resultContent.textContent = `${a} × ${b}`;
     resultAnswer.textContent = `= ${a * b}`;
     resultAnswer.hidden = true;
     hintText.hidden = false;
-    resultCard.hidden = false;
+    placeholderText.hidden = true;
+    resultContentWrap.hidden = false;
+
+    if (mode === "sprint") {
+      freeControls.hidden = true;
+      sprintControls.hidden = false;
+      sprintFeedback.textContent = "";
+      sprintFeedback.className = "sprint-feedback";
+      sprintAnswerInput.value = "";
+      sprintAnswerInput.disabled = false;
+      sprintCheckBtn.disabled = false;
+      sprintLocked = false;
+      sprintAnswerInput.focus();
+    } else {
+      freeControls.hidden = false;
+      sprintControls.hidden = true;
+    }
 
     liveRegion.textContent = `${cat.name}: Aufgabe ${a} mal ${b}.`;
   }
@@ -497,37 +702,188 @@
     renderResult();
   }
 
+  // ---------- Sprint-Modus ----------
+  function startCountdownThenSprint() {
+    resultContentWrap.hidden = true;
+    placeholderText.hidden = true;
+    sprintSummary.hidden = true;
+    let n = 3;
+    countdownOverlay.hidden = false;
+    countdownOverlay.textContent = n;
+    const step = () => {
+      n--;
+      if (n > 0) {
+        countdownOverlay.textContent = n;
+        window.setTimeout(step, 600);
+      } else {
+        countdownOverlay.textContent = "Los!";
+        window.setTimeout(() => {
+          countdownOverlay.hidden = true;
+          beginSprint();
+        }, 500);
+      }
+    };
+    window.setTimeout(step, 600);
+  }
+
+  function beginSprint() {
+    sprintActive = true;
+    sprintCorrect = 0;
+    sprintTotal = 0;
+    sprintTimeLeft = SPRINT_SECONDS;
+    updateSprintStats();
+    sprintTimerEl.classList.remove("low");
+    clearInterval(sprintTimerId);
+    sprintTimerId = window.setInterval(tickSprintTimer, 1000);
+    spin();
+  }
+
+  function tickSprintTimer() {
+    sprintTimeLeft--;
+    if (sprintTimeLeft <= 10) sprintTimerEl.classList.add("low");
+    if (sprintTimeLeft <= 0) {
+      sprintTimeLeft = 0;
+      updateSprintStats();
+      endSprint();
+      return;
+    }
+    updateSprintStats();
+  }
+
+  function updateSprintStats() {
+    sprintTimerEl.textContent = sprintTimeLeft + "s";
+    sprintCorrectEl.textContent = sprintCorrect;
+    sprintTotalEl.textContent = sprintTotal;
+  }
+
+  function checkSprintAnswer() {
+    if (!sprintActive || sprintLocked) return;
+    const raw = sprintAnswerInput.value;
+    if (raw === "") return;
+    sprintLocked = true;
+    sprintAnswerInput.disabled = true;
+    sprintCheckBtn.disabled = true;
+
+    const cat = categories[currentCategoryIndex];
+    const [a, b] = cat.pairs[currentPairIndex];
+    const correctValue = a * b;
+    const given = parseInt(raw, 10);
+    sprintTotal++;
+
+    if (given === correctValue) {
+      sprintCorrect++;
+      resultCol.classList.add("flash-good");
+      sprintFeedback.textContent = "Richtig!";
+      sprintFeedback.className = "sprint-feedback good";
+    } else {
+      resultCol.classList.add("flash-bad");
+      sprintFeedback.textContent = `Leider nicht – richtig wäre ${correctValue}.`;
+      sprintFeedback.className = "sprint-feedback bad";
+    }
+    updateSprintStats();
+
+    window.setTimeout(() => {
+      resultCol.classList.remove("flash-good", "flash-bad");
+      if (sprintActive) spin();
+    }, 550);
+  }
+
+  function endSprint() {
+    sprintActive = false;
+    clearInterval(sprintTimerId);
+    resultContentWrap.hidden = true;
+    sprintSummary.hidden = false;
+
+    summaryScore.textContent = `${sprintCorrect} richtig`;
+    summaryDetail.textContent = `von ${sprintTotal} Aufgaben in ${SPRINT_SECONDS} Sekunden`;
+
+    const best = getHighscore();
+    if (sprintCorrect > best) {
+      setHighscore(sprintCorrect);
+      summaryRecord.textContent = "🎉 Neuer Highscore!";
+      summaryRecord.className = "summary-record new";
+    } else {
+      summaryRecord.textContent = `Bisheriger Rekord: ${best} richtig`;
+      summaryRecord.className = "summary-record";
+    }
+    liveRegion.textContent = `Sprint beendet. ${sprintCorrect} von ${sprintTotal} richtig.`;
+  }
+
   function resetAll() {
-    const confirmed = window.confirm("Zähler und Fortschritt wirklich zurücksetzen?");
+    const confirmed = window.confirm("Zurück zum Menü? Spielstand und Zähler werden zurückgesetzt.");
     if (!confirmed) return;
+    clearInterval(sprintTimerId);
+    sprintActive = false;
+    sprintLocked = false;
     remaining = categories.map(c => shuffle(c.pairs.map((_, i) => i)));
     drawCount = 0;
     counterEl.textContent = "Gezogene Aufgaben: 0";
-    resultCard.hidden = true;
     currentCategoryIndex = null;
     currentPairIndex = null;
+    wheelScreen.hidden = true;
+    startScreen.hidden = false;
+    updateHighscoreNote();
     liveRegion.textContent = "Zurückgesetzt.";
   }
 
   spinBtn.addEventListener("click", spin);
-  spinAgainBtn.addEventListener("click", spin);
   resetBtn.addEventListener("click", resetAll);
   otherContentBtn.addEventListener("click", otherContentFromSameCategory);
-  skipBtn.addEventListener("click", () => { resultCard.hidden = true; });
+  skipBtn.addEventListener("click", () => {
+    placeholderText.hidden = false;
+    resultContentWrap.hidden = true;
+  });
   showAnswerBtn.addEventListener("click", () => {
     resultAnswer.hidden = false;
     liveRegion.textContent = `Lösung: ${resultContent.textContent} ${resultAnswer.textContent}`;
   });
 
-  // ---- Start ----
+  sprintCheckBtn.addEventListener("click", checkSprintAnswer);
+  sprintAnswerInput.addEventListener("keydown", (e) => { if (e.key === "Enter") checkSprintAnswer(); });
+  sprintAgainBtn.addEventListener("click", () => { startCountdownThenSprint(); });
+  backToMenuBtn.addEventListener("click", () => {
+    wheelScreen.hidden = true;
+    startScreen.hidden = false;
+    updateHighscoreNote();
+  });
+
   const startScreen = document.getElementById("start-screen");
   const wheelScreen = document.getElementById("wheel-screen");
   const startBtn = document.getElementById("start-btn");
 
+  function updateHighscoreNote() {
+    const modeVal = document.querySelector('input[name="mode"]:checked').value;
+    if (modeVal === "sprint") {
+      const best = getHighscore();
+      highscoreNote.hidden = false;
+      highscoreNote.textContent = best > 0
+        ? `Bisheriger Rekord auf diesem Gerät: ${best} richtige Aufgaben in 60 Sekunden.`
+        : "Noch kein Rekord auf diesem Gerät – sei die/der Erste!";
+    } else {
+      highscoreNote.hidden = true;
+    }
+  }
+  document.querySelectorAll('input[name="mode"]').forEach((r) => r.addEventListener("change", updateHighscoreNote));
+  updateHighscoreNote();
+
   startBtn.addEventListener("click", () => {
+    mode = document.querySelector('input[name="mode"]:checked').value;
     startScreen.hidden = true;
     wheelScreen.hidden = false;
-    spinBtn.focus();
+
+    placeholderText.hidden = false;
+    resultContentWrap.hidden = true;
+    sprintSummary.hidden = true;
+
+    if (mode === "sprint") {
+      counterEl.hidden = true;
+      sprintStats.hidden = false;
+      startCountdownThenSprint();
+    } else {
+      counterEl.hidden = false;
+      sprintStats.hidden = true;
+      spinBtn.focus();
+    }
   });
 })();
 </script>
