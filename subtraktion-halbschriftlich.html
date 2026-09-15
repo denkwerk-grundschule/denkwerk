@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rechenwege – Halbschriftliche Subtraktion</title>
+<style>
+  :root {
+    --paper: #eef3f7;
+    --grid-line: #dbe6ee;
+    --card: #ffffff;
+    --border: #c9d7e1;
+    --ink: #223342;
+    --ink-soft: #5c6c78;
+    --focus: #1a56db;
+
+    --c-schritt: #2f6fa8;
+    --c-schritt-bg: #dbe8f2;
+    --c-stellen: #7a4fa0;
+    --c-stellen-bg: #ece0f3;
+    --c-verein: #c9772a;
+    --c-verein-bg: #f7e6d2;
+
+    --good: #2f8f57;
+    --good-bg: #e1f2e7;
+    --bad: #c0453a;
+    --bad-bg: #fbe6e3;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 24px 24px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    line-height: 1.5;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 760px;
+    padding: 20px 16px 48px;
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-size: clamp(1.4rem, 4vw, 1.9rem);
+    margin: 0;
+    font-weight: 800;
+  }
+
+  .subtitle {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    margin: 4px 0 0;
+  }
+
+  .pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  #points-pill { color: #b8860b; }
+  #streak-pill { color: #2f8f57; }
+  #correct-pill { color: var(--focus); }
+
+  .icon-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .icon-btn:hover { background: #f4f8fb; }
+  .icon-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+
+  section.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 26px;
+    box-shadow: 0 3px 0 rgba(34, 51, 66, 0.05);
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+    margin: 0 0 10px;
+  }
+
+  fieldset {
+    border: none;
+    padding: 0;
+    margin: 0 0 20px;
+  }
+  legend {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    padding: 0;
+  }
+
+  .segmented {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .segmented label {
+    position: relative;
+  }
+  .segmented input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+  .segmented span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    background: #fff;
+  }
+  .segmented input:checked + span {
+    border-color: var(--seg-color, var(--focus));
+    background: var(--seg-bg, #eef3fb);
+    color: var(--seg-color, var(--focus));
+  }
+  .segmented input:focus-visible + span {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .toggle-row input { width: 18px; height: 18px; }
+  .toggle-row label { font-weight: 600; font-size: 0.92rem; }
+  .toggle-note {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: -12px 0 20px 30px;
+  }
+
+  details.legend-box {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #f7fafc;
+  }
+  details.legend-box summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+  details.legend-box .legend-item {
+    margin-top: 10px;
+    font-size: 0.92rem;
+  }
+  details.legend-box .legend-item b { color: var(--legend-color); }
+
+  .start-btn {
+    display: inline-block;
+    background: var(--focus);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 26px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .start-btn:hover { background: #1544ad; }
+  .start-btn:focus-visible { outline: 3px solid #0a2e73; outline-offset: 2px; }
+
+  .task-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .task-expr {
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+  .strategy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    background: var(--badge-bg);
+    color: var(--badge-color);
+  }
+  .strategy-tip {
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    margin: 0 0 16px;
+    font-style: italic;
+  }
+
+  .workspace { margin: 18px 0; }
+
+  .numberline-wrap {
+    overflow-x: auto;
+    padding: 6px 0 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .numberline-wrap svg { display: block; }
+
+  .schritt-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .schritt-controls input[type="number"] {
+    width: 90px;
+    padding: 9px 10px;
+    font-size: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+  }
+  .schritt-controls input:focus-visible { outline: 3px solid var(--focus); border-color: var(--focus); }
+  .remaining-note {
+    font-weight: 700;
+    color: var(--c-schritt);
+  }
+
+  .btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: #fff;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .btn:hover:not(:disabled) { background: #f4f8fb; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .btn-primary {
+    background: var(--focus);
+    border-color: var(--focus);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { background: #1544ad; }
+
+  .field-error {
+    color: var(--bad);
+    font-size: 0.85rem;
+    margin-top: 6px;
+    min-height: 1.2em;
+  }
+
+  table.stellen-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+  }
+  table.stellen-table th, table.stellen-table td {
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.02rem;
+  }
+  table.stellen-table th { font-size: 0.82rem; color: var(--ink-soft); font-weight: 700; }
+  table.stellen-table input {
+    width: 72px;
+    padding: 7px 6px;
+    font-size: 1rem;
+    text-align: center;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+  }
+  table.stellen-table input:focus-visible { outline: 3px solid var(--focus); border-color: var(--focus); }
+  table.stellen-table tr.sum-row td { font-weight: 800; padding-top: 12px; }
+  .row-flag { font-size: 0.85rem; margin-left: 6px; }
+  .row-flag.ok { color: var(--good); }
+  .row-flag.bad { color: var(--bad); }
+
+  .chain-grid {
+    display: inline-grid;
+    grid-template-columns: var(--num-w) min-content var(--num-w) min-content var(--num-w);
+    column-gap: 14px;
+    row-gap: 10px;
+    align-items: center;
+    font-family: "Courier New", Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    margin: 14px 0 6px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .chain-row { display: contents; }
+  .chain-divider { grid-column: 1 / -1; height: 1px; background: var(--border); margin: 2px 0; }
+  .chain-num {
+    text-align: right;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--c-stellen);
+  }
+  .chain-task .chain-num, .chain-task .chain-op, .chain-task .chain-eq {
+    color: var(--ink);
+    font-size: 1.3rem;
+    font-weight: 800;
+  }
+  .digit-e { color: var(--focus); }
+  .digit-z { color: var(--bad); }
+  .digit-h { color: #b8860b; }
+  .chain-op, .chain-eq {
+    text-align: center;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .chain-num-input {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: right;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 6px 8px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    color: var(--c-stellen);
+  }
+  .chain-num-input:focus-visible { outline: 3px solid var(--focus); border-color: var(--focus); }
+  .chain-op-toggle { display: flex; gap: 4px; justify-content: center; }
+  .op-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: #fff;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .op-btn.active {
+    border-color: var(--c-stellen);
+    background: var(--c-stellen-bg);
+    color: var(--c-stellen);
+  }
+  .op-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .chain-buttons { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .verein-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+  }
+  .verein-task {
+    font-size: clamp(1.3rem, 4.5vw, 1.7rem);
+    font-weight: 800;
+  }
+  .verein-arrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--c-verein);
+    font-weight: 700;
+    margin: 4px 0;
+  }
+  .verein-arrow input {
+    width: 70px;
+    padding: 8px 8px;
+    font-size: 1rem;
+    text-align: center;
+    border: 2px solid var(--c-verein);
+    border-radius: 8px;
+    color: var(--c-verein);
+    font-weight: 700;
+  }
+  .verein-hint { color: var(--ink-soft); font-size: 0.88rem; margin-top: 4px; }
+  .verein-result-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  .verein-result-row input {
+    width: 90px;
+    padding: 9px 10px;
+    font-size: 1.05rem;
+    text-align: center;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .feedback {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.good { background: var(--good-bg); color: var(--good); }
+  .feedback.bad { background: var(--bad-bg); color: var(--bad); }
+
+  .round-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+    justify-content: space-between;
+  }
+  .round-footer .left-group, .round-footer .right-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .end-stats {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 16px 0 20px;
+  }
+  .end-stat {
+    background: #f7fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+  }
+  .end-stat .num { font-size: 1.6rem; font-weight: 800; display: block; }
+  .end-stat .lbl { font-size: 0.85rem; color: var(--ink-soft); }
+
+  [hidden] { display: none !important; }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 30, 40, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 20;
+  }
+  .modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px 26px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+  }
+  .modal p { margin: 0 0 18px; font-weight: 600; }
+  .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .feedback.show { animation: pop 0.25s ease; }
+  }
+  @keyframes pop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <h1>Rechenwege – Halbschriftliche Subtraktion</h1>
+      <p class="subtitle">Schrittweise, stellenweise oder vereinfacht rechnen</p>
+    </div>
+    <div class="pills" id="stat-pills" hidden>
+      <span class="pill" id="points-pill">0 Punkte</span>
+      <span class="pill" id="streak-pill">Serie: 0</span>
+      <span class="pill" id="correct-pill">0/0 richtig</span>
+    </div>
+    <button class="icon-btn" id="header-reset-btn" hidden>Neu starten</button>
+  </header>
+
+  <section class="card" id="start-screen">
+    <h2>Einstellungen</h2>
+
+    <details class="legend-box">
+      <summary>Was bedeuten die Rechenwege?</summary>
+      <div class="legend-item" style="--legend-color: var(--c-schritt);"><b>Schrittweise:</b> Auf dem Rechenstrich in mehreren Sprüngen abziehen, zum Beispiel erst bis zum nächsten Zehner, dann in Zehnerschritten weiter.</div>
+      <div class="legend-item" style="--legend-color: var(--c-stellen);"><b>Stellenweise:</b> Hunderter, Zehner und Einer getrennt voneinander abziehen und die Teilergebnisse am Ende zusammenzählen. Bei Zehnerübergang wird stattdessen in einer Rechenkette Schritt für Schritt gerechnet.</div>
+      <div class="legend-item" style="--legend-color: var(--c-verein);"><b>Vereinfachen:</b> Die zweite Zahl bis zum nächsten Zehner ergänzen und dieselbe Ergänzung auch bei der ersten Zahl dazuzählen – das Ergebnis bleibt gleich.</div>
+    </details>
+
+    <fieldset>
+      <legend>Zahlenraum</legend>
+      <div class="segmented" id="range-group">
+        <label style="--seg-color: var(--focus);"><input type="radio" name="range" value="20" checked><span>bis 20</span></label>
+        <label style="--seg-color: var(--focus);"><input type="radio" name="range" value="100"><span>bis 100</span></label>
+        <label style="--seg-color: var(--focus);"><input type="radio" name="range" value="1000"><span>bis 1000</span></label>
+      </div>
+    </fieldset>
+
+    <div class="toggle-row">
+      <input type="checkbox" id="uebergang-toggle" checked>
+      <label for="uebergang-toggle">Mit Zehnerübergang (schwerer)</label>
+    </div>
+    <p class="toggle-note" id="uebergang-note" hidden>Bei „Stellenweise" wird eine Aufgabe mit Zehnerübergang als Rechenkette in mehreren Schritten dargestellt, damit keine Zahl negativ wird.</p>
+
+    <fieldset>
+      <legend>Rechenweg</legend>
+      <div class="segmented" id="strategy-group">
+        <label style="--seg-color: var(--c-schritt); --seg-bg: var(--c-schritt-bg);"><input type="radio" name="strategy" value="schritt" checked><span>Schrittweise</span></label>
+        <label style="--seg-color: var(--c-stellen); --seg-bg: var(--c-stellen-bg);"><input type="radio" name="strategy" value="stellen"><span>Stellenweise</span></label>
+        <label style="--seg-color: var(--c-verein); --seg-bg: var(--c-verein-bg);"><input type="radio" name="strategy" value="verein"><span>Vereinfachen</span></label>
+        <label style="--seg-color: #444;"><input type="radio" name="strategy" value="gemischt"><span>Gemischt</span></label>
+      </div>
+    </fieldset>
+
+    <button class="start-btn" id="start-btn">Los geht's</button>
+  </section>
+
+  <section class="card" id="practice-screen" hidden>
+    <div class="task-banner">
+      <span class="task-expr" id="task-expr"></span>
+      <span class="strategy-badge" id="strategy-badge"></span>
+    </div>
+    <p class="strategy-tip" id="strategy-tip" hidden></p>
+
+    <div class="workspace" id="workspace"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="round-footer">
+      <div class="left-group">
+        <button class="btn" id="hint-btn">Tipp anzeigen</button>
+      </div>
+      <div class="right-group">
+        <button class="btn" id="end-btn">Beenden</button>
+        <button class="btn btn-primary" id="next-btn" hidden>Nächste Aufgabe</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="end-screen" hidden>
+    <h2>Runde beendet</h2>
+    <div class="end-stats">
+      <div class="end-stat"><span class="num" id="end-points">0</span><span class="lbl">Punkte</span></div>
+      <div class="end-stat"><span class="num" id="end-correct">0</span><span class="lbl">richtig gelöst</span></div>
+      <div class="end-stat"><span class="num" id="end-total">0</span><span class="lbl">Aufgaben gesamt</span></div>
+    </div>
+    <button class="start-btn" id="restart-btn">Neue Runde</button>
+  </section>
+
+</div>
+
+<div class="overlay" id="confirm-overlay" hidden>
+  <div class="modal">
+    <p id="confirm-text">Möchtest du wirklich neu starten? Dein Fortschritt geht verloren.</p>
+    <div class="modal-actions">
+      <button class="btn" id="confirm-cancel-btn">Abbrechen</button>
+      <button class="btn btn-primary" id="confirm-ok-btn">Neu starten</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Grund-Helfer ----------
+  function randInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function placesFor(range) {
+    return range === 1000 ? ["H", "Z", "E"] : ["Z", "E"];
+  }
+  function placeValue(p) { return p === "H" ? 100 : p === "Z" ? 10 : 1; }
+  function placeLabel(p) { return p === "H" ? "Hunderter" : p === "Z" ? "Zehner" : "Einer"; }
+  function digitAtPlace(n, p) { return Math.floor(n / placeValue(p)) % 10; }
+
+  function needsBorrow(a, b) {
+    const len = Math.max(String(a).length, String(b).length);
+    const da = String(a).padStart(len, "0").split("").map(Number);
+    const db = String(b).padStart(len, "0").split("").map(Number);
+    let borrow = 0, any = false;
+    for (let i = len - 1; i >= 0; i--) {
+      const top = da[i] - borrow;
+      if (top < db[i]) { any = true; borrow = 1; } else { borrow = 0; }
+    }
+    return any;
+  }
+
+  // ---------- Aufgaben-Generator ----------
+  function rawTask(range) {
+    if (range === 20) {
+      const a = randInt(11, 20);
+      const b = randInt(1, a - 1);
+      return { a, b };
+    }
+    if (range === 100) {
+      const a = randInt(21, 99);
+      const b = randInt(1, a - 1);
+      return { a, b };
+    }
+    const a = randInt(101, 999);
+    const b = randInt(1, a - 1);
+    return { a, b };
+  }
+
+  function generateTask(range, requireUebergang, forVerein) {
+    let best = null;
+    for (let i = 0; i < 300; i++) {
+      const t = rawTask(range);
+      const borrow = needsBorrow(t.a, t.b);
+      if (borrow !== requireUebergang) continue;
+      if (forVerein) {
+        if (t.b % 10 === 0) continue; // b ist schon ein Zehner – keine sinnvolle Ergänzungsaufgabe
+        if (!best) best = t;
+        if ((10 - (t.b % 10)) % 10 <= 5) return t; // bevorzugt kleine, handliche Ergänzungen
+        continue;
+      }
+      return t;
+    }
+    return best || rawTask(range);
+  }
+
+  // ---------- Rechenweg-Tipp ----------
+  function suggestSteps(a, b) {
+    let rem = b, cur = a;
+    const steps = [];
+    const bridge = cur % 10;
+    if (bridge > 0 && bridge < rem) { steps.push(bridge); rem -= bridge; cur -= bridge; }
+    while (rem >= 10) { steps.push(10); rem -= 10; }
+    if (rem > 0) steps.push(rem);
+    if (steps.length === 0) steps.push(b);
+    return steps;
+  }
+
+  // Zerlegt b in seine Stellenwert-Anteile (z. B. 36 -> [30, 6]) als Vorschlag für die Rechenkette.
+  function suggestPlaceSteps(b, places) {
+    return places.map(function (p) { return digitAtPlace(b, p) * placeValue(p); }).filter(function (v) { return v > 0; });
+  }
+
+  function strategyLabel(s) {
+    return s === "schritt" ? "Schrittweise" : s === "stellen" ? "Stellenweise" : "Vereinfachen";
+  }
+  function strategyTipText(s, a, b) {
+    if (s === "schritt") return "Springe in mehreren Schritten auf dem Rechenstrich zurück.";
+    if (s === "stellen") return needsBorrow(a, b)
+      ? "Diese Aufgabe hat einen Zehnerübergang – rechne in mehreren Schritten in der Rechenkette."
+      : "Diese Aufgabe hat keinen Zehnerübergang – die klassische Stellenwerttabelle passt gut.";
+    return "Ergänze zuerst die zweite Zahl bis zum nächsten Zehner.";
+  }
+
+  // ---------- App-Zustand ----------
+  const els = {
+    startScreen: document.getElementById("start-screen"),
+    practiceScreen: document.getElementById("practice-screen"),
+    endScreen: document.getElementById("end-screen"),
+    statPills: document.getElementById("stat-pills"),
+    pointsPill: document.getElementById("points-pill"),
+    streakPill: document.getElementById("streak-pill"),
+    correctPill: document.getElementById("correct-pill"),
+    headerResetBtn: document.getElementById("header-reset-btn"),
+    startBtn: document.getElementById("start-btn"),
+    taskExpr: document.getElementById("task-expr"),
+    strategyBadge: document.getElementById("strategy-badge"),
+    strategyTip: document.getElementById("strategy-tip"),
+    workspace: document.getElementById("workspace"),
+    feedback: document.getElementById("feedback"),
+    hintBtn: document.getElementById("hint-btn"),
+    endBtn: document.getElementById("end-btn"),
+    nextBtn: document.getElementById("next-btn"),
+    endPoints: document.getElementById("end-points"),
+    endCorrect: document.getElementById("end-correct"),
+    endTotal: document.getElementById("end-total"),
+    restartBtn: document.getElementById("restart-btn"),
+    confirmOverlay: document.getElementById("confirm-overlay"),
+    confirmOkBtn: document.getElementById("confirm-ok-btn"),
+    confirmCancelBtn: document.getElementById("confirm-cancel-btn")
+  };
+
+  const CORRECT_POINTS = 10;
+  const STREAK_BONUS_AT = 3;
+  const STREAK_BONUS_POINTS = 5;
+
+  let settings = { range: 20, uebergang: true, strategy: "schritt" };
+  let session = { points: 0, streak: 0, correct: 0, total: 0 };
+  let task = null;
+  let activeStrategy = null;
+  let roundLocked = false;
+  let strategyState = null;
+
+  function showConfirm(text, onConfirm) {
+    document.getElementById("confirm-text").textContent = text;
+    els.confirmOverlay.hidden = false;
+    els.confirmOkBtn.focus();
+    function cleanup() {
+      els.confirmOverlay.hidden = true;
+      els.confirmOkBtn.removeEventListener("click", onOk);
+      els.confirmCancelBtn.removeEventListener("click", onCancel);
+    }
+    function onOk() { cleanup(); onConfirm(); }
+    function onCancel() { cleanup(); }
+    els.confirmOkBtn.addEventListener("click", onOk);
+    els.confirmCancelBtn.addEventListener("click", onCancel);
+  }
+
+  function updatePills() {
+    els.pointsPill.textContent = session.points + " Punkte";
+    els.streakPill.textContent = "Serie: " + session.streak;
+    els.correctPill.textContent = session.correct + "/" + session.total + " richtig";
+  }
+
+  function pickRoundStrategy() {
+    if (settings.strategy !== "gemischt") return settings.strategy;
+    const opts = ["schritt", "stellen", "verein"];
+    return opts[randInt(0, 2)];
+  }
+
+  function newRound() {
+    activeStrategy = pickRoundStrategy();
+    task = generateTask(settings.range, settings.uebergang, activeStrategy === "verein");
+    roundLocked = false;
+    els.feedback.className = "feedback";
+    els.feedback.textContent = "";
+    els.nextBtn.hidden = true;
+    els.hintBtn.disabled = false;
+    els.hintBtn.hidden = false;
+
+    els.taskExpr.textContent = task.a + " − " + task.b + " = ?";
+    const badgeColors = {
+      schritt: ["var(--c-schritt-bg)", "var(--c-schritt)"],
+      stellen: ["var(--c-stellen-bg)", "var(--c-stellen)"],
+      verein: ["var(--c-verein-bg)", "var(--c-verein)"]
+    };
+    const [bg, col] = badgeColors[activeStrategy];
+    els.strategyBadge.style.setProperty("--badge-bg", bg);
+    els.strategyBadge.style.setProperty("--badge-color", col);
+    els.strategyBadge.textContent = strategyLabel(activeStrategy);
+
+    if (settings.strategy === "gemischt") {
+      els.strategyTip.hidden = false;
+      els.strategyTip.textContent = strategyTipText(activeStrategy, task.a, task.b);
+    } else {
+      els.strategyTip.hidden = true;
+    }
+
+    if (activeStrategy === "schritt") renderSchritt();
+    else if (activeStrategy === "stellen") renderStellen();
+    else renderVerein();
+  }
+
+  function markSuccess(message) {
+    if (roundLocked) return;
+    roundLocked = true;
+    session.correct++;
+    session.total++;
+    session.streak++;
+    let gained = CORRECT_POINTS;
+    if (session.streak > 0 && session.streak % STREAK_BONUS_AT === 0) gained += STREAK_BONUS_POINTS;
+    session.points += gained;
+    updatePills();
+    els.feedback.className = "feedback show good";
+    els.feedback.textContent = message + " (+" + gained + " Punkte)";
+    els.nextBtn.hidden = false;
+    els.hintBtn.disabled = true;
+    disableWorkspaceInputs();
+  }
+
+  function markWrong(message) {
+    session.total++;
+    session.streak = 0;
+    updatePills();
+    els.feedback.className = "feedback show bad";
+    els.feedback.textContent = message;
+  }
+
+  function disableWorkspaceInputs() {
+    els.workspace.querySelectorAll("input, button").forEach(function (el) { el.disabled = true; });
+  }
+
+  // ---------- Rechenstrich (schrittweise) ----------
+  function buildNumberLineSVG(points) {
+    const dx = 130, x0 = 50, y = 100, h = 150;
+    const w = x0 + dx * (points.length - 1) + 60;
+    let arcs = "", dots = "";
+    for (let i = 0; i < points.length; i++) {
+      const x = x0 + dx * i;
+      dots += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#2f6fa8"></circle>' +
+        '<text x="' + x + '" y="' + (y + 28) + '" text-anchor="middle" font-size="17" font-weight="700" fill="#223342">' + points[i] + "</text>";
+      if (i > 0) {
+        const xPrev = x0 + dx * (i - 1);
+        const step = points[i - 1] - points[i];
+        const midX = (xPrev + x) / 2;
+        arcs += '<path d="M ' + xPrev + ' ' + y + ' Q ' + midX + ' ' + (y - 55) + ' ' + x + ' ' + y + '" fill="none" stroke="#2f6fa8" stroke-width="2.5"></path>' +
+          '<text x="' + midX + '" y="' + (y - 60) + '" text-anchor="middle" font-size="15" font-weight="700" fill="#2f6fa8">−' + step + "</text>";
+      }
+    }
+    const line = '<line x1="' + (x0 - 30) + '" y1="' + y + '" x2="' + (w - 30) + '" y2="' + y + '" stroke="#c9d7e1" stroke-width="2"></line>';
+    return '<svg viewBox="0 0 ' + w + " " + h + '" width="' + w + '" height="' + h + '" role="img" aria-label="Rechenstrich">' + line + arcs + dots + "</svg>";
+  }
+
+  function renderSchritt() {
+    strategyState = { points: [task.a], remaining: task.b };
+    paintSchritt();
+  }
+
+  function paintSchritt() {
+    const st = strategyState;
+    const lastVal = st.points[st.points.length - 1];
+    let html = '<div class="numberline-wrap">' + buildNumberLineSVG(st.points) + "</div>";
+    if (st.remaining > 0) {
+      html += '<div class="schritt-controls">' +
+        '<span class="remaining-note">Noch abzuziehen: ' + st.remaining + "</span>" +
+        '<input type="number" id="step-input" min="1" max="' + st.remaining + '" placeholder="Sprung">' +
+        '<button class="btn btn-primary" id="step-add-btn">Sprung machen</button>' +
+        (st.points.length > 1 ? '<button class="btn" id="step-undo-btn">Rückgängig</button>' : "") +
+        "</div>" +
+        '<div class="field-error" id="step-error"></div>';
+    } else {
+      html += '<p style="font-weight:700; color: var(--good);">Du bist bei ' + lastVal + " angekommen: " + task.a + " − " + task.b + " = " + lastVal + "</p>";
+    }
+    els.workspace.innerHTML = html;
+
+    if (st.remaining > 0) {
+      const input = document.getElementById("step-input");
+      const addBtn = document.getElementById("step-add-btn");
+      const undoBtn = document.getElementById("step-undo-btn");
+      const errorEl = document.getElementById("step-error");
+      addBtn.addEventListener("click", function () {
+        const val = parseInt(input.value, 10);
+        if (!Number.isInteger(val) || val <= 0) { errorEl.textContent = "Bitte eine positive Zahl eingeben."; return; }
+        if (val > st.remaining) { errorEl.textContent = "Das ist mehr, als noch übrig ist (" + st.remaining + ")."; return; }
+        errorEl.textContent = "";
+        st.points.push(lastVal - val);
+        st.remaining -= val;
+        paintSchritt();
+        if (st.remaining === 0) markSuccess("Richtig!");
+      });
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") addBtn.click(); });
+      if (undoBtn) {
+        undoBtn.addEventListener("click", function () {
+          const removed = st.points.pop();
+          const newLast = st.points[st.points.length - 1];
+          st.remaining += (newLast - removed);
+          paintSchritt();
+        });
+      }
+    }
+  }
+
+  // ---------- Stellenweise ----------
+  function renderStellen() {
+    if (needsBorrow(task.a, task.b)) {
+      strategyState = { mode: "chain", chain: [], current: task.a };
+      paintStellenChain();
+    } else {
+      strategyState = { mode: "table", places: placesFor(settings.range) };
+      paintStellenTable();
+    }
+  }
+
+  function paintStellenTable() {
+    const places = strategyState.places;
+    let rows = "";
+    places.forEach(function (p) {
+      const aPart = digitAtPlace(task.a, p) * placeValue(p);
+      const bPart = digitAtPlace(task.b, p) * placeValue(p);
+      rows += "<tr><td>" + placeLabel(p) + "</td><td>" + aPart + "</td><td>−</td><td>" + bPart + "</td><td>=</td>" +
+        '<td><input type="number" data-place="' + p + '" data-target="' + (aPart - bPart) + '"></td>' +
+        '<td class="row-flag" id="flag-' + p + '"></td></tr>';
+    });
+    const html = '<table class="stellen-table"><thead><tr><th>Stelle</th><th>Zahl a</th><th></th><th>Zahl b</th><th></th><th>Teilergebnis</th><th></th></tr></thead><tbody>' +
+      rows +
+      '<tr class="sum-row"><td colspan="5">Summe der Teilergebnisse</td><td id="stellen-sum">0</td><td></td></tr></tbody></table>' +
+      '<button class="btn btn-primary" id="stellen-check-btn">Ergebnis prüfen</button>' +
+      '<div class="field-error" id="stellen-error"></div>';
+    els.workspace.innerHTML = html;
+
+    const inputs = els.workspace.querySelectorAll("input[data-place]");
+    const sumEl = document.getElementById("stellen-sum");
+    function recalcSum() {
+      let sum = 0, any = false;
+      inputs.forEach(function (inp) {
+        if (inp.value !== "") { sum += parseInt(inp.value, 10) || 0; any = true; }
+      });
+      sumEl.textContent = any ? sum : "0";
+    }
+    inputs.forEach(function (inp) { inp.addEventListener("input", recalcSum); });
+
+    document.getElementById("stellen-check-btn").addEventListener("click", function () {
+      let allFilled = true, allCorrect = true;
+      inputs.forEach(function (inp) {
+        const p = inp.dataset.place;
+        const target = parseInt(inp.dataset.target, 10);
+        const val = inp.value === "" ? NaN : parseInt(inp.value, 10);
+        const flag = document.getElementById("flag-" + p);
+        if (Number.isNaN(val)) { allFilled = false; flag.textContent = ""; return; }
+        if (val === target) { flag.textContent = "✓"; flag.className = "row-flag ok"; }
+        else { flag.textContent = "✗"; flag.className = "row-flag bad"; allCorrect = false; }
+      });
+      const errorEl = document.getElementById("stellen-error");
+      if (!allFilled) { errorEl.textContent = "Bitte fülle alle Felder aus."; return; }
+      errorEl.textContent = "";
+      if (allCorrect) markSuccess("Richtig! " + task.a + " − " + task.b + " = " + (task.a - task.b));
+      else markWrong("Noch nicht ganz – schau dir die rot markierte Stelle noch einmal an.");
+    });
+  }
+
+  // Bei Zehnerübergang: Rechenkette mit freier Schrittwahl, stellengerecht untereinander,
+  // jeder Schritt einzeln geprüft.
+  // Färbt jede Ziffer nach ihrem Stellenwert ein (Einer blau, Zehner rot, Hunderter gelb),
+  // die Farben wiederholen sich alle drei Stellen (Tausender wieder blau, usw.).
+  function colorizeDigits(value) {
+    if (value === "?") return "?";
+    const s = String(value);
+    let html = "";
+    for (let i = 0; i < s.length; i++) {
+      const fromRight = (s.length - 1 - i) % 3;
+      const cls = fromRight === 0 ? "digit-e" : fromRight === 1 ? "digit-z" : "digit-h";
+      html += '<span class="' + cls + '">' + s[i] + "</span>";
+    }
+    return html;
+  }
+
+  function chainRow(num1, op, num2, result, extraClass) {
+    return '<div class="chain-row ' + (extraClass || "") + '">' +
+      '<span class="chain-num">' + colorizeDigits(num1) + '</span>' +
+      '<span class="chain-op">' + op + '</span>' +
+      '<span class="chain-num">' + colorizeDigits(num2) + '</span>' +
+      '<span class="chain-eq">=</span>' +
+      '<span class="chain-num">' + colorizeDigits(result) + '</span>' +
+      "</div>";
+  }
+
+  function paintStellenChain() {
+    const st = strategyState;
+    const target = task.a - task.b;
+    const digits = settings.range === 1000 ? 3 : 2;
+    const numW = (digits + 2) + "ch";
+
+    const taskResult = st.current === target ? target : "?";
+    let grid = '<div class="chain-grid" style="--num-w:' + numW + '">' +
+      chainRow(task.a, "−", task.b, taskResult, "chain-task") +
+      '<div class="chain-divider"></div>';
+    st.chain.forEach(function (line) {
+      grid += chainRow(line.from, line.op, line.operand, line.result, "chain-step");
+    });
+    if (st.current !== target) {
+      grid += '<div class="chain-row chain-active">' +
+        '<span class="chain-num">' + st.current + "</span>" +
+        '<span class="chain-op-toggle" id="op-toggle">' +
+        '<button type="button" class="op-btn active" data-op="−">−</button>' +
+        '<button type="button" class="op-btn" data-op="+">+</button>' +
+        "</span>" +
+        '<input type="number" class="chain-num-input" id="chain-operand" aria-label="Zahl">' +
+        '<span class="chain-eq">=</span>' +
+        '<input type="number" class="chain-num-input" id="chain-result" aria-label="Ergebnis">' +
+        "</div>";
+    }
+    grid += "</div>";
+
+    let html = '<p class="verein-hint">Diese Aufgabe hat einen Zehnerübergang. Rechne in mehreren Schritten – ohne dass eine Zahl negativ wird.</p>' + grid;
+    if (st.current !== target) {
+      html += '<div class="field-error" id="chain-error"></div>' +
+        '<div class="chain-buttons">' +
+        '<button class="btn btn-primary" id="chain-add-btn">Schritt hinzufügen</button>' +
+        (st.chain.length > 0 ? '<button class="btn" id="chain-undo-btn">Rückgängig</button>' : "") +
+        "</div>";
+    }
+    els.workspace.innerHTML = html;
+
+    if (st.current === target) return;
+
+    let selectedOp = "−";
+    const opButtons = els.workspace.querySelectorAll(".op-btn");
+    opButtons.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        selectedOp = btn.dataset.op;
+        opButtons.forEach(function (b) { b.classList.toggle("active", b === btn); });
+      });
+    });
+
+    const operandInput = document.getElementById("chain-operand");
+    const resultInput = document.getElementById("chain-result");
+    const errorEl = document.getElementById("chain-error");
+
+    document.getElementById("chain-add-btn").addEventListener("click", function () {
+      const operand = parseInt(operandInput.value, 10);
+      const result = parseInt(resultInput.value, 10);
+      if (!Number.isInteger(operand) || operand <= 0) { errorEl.textContent = "Bitte eine positive Zahl als zweiten Wert eingeben."; return; }
+      if (!Number.isInteger(result)) { errorEl.textContent = "Bitte ein Ergebnis eingeben."; return; }
+      if (result < 0) { errorEl.textContent = "Das Ergebnis darf nicht negativ werden."; return; }
+      const expected = selectedOp === "−" ? st.current - operand : st.current + operand;
+      if (result !== expected) { errorEl.textContent = "Diese Rechnung stimmt nicht: " + st.current + " " + selectedOp + " " + operand + " ist nicht " + result + "."; return; }
+      st.chain.push({ from: st.current, op: selectedOp, operand: operand, result: result });
+      st.current = result;
+      paintStellenChain();
+      if (st.current === target) markSuccess("Richtig!");
+    });
+    resultInput.addEventListener("keydown", function (e) { if (e.key === "Enter") document.getElementById("chain-add-btn").click(); });
+
+    const undoBtn = document.getElementById("chain-undo-btn");
+    if (undoBtn) {
+      undoBtn.addEventListener("click", function () {
+        const last = st.chain.pop();
+        st.current = last.from;
+        paintStellenChain();
+      });
+    }
+  }
+
+  // ---------- Vereinfachen ----------
+  function renderVerein() {
+    const b = task.b;
+    let nextTen = Math.ceil(b / 10) * 10;
+    if (nextTen === b) nextTen += 10; // Sicherheitsnetz, falls b doch ein Zehner ist
+    const erg = nextTen - b;
+    strategyState = { phase: "erg", nextTen: nextTen, erg: erg };
+    paintVerein();
+  }
+
+  function paintVerein() {
+    const st = strategyState;
+    let html = '<div class="verein-flow">';
+    if (st.phase === "erg") {
+      html += '<p class="verein-hint">Ergänze zuerst die zweite Zahl bis zum nächsten Zehner.</p>' +
+        '<div class="verein-arrow">' + task.b + ' + <input type="number" id="erg-input" style="width:70px"> = ' + st.nextTen + "</div>" +
+        '<button class="btn btn-primary" id="erg-check-btn">Prüfen</button>' +
+        '<div class="field-error" id="verein-error"></div>';
+    } else {
+      const newA = task.a + st.erg;
+      html += '<p class="verein-hint">Du hast ' + st.erg + " dazugezählt. Damit sich die Differenz nicht ändert, zählst du dieselbe Zahl auch bei der ersten Zahl dazu:</p>" +
+        '<div class="verein-arrow">' + task.a + " + " + st.erg + " = " + newA + "&nbsp;&nbsp;&nbsp;&nbsp;" + task.b + " + " + st.erg + " = " + st.nextTen + "</div>" +
+        '<div class="verein-task">' + newA + " − " + st.nextTen + " = ?</div>" +
+        '<div class="verein-result-row"><label for="verein-result">Ergebnis:</label><input type="number" id="verein-result"></div>' +
+        '<button class="btn btn-primary" id="verein-check-btn" style="margin-top:14px;">Prüfen</button>' +
+        '<div class="field-error" id="verein-error"></div>';
+    }
+    html += "</div>";
+    els.workspace.innerHTML = html;
+
+    if (st.phase === "erg") {
+      const ergInput = document.getElementById("erg-input");
+      document.getElementById("erg-check-btn").addEventListener("click", function () {
+        const val = parseInt(ergInput.value, 10);
+        const errorEl = document.getElementById("verein-error");
+        if (!Number.isInteger(val)) { errorEl.textContent = "Bitte eine Zahl eingeben."; return; }
+        if (val !== st.erg) { errorEl.textContent = "Das ist noch nicht die richtige Ergänzung bis " + st.nextTen + "."; return; }
+        errorEl.textContent = "";
+        st.phase = "solve";
+        paintVerein();
+      });
+      ergInput.addEventListener("keydown", function (e) { if (e.key === "Enter") document.getElementById("erg-check-btn").click(); });
+    } else {
+      const resultInput = document.getElementById("verein-result");
+      document.getElementById("verein-check-btn").addEventListener("click", function () {
+        const errorEl = document.getElementById("verein-error");
+        const val = parseInt(resultInput.value, 10);
+        if (Number.isNaN(val)) { errorEl.textContent = "Bitte ein Ergebnis eingeben."; return; }
+        errorEl.textContent = "";
+        const correct = task.a - task.b;
+        if (val === correct) markSuccess("Richtig! Auch " + task.a + " − " + task.b + " = " + correct + ".");
+        else markWrong("Das stimmt noch nicht. Rechne die vereinfachte Aufgabe noch einmal nach.");
+      });
+      resultInput.addEventListener("keydown", function (e) { if (e.key === "Enter") document.getElementById("verein-check-btn").click(); });
+    }
+  }
+
+  // ---------- Tipp ----------
+  els.hintBtn.addEventListener("click", function () {
+    let msg = "";
+    if (activeStrategy === "schritt") {
+      msg = "Vorschlag: " + suggestSteps(task.a, task.b).map(function (s) { return "−" + s; }).join(" dann ");
+    } else if (activeStrategy === "stellen" && strategyState.mode === "table") {
+      msg = "Rechne jede Stelle für sich: Hunderter minus Hunderter, Zehner minus Zehner, Einer minus Einer.";
+    } else if (activeStrategy === "stellen") {
+      const steps = suggestPlaceSteps(task.b, placesFor(settings.range));
+      msg = "Vorschlag: ziehe erst " + steps.join(", dann ") + " ab.";
+    } else if (strategyState.phase === "erg") {
+      msg = "Tipp: " + task.b + " + " + strategyState.erg + " = " + strategyState.nextTen + ".";
+    } else {
+      msg = "Tipp: Zähle " + strategyState.erg + " auch bei " + task.a + " dazu, dann rechne die neue Aufgabe aus.";
+    }
+    els.feedback.className = "feedback show";
+    els.feedback.style.background = "#fff7db";
+    els.feedback.style.color = "#8a6d1a";
+    els.feedback.textContent = msg;
+  });
+
+  // ---------- Zehnerübergang-Schalter: Hinweis bei "Stellenweise" ----------
+  function updateUebergangUI() {
+    const strategy = document.querySelector('input[name="strategy"]:checked').value;
+    const note = document.getElementById("uebergang-note");
+    note.hidden = strategy !== "stellen";
+  }
+  document.querySelectorAll('input[name="strategy"]').forEach(function (r) {
+    r.addEventListener("change", updateUebergangUI);
+  });
+  updateUebergangUI();
+
+  // ---------- Navigation ----------
+  els.startBtn.addEventListener("click", function () {
+    const rangeVal = document.querySelector('input[name="range"]:checked').value;
+    settings.range = parseInt(rangeVal, 10);
+    settings.uebergang = document.getElementById("uebergang-toggle").checked;
+    settings.strategy = document.querySelector('input[name="strategy"]:checked').value;
+    session = { points: 0, streak: 0, correct: 0, total: 0 };
+    updatePills();
+    els.startScreen.hidden = true;
+    els.endScreen.hidden = true;
+    els.practiceScreen.hidden = false;
+    els.statPills.hidden = false;
+    els.headerResetBtn.hidden = false;
+    newRound();
+  });
+
+  els.nextBtn.addEventListener("click", newRound);
+
+  els.endBtn.addEventListener("click", function () {
+    els.practiceScreen.hidden = true;
+    els.statPills.hidden = true;
+    els.headerResetBtn.hidden = true;
+    els.endPoints.textContent = session.points;
+    els.endCorrect.textContent = session.correct;
+    els.endTotal.textContent = session.total;
+    els.endScreen.hidden = false;
+  });
+
+  els.restartBtn.addEventListener("click", function () {
+    els.endScreen.hidden = true;
+    els.startScreen.hidden = false;
+  });
+
+  els.headerResetBtn.addEventListener("click", function () {
+    showConfirm("Möchtest du wirklich neu starten? Dein Fortschritt in dieser Runde geht verloren.", function () {
+      els.practiceScreen.hidden = true;
+      els.statPills.hidden = true;
+      els.headerResetBtn.hidden = true;
+      els.startScreen.hidden = false;
+    });
+  });
+})();
+</script>
+</body>
+</html>
