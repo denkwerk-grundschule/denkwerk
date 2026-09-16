@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schriftliche Addition und Subtraktion</title>
+<style>
+  :root {
+    --paper: #eef3f7;
+    --grid-line: #dbe6ee;
+    --card: #ffffff;
+    --border: #c9d7e1;
+    --ink: #223342;
+    --ink-soft: #5c6c78;
+    --focus: #1a56db;
+
+    --accent: #3d6b5c;
+    --accent-dark: #2a4d41;
+    --c-add: #3d6b5c;
+    --c-add-bg: #dcebe6;
+    --c-sub: #b8492f;
+    --c-sub-bg: #f6ded6;
+
+    --digit-e: #1a56db;
+    --digit-z: #c0453a;
+    --digit-h: #b8860b;
+
+    --good: #2f8f57;
+    --good-bg: #e1f2e7;
+    --bad: #c0453a;
+    --bad-bg: #fbe6e3;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 24px 24px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    line-height: 1.5;
+  }
+
+  .app { width: 100%; max-width: 780px; padding: 20px 16px 48px; }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  h1 { font-size: clamp(1.4rem, 4vw, 1.9rem); margin: 0; font-weight: 800; }
+  .subtitle { color: var(--ink-soft); font-size: 0.95rem; margin: 4px 0 0; }
+
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  #points-pill { color: #b8860b; }
+  #streak-pill { color: var(--good); }
+  #correct-pill { color: var(--focus); }
+
+  .icon-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .icon-btn:hover { background: #f4f8fb; }
+  .icon-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+
+  section.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 26px;
+    box-shadow: 0 3px 0 rgba(34, 51, 66, 0.05);
+    margin-bottom: 16px;
+  }
+  h2 { font-size: 1.15rem; margin: 0 0 10px; }
+
+  fieldset { border: none; padding: 0; margin: 0 0 20px; }
+  legend { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; padding: 0; }
+
+  .segmented { display: flex; flex-wrap: wrap; gap: 8px; }
+  .segmented label { position: relative; }
+  .segmented input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .segmented span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border: 2px solid var(--border); border-radius: 10px;
+    font-weight: 600; font-size: 0.92rem; color: var(--ink-soft); background: #fff;
+  }
+  .segmented input:checked + span { border-color: var(--seg-color, var(--focus)); background: var(--seg-bg, #eef3fb); color: var(--seg-color, var(--focus)); }
+  .segmented input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .toggle-row input { width: 18px; height: 18px; }
+  .toggle-row label { font-weight: 600; font-size: 0.92rem; }
+
+  details.legend-box {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #f7fafc;
+  }
+  details.legend-box summary { cursor: pointer; font-weight: 700; font-size: 0.92rem; }
+  details.legend-box .legend-item { margin-top: 10px; font-size: 0.92rem; }
+  details.legend-box .legend-item b { color: var(--legend-color); }
+
+  .start-btn {
+    display: inline-block;
+    background: var(--focus);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 26px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .start-btn:hover { background: #1544ad; }
+  .start-btn:focus-visible { outline: 3px solid #0a2e73; outline-offset: 2px; }
+
+  .task-banner {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 16px;
+  }
+  .op-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 0.85rem;
+    background: var(--badge-bg); color: var(--badge-color);
+  }
+
+  .col-grid-wrap { overflow-x: auto; padding: 4px 0 10px; }
+  .col-grid {
+    display: inline-grid;
+    grid-auto-flow: row;
+    row-gap: 8px;
+    column-gap: 6px;
+    align-items: center;
+    font-family: "Courier New", Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .col-grid .cell { text-align: center; }
+
+  .carry-cell {
+    height: 1.6em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .carry-input {
+    width: 1.6em;
+    height: 1.6em;
+    text-align: center;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    padding: 0;
+    color: var(--ink-soft);
+  }
+  .carry-input:focus-visible { outline: 3px solid var(--focus); border-color: var(--focus); border-style: solid; }
+
+  .digit-cell {
+    font-size: 1.5rem;
+    font-weight: 700;
+    min-height: 1.3em;
+  }
+  .digit-cell.blank { visibility: hidden; }
+  .digit-cell.e { color: var(--digit-e); }
+  .digit-cell.z { color: var(--digit-z); }
+  .digit-cell.h { color: var(--digit-h); }
+
+  .op-symbol {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--ink-soft);
+    text-align: left;
+    padding-right: 4px;
+  }
+
+  .rule-cell {
+    grid-row: var(--rule-row);
+    border-top: 3px solid var(--ink);
+    height: 0;
+  }
+
+  .result-input {
+    width: 100%;
+    aspect-ratio: 1;
+    text-align: center;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.4rem;
+    font-weight: 800;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 0;
+  }
+  .result-input:focus-visible { outline: 3px solid var(--focus); border-color: var(--focus); }
+  .result-input.e { color: var(--digit-e); }
+  .result-input.z { color: var(--digit-z); }
+  .result-input.h { color: var(--digit-h); }
+  .result-input.ok { border-color: var(--good); background: var(--good-bg); }
+  .result-input.bad { border-color: var(--bad); background: var(--bad-bg); }
+  .carry-input.ok { border-color: var(--good); background: var(--good-bg); border-style: solid; }
+  .carry-input.bad { border-color: var(--bad); background: var(--bad-bg); border-style: solid; }
+
+  .btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: #fff;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .btn:hover:not(:disabled) { background: #f4f8fb; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .btn-primary { background: var(--focus); border-color: var(--focus); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1544ad; }
+
+  .field-error { color: var(--bad); font-size: 0.85rem; margin-top: 10px; min-height: 1.2em; }
+
+  .feedback {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.good { background: var(--good-bg); color: var(--good); }
+  .feedback.bad { background: var(--bad-bg); color: var(--bad); }
+
+  .round-footer { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; justify-content: space-between; }
+  .round-footer .left-group, .round-footer .right-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .end-stats { display: flex; gap: 14px; flex-wrap: wrap; margin: 16px 0 20px; }
+  .end-stat {
+    background: #f7fafc; border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 20px; text-align: center; flex: 1; min-width: 120px;
+  }
+  .end-stat .num { font-size: 1.6rem; font-weight: 800; display: block; }
+  .end-stat .lbl { font-size: 0.85rem; color: var(--ink-soft); }
+
+  [hidden] { display: none !important; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(20, 30, 40, 0.45);
+    display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20;
+  }
+  .modal { background: #fff; border-radius: 14px; padding: 24px 26px; max-width: 360px; width: 100%; box-shadow: 0 12px 30px rgba(0,0,0,0.2); }
+  .modal p { margin: 0 0 18px; font-weight: 600; }
+  .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .feedback.show { animation: pop 0.25s ease; }
+  }
+  @keyframes pop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <h1>Schriftliche Addition und Subtraktion</h1>
+      <p class="subtitle">Spaltenweise rechnen mit Übertrag und Entbündeln</p>
+    </div>
+    <div class="pills" id="stat-pills" hidden>
+      <span class="pill" id="points-pill">0 Punkte</span>
+      <span class="pill" id="streak-pill">Serie: 0</span>
+      <span class="pill" id="correct-pill">0/0 richtig</span>
+    </div>
+    <button class="icon-btn" id="header-reset-btn" hidden>Neu starten</button>
+  </header>
+
+  <section class="card" id="start-screen">
+    <h2>Einstellungen</h2>
+
+    <details class="legend-box">
+      <summary>Wie funktioniert das schriftliche Verfahren?</summary>
+      <div class="legend-item" style="--legend-color: var(--c-add);"><b>Addition:</b> Spaltenweise von rechts nach links addieren. Wird die Summe einer Spalte 10 oder mehr, kommt die Einerziffer ins Ergebnis und die Zehnerziffer als Übertrag in das Kästchen über der nächsten Spalte.</div>
+      <div class="legend-item" style="--legend-color: var(--c-sub);"><b>Subtraktion:</b> Spaltenweise von rechts nach links subtrahieren. Reicht die obere Ziffer nicht aus, wird von der Spalte links eine 10 geliehen (entbündelt) – das Kästchen markiert, wo geliehen wurde.</div>
+    </details>
+
+    <fieldset>
+      <legend>Rechenart</legend>
+      <div class="segmented" id="op-group">
+        <label style="--seg-color: var(--c-add); --seg-bg: var(--c-add-bg);"><input type="radio" name="op" value="add" checked><span>Addition</span></label>
+        <label style="--seg-color: var(--c-sub); --seg-bg: var(--c-sub-bg);"><input type="radio" name="op" value="sub"><span>Subtraktion</span></label>
+        <label style="--seg-color: #444;"><input type="radio" name="op" value="mixed"><span>Gemischt</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Zahlenraum</legend>
+      <div class="segmented" id="range-group">
+        <label style="--seg-color: var(--focus);"><input type="radio" name="range" value="100" checked><span>bis 100 (zweistellig)</span></label>
+        <label style="--seg-color: var(--focus);"><input type="radio" name="range" value="1000"><span>bis 1000 (dreistellig)</span></label>
+      </div>
+    </fieldset>
+
+    <div class="toggle-row">
+      <input type="checkbox" id="regroup-toggle" checked>
+      <label for="regroup-toggle">Mit Übertrag / Entbündeln (schwerer)</label>
+    </div>
+
+    <button class="start-btn" id="start-btn">Los geht's</button>
+  </section>
+
+  <section class="card" id="practice-screen" hidden>
+    <div class="task-banner">
+      <span class="op-badge" id="op-badge"></span>
+    </div>
+
+    <div class="col-grid-wrap">
+      <div class="col-grid" id="col-grid"></div>
+    </div>
+
+    <div class="field-error" id="grid-error"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="round-footer">
+      <div class="left-group">
+        <button class="btn" id="hint-btn">Tipp anzeigen</button>
+      </div>
+      <div class="right-group">
+        <button class="btn" id="end-btn">Beenden</button>
+        <button class="btn btn-primary" id="check-btn">Prüfen</button>
+        <button class="btn btn-primary" id="next-btn" hidden>Nächste Aufgabe</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="end-screen" hidden>
+    <h2>Runde beendet</h2>
+    <div class="end-stats">
+      <div class="end-stat"><span class="num" id="end-points">0</span><span class="lbl">Punkte</span></div>
+      <div class="end-stat"><span class="num" id="end-correct">0</span><span class="lbl">richtig gelöst</span></div>
+      <div class="end-stat"><span class="num" id="end-total">0</span><span class="lbl">Aufgaben gesamt</span></div>
+    </div>
+    <button class="start-btn" id="restart-btn">Neue Runde</button>
+  </section>
+
+</div>
+
+<div class="overlay" id="confirm-overlay" hidden>
+  <div class="modal">
+    <p id="confirm-text">Möchtest du wirklich neu starten? Dein Fortschritt geht verloren.</p>
+    <div class="modal-actions">
+      <button class="btn" id="confirm-cancel-btn">Abbrechen</button>
+      <button class="btn btn-primary" id="confirm-ok-btn">Neu starten</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function randInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
+
+  function digitsArray(n, len) {
+    const arr = [];
+    for (let i = 0; i < len; i++) arr.push(Math.floor(n / Math.pow(10, i)) % 10);
+    return arr;
+  }
+
+  function placeClass(i) { return i % 3 === 0 ? "e" : i % 3 === 1 ? "z" : "h"; }
+
+  function computeAddition(a, b) {
+    const sum = a + b;
+    const len = String(sum).length;
+    const da = digitsArray(a, len), db = digitsArray(b, len);
+    const trueCarryIn = [0];
+    const resultDigits = [];
+    for (let i = 0; i < len; i++) {
+      const s = da[i] + db[i] + trueCarryIn[i];
+      resultDigits.push(s % 10);
+      trueCarryIn.push(Math.floor(s / 10));
+    }
+    return { len, da, db, resultDigits, trueCarryIn, lenA: String(a).length, lenB: String(b).length };
+  }
+
+  function computeSubtraction(a, b) {
+    const len = String(a).length;
+    const da = digitsArray(a, len), db = digitsArray(b, len);
+    let borrowIn = 0;
+    const resultDigits = [];
+    const borrowFromAbove = [];
+    for (let i = 0; i < len; i++) {
+      let top = da[i] - borrowIn;
+      let bBorrow = 0;
+      if (top < db[i]) { top += 10; bBorrow = 1; }
+      resultDigits.push(top - db[i]);
+      borrowFromAbove.push(bBorrow);
+      borrowIn = bBorrow;
+    }
+    return { len, da, db, resultDigits, borrowFromAbove, lenA: String(a).length, lenB: String(b).length };
+  }
+
+  function needsCarryAnywhere(steps) {
+    for (let i = 1; i <= steps.len; i++) if (steps.trueCarryIn[i] > 0) return true;
+    return false;
+  }
+  function needsBorrowAnywhere(steps) {
+    return steps.borrowFromAbove.some(function (v) { return v === 1; });
+  }
+
+  function rawPair(range) {
+    if (range === 100) return { a: randInt(10, 99), b: randInt(10, 99) };
+    return { a: randInt(100, 999), b: randInt(100, 999) };
+  }
+
+  function generateAddition(range, requireRegroup) {
+    let best = null;
+    for (let i = 0; i < 300; i++) {
+      const { a, b } = rawPair(range);
+      const steps = computeAddition(a, b);
+      const has = needsCarryAnywhere(steps);
+      if (has === requireRegroup) return { a, b, steps };
+      if (!best) best = { a, b, steps };
+    }
+    return best;
+  }
+
+  function generateSubtraction(range, requireRegroup) {
+    let best = null;
+    for (let i = 0; i < 300; i++) {
+      let { a, b } = rawPair(range);
+      if (a === b) continue;
+      if (a < b) { const t = a; a = b; b = t; }
+      const steps = computeSubtraction(a, b);
+      const has = needsBorrowAnywhere(steps);
+      if (has === requireRegroup) return { a, b, steps };
+      if (!best) best = { a, b, steps };
+    }
+    return best;
+  }
+
+  // ---------- App-Zustand ----------
+  const els = {
+    startScreen: document.getElementById("start-screen"),
+    practiceScreen: document.getElementById("practice-screen"),
+    endScreen: document.getElementById("end-screen"),
+    statPills: document.getElementById("stat-pills"),
+    pointsPill: document.getElementById("points-pill"),
+    streakPill: document.getElementById("streak-pill"),
+    correctPill: document.getElementById("correct-pill"),
+    headerResetBtn: document.getElementById("header-reset-btn"),
+    startBtn: document.getElementById("start-btn"),
+    opBadge: document.getElementById("op-badge"),
+    colGrid: document.getElementById("col-grid"),
+    gridError: document.getElementById("grid-error"),
+    feedback: document.getElementById("feedback"),
+    hintBtn: document.getElementById("hint-btn"),
+    endBtn: document.getElementById("end-btn"),
+    checkBtn: document.getElementById("check-btn"),
+    nextBtn: document.getElementById("next-btn"),
+    endPoints: document.getElementById("end-points"),
+    endCorrect: document.getElementById("end-correct"),
+    endTotal: document.getElementById("end-total"),
+    restartBtn: document.getElementById("restart-btn"),
+    confirmOverlay: document.getElementById("confirm-overlay"),
+    confirmOkBtn: document.getElementById("confirm-ok-btn"),
+    confirmCancelBtn: document.getElementById("confirm-cancel-btn")
+  };
+
+  const CORRECT_POINTS = 10;
+  const STREAK_BONUS_AT = 3;
+  const STREAK_BONUS_POINTS = 5;
+
+  let settings = { op: "add", range: 100, regroup: true };
+  let session = { points: 0, streak: 0, correct: 0, total: 0 };
+  let activeOp = null;
+  let task = null;
+  let roundLocked = false;
+
+  function showConfirm(text, onConfirm) {
+    document.getElementById("confirm-text").textContent = text;
+    els.confirmOverlay.hidden = false;
+    els.confirmOkBtn.focus();
+    function cleanup() {
+      els.confirmOverlay.hidden = true;
+      els.confirmOkBtn.removeEventListener("click", onOk);
+      els.confirmCancelBtn.removeEventListener("click", onCancel);
+    }
+    function onOk() { cleanup(); onConfirm(); }
+    function onCancel() { cleanup(); }
+    els.confirmOkBtn.addEventListener("click", onOk);
+    els.confirmCancelBtn.addEventListener("click", onCancel);
+  }
+
+  function updatePills() {
+    els.pointsPill.textContent = session.points + " Punkte";
+    els.streakPill.textContent = "Serie: " + session.streak;
+    els.correctPill.textContent = session.correct + "/" + session.total + " richtig";
+  }
+
+  function pickRoundOp() {
+    if (settings.op !== "mixed") return settings.op;
+    return Math.random() < 0.5 ? "add" : "sub";
+  }
+
+  function newRound() {
+    activeOp = pickRoundOp();
+    task = activeOp === "add"
+      ? generateAddition(settings.range, settings.regroup)
+      : generateSubtraction(settings.range, settings.regroup);
+    roundLocked = false;
+    els.feedback.className = "feedback";
+    els.feedback.textContent = "";
+    els.gridError.textContent = "";
+    els.nextBtn.hidden = true;
+    els.checkBtn.hidden = false;
+    els.hintBtn.disabled = false;
+
+    const isAdd = activeOp === "add";
+    els.opBadge.style.setProperty("--badge-bg", isAdd ? "var(--c-add-bg)" : "var(--c-sub-bg)");
+    els.opBadge.style.setProperty("--badge-color", isAdd ? "var(--c-add)" : "var(--c-sub)");
+    els.opBadge.textContent = isAdd ? "Addition" : "Subtraktion";
+
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const steps = task.steps;
+    const len = steps.len;
+    const numW = (len >= 4 ? 4 : 3) + "ch";
+
+    // Zeilen: Zahl A, Zahl B (+Operator), Übertrag/Entbündeln, Trennlinie, Ergebnis.
+    // Bei der Addition steht der Übertrag unter den beiden Summanden, direkt über dem
+    // Lösungsstrich; bei der Subtraktion steht das Entbündeln-Kästchen weiterhin oben,
+    // da es dort angibt, an welcher Stelle vor dem Rechnen geliehen wird.
+    let carryRow = '<div class="op-col carry-cell"></div>';
+    for (let i = len - 1; i >= 0; i--) {
+      carryRow += carryCellHtml(i, len);
+    }
+    let rowA = '<div class="op-col digit-cell"></div>';
+    for (let i = len - 1; i >= 0; i--) {
+      rowA += digitCellHtml(steps.da[i], i, i < steps.lenA);
+    }
+    let rowB = '<div class="op-col op-symbol">' + (activeOp === "add" ? "+" : "−") + '</div>';
+    for (let i = len - 1; i >= 0; i--) {
+      rowB += digitCellHtml(steps.db[i], i, i < steps.lenB);
+    }
+    let ruleRow = '<div class="op-col rule-cell" style="--rule-row:4;"></div>';
+    for (let i = len - 1; i >= 0; i--) {
+      ruleRow += '<div class="rule-cell" style="--rule-row:4;"></div>';
+    }
+    let resultRow = '<div class="op-col cell"></div>';
+    for (let i = len - 1; i >= 0; i--) {
+      resultRow += resultCellHtml(i);
+    }
+
+    const html = activeOp === "add"
+      ? rowA + rowB + carryRow + ruleRow + resultRow
+      : carryRow + rowA + rowB + ruleRow + resultRow;
+
+    els.colGrid.style.setProperty("--num-w", numW);
+    els.colGrid.style.gridTemplateColumns = "auto repeat(" + len + ", " + numW + ")";
+    els.colGrid.style.gridTemplateRows = "auto auto auto 0 auto";
+    els.colGrid.innerHTML = html;
+  }
+
+  function carryCellHtml(i, len) {
+    if (activeOp === "add") {
+      if (i === 0) return '<div class="carry-cell"></div>';
+      return '<div class="carry-cell"><input type="number" class="carry-input" data-carry="' + i + '" aria-label="Übertrag Stelle ' + i + '"></div>';
+    }
+    // Subtraktion: kein Kästchen in der obersten Spalte
+    if (i === len - 1) return '<div class="carry-cell"></div>';
+    return '<div class="carry-cell"><input type="number" class="carry-input" data-borrow="' + i + '" min="0" max="1" aria-label="Geliehen an Stelle ' + i + '"></div>';
+  }
+
+  function digitCellHtml(digit, i, isSignificant) {
+    const cls = "digit-cell " + placeClass(i) + (isSignificant ? "" : " blank");
+    return '<div class="' + cls + '">' + digit + "</div>";
+  }
+
+  function resultCellHtml(i) {
+    return '<div class="cell"><input type="number" class="result-input ' + placeClass(i) + '" data-result="' + i + '" aria-label="Ergebnis Stelle ' + i + '"></div>';
+  }
+
+  function clearCellStates() {
+    els.colGrid.querySelectorAll(".result-input, .carry-input").forEach(function (el) {
+      el.classList.remove("ok", "bad");
+    });
+  }
+
+  function checkAnswer() {
+    if (roundLocked) return;
+    const steps = task.steps;
+    const len = steps.len;
+    let allFilled = true;
+    let allCorrect = true;
+    clearCellStates();
+
+    for (let i = 0; i < len; i++) {
+      const resultInput = els.colGrid.querySelector('[data-result="' + i + '"]');
+      const val = resultInput.value === "" ? NaN : parseInt(resultInput.value, 10);
+      if (Number.isNaN(val)) { allFilled = false; }
+      else if (val === steps.resultDigits[i]) { resultInput.classList.add("ok"); }
+      else { resultInput.classList.add("bad"); allCorrect = false; }
+    }
+
+    if (activeOp === "add") {
+      for (let i = 1; i < len; i++) {
+        const carryInput = els.colGrid.querySelector('[data-carry="' + i + '"]');
+        const expected = steps.trueCarryIn[i];
+        const val = carryInput.value === "" ? 0 : parseInt(carryInput.value, 10);
+        if (carryInput.value === "" && expected === 0) { carryInput.classList.add("ok"); continue; }
+        if (carryInput.value === "" && expected > 0) { allFilled = false; continue; }
+        if (val === expected) carryInput.classList.add("ok");
+        else { carryInput.classList.add("bad"); allCorrect = false; }
+      }
+    } else {
+      for (let i = 0; i < len - 1; i++) {
+        const borrowInput = els.colGrid.querySelector('[data-borrow="' + i + '"]');
+        const expected = steps.borrowFromAbove[i];
+        const val = borrowInput.value === "" ? 0 : parseInt(borrowInput.value, 10);
+        if (borrowInput.value === "" && expected === 0) { borrowInput.classList.add("ok"); continue; }
+        if (borrowInput.value === "" && expected > 0) { allFilled = false; continue; }
+        if (val === expected) borrowInput.classList.add("ok");
+        else { borrowInput.classList.add("bad"); allCorrect = false; }
+      }
+    }
+
+    if (!allFilled) { els.gridError.textContent = "Bitte fülle alle Ergebnis- und Übertragsfelder aus."; return; }
+    els.gridError.textContent = "";
+
+    if (allCorrect) {
+      markSuccess("Richtig! " + task.a + (activeOp === "add" ? " + " : " − ") + task.b + " = " + (activeOp === "add" ? task.a + task.b : task.a - task.b) + ".");
+    } else {
+      markWrong("Noch nicht ganz richtig – schau dir die rot markierten Felder an.");
+    }
+  }
+
+  function markSuccess(message) {
+    if (roundLocked) return;
+    roundLocked = true;
+    session.correct++;
+    session.total++;
+    session.streak++;
+    let gained = CORRECT_POINTS;
+    if (session.streak > 0 && session.streak % STREAK_BONUS_AT === 0) gained += STREAK_BONUS_POINTS;
+    session.points += gained;
+    updatePills();
+    els.feedback.className = "feedback show good";
+    els.feedback.textContent = message + " (+" + gained + " Punkte)";
+    els.nextBtn.hidden = false;
+    els.checkBtn.hidden = true;
+    els.hintBtn.disabled = true;
+    els.colGrid.querySelectorAll("input").forEach(function (el) { el.disabled = true; });
+  }
+
+  function markWrong(message) {
+    session.total++;
+    session.streak = 0;
+    updatePills();
+    els.feedback.className = "feedback show bad";
+    els.feedback.textContent = message;
+  }
+
+  els.hintBtn.addEventListener("click", function () {
+    let msg;
+    if (activeOp === "add") {
+      msg = "Tipp: Addiere von rechts nach links. Wird eine Summe 10 oder mehr, kommt die Einerziffer ins Ergebnis, die Zehnerziffer als Übertrag ins Kästchen über der nächsten Spalte.";
+    } else {
+      msg = "Tipp: Subtrahiere von rechts nach links. Reicht die obere Ziffer nicht, leihe dir 10 von der Spalte links: schreibe eine 1 in ihr Kästchen und rechne mit oberer Ziffer + 10 weiter.";
+    }
+    els.feedback.className = "feedback show";
+    els.feedback.style.background = "#fff7db";
+    els.feedback.style.color = "#8a6d1a";
+    els.feedback.textContent = msg;
+  });
+
+  els.checkBtn.addEventListener("click", checkAnswer);
+  els.nextBtn.addEventListener("click", newRound);
+
+  els.endBtn.addEventListener("click", function () {
+    els.practiceScreen.hidden = true;
+    els.statPills.hidden = true;
+    els.headerResetBtn.hidden = true;
+    els.endPoints.textContent = session.points;
+    els.endCorrect.textContent = session.correct;
+    els.endTotal.textContent = session.total;
+    els.endScreen.hidden = false;
+  });
+
+  els.restartBtn.addEventListener("click", function () {
+    els.endScreen.hidden = true;
+    els.startScreen.hidden = false;
+  });
+
+  els.headerResetBtn.addEventListener("click", function () {
+    showConfirm("Möchtest du wirklich neu starten? Dein Fortschritt in dieser Runde geht verloren.", function () {
+      els.practiceScreen.hidden = true;
+      els.statPills.hidden = true;
+      els.headerResetBtn.hidden = true;
+      els.startScreen.hidden = false;
+    });
+  });
+
+  els.startBtn.addEventListener("click", function () {
+    settings.op = document.querySelector('input[name="op"]:checked').value;
+    settings.range = parseInt(document.querySelector('input[name="range"]:checked').value, 10);
+    settings.regroup = document.getElementById("regroup-toggle").checked;
+    session = { points: 0, streak: 0, correct: 0, total: 0 };
+    updatePills();
+    els.startScreen.hidden = true;
+    els.endScreen.hidden = true;
+    els.practiceScreen.hidden = false;
+    els.statPills.hidden = false;
+    els.headerResetBtn.hidden = false;
+    newRound();
+  });
+})();
+</script>
+</body>
+</html>
