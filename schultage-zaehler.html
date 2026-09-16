@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unser Schultage-Zähler</title>
+<style>
+  :root {
+    --paper: #f6f0e4;
+    --card: #ffffff;
+    --border: #ddd2b3;
+    --ink: #2e2a24;
+    --ink-soft: #6b6456;
+    --focus: #1a56db;
+
+    --h-color: #b8860b;
+    --h-bg: #faf1d9;
+    --z-color: #c0453a;
+    --z-bg: #f8dedb;
+    --e-color: #1a56db;
+    --e-bg: #dbe6f8;
+
+    --good: #2f8f57;
+    --good-bg: #e1f2e7;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    line-height: 1.5;
+  }
+
+  .app { width: 100%; max-width: 820px; padding: 24px 16px 48px; }
+
+  .date-line {
+    text-align: center;
+    font-size: clamp(1rem, 2.6vw, 1.3rem);
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 0 0 4px;
+  }
+  h1 {
+    text-align: center;
+    font-size: clamp(1.5rem, 4.2vw, 2.2rem);
+    margin: 0 0 18px;
+    font-weight: 800;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 22px 28px;
+    box-shadow: 0 3px 0 rgba(46, 42, 36, 0.05);
+    margin-bottom: 18px;
+    text-align: center;
+  }
+
+  .day-heading {
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 800;
+    margin: 0 0 6px;
+  }
+  .day-heading .num { color: var(--focus); }
+  .day-breakdown {
+    font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+    color: var(--ink-soft);
+    margin: 0 0 22px;
+  }
+  .day-breakdown b.h { color: var(--h-color); }
+  .day-breakdown b.z { color: var(--z-color); }
+  .day-breakdown b.e { color: var(--e-color); }
+
+  .blocks-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: clamp(16px, 4vw, 40px);
+    flex-wrap: wrap;
+    min-height: 130px;
+    margin-bottom: 10px;
+  }
+
+  .place-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 90px;
+  }
+  .place-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .place-label.h { color: var(--h-color); }
+  .place-label.z { color: var(--z-color); }
+  .place-label.e { color: var(--e-color); }
+
+  .place-items {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    align-content: flex-end;
+    gap: 6px;
+    min-height: 100px;
+    max-width: 340px;
+  }
+
+  .hundred-block {
+    width: 100px;
+    height: 100px;
+    border: 2px solid var(--h-color);
+    background-color: var(--h-bg);
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 8px, var(--h-color) 8px 9px, transparent 9px 10px),
+      repeating-linear-gradient(90deg, transparent 0 8px, var(--h-color) 8px 9px, transparent 9px 10px);
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .ten-block {
+    width: 18px;
+    height: 100px;
+    border: 2px solid var(--z-color);
+    background-color: var(--z-bg);
+    background-image: repeating-linear-gradient(0deg, transparent 0 8px, var(--z-color) 8px 9px, transparent 9px 10px);
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .one-block {
+    width: 18px;
+    height: 9px;
+    border: 2px solid var(--e-color);
+    background-color: var(--e-bg);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .empty-note { font-size: 0.85rem; color: var(--ink-soft); font-style: italic; }
+
+  .main-btn {
+    display: inline-block;
+    background: var(--focus);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 15px 30px;
+    font-size: clamp(1rem, 2.4vw, 1.2rem);
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .main-btn:hover:not(:disabled) { background: #1544ad; }
+  .main-btn:disabled {
+    background: var(--good-bg);
+    color: var(--good);
+    cursor: default;
+  }
+  .main-btn:focus-visible { outline: 3px solid #0a2e73; outline-offset: 2px; }
+
+  .banner {
+    margin: 0 0 18px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    text-align: center;
+    display: none;
+  }
+  .banner.show { display: block; }
+  .banner.bundle { background: var(--good-bg); color: var(--good); }
+  .banner.milestone {
+    background: linear-gradient(90deg, #fdf0d5, #fbe3e0, #dbe6f8);
+    color: var(--ink);
+    font-size: 1.15rem;
+  }
+
+  details.settings {
+    margin-top: 6px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #fbf8f2;
+  }
+  details.settings summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .settings-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 0.9rem;
+  }
+  .settings-row input[type="number"] {
+    width: 90px;
+    padding: 6px 8px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+  }
+  .btn-small {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: #fff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-small:hover { background: #f4f0e6; }
+  .btn-small.danger { border-color: #c0453a; color: #c0453a; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(46, 42, 36, 0.45);
+    display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20;
+  }
+  .modal { background: #fff; border-radius: 14px; padding: 24px 26px; max-width: 360px; width: 100%; box-shadow: 0 12px 30px rgba(0,0,0,0.2); }
+  .modal p { margin: 0 0 18px; font-weight: 600; }
+  .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .banner.show { animation: pop 0.25s ease; }
+  }
+  @keyframes pop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  @media (max-width: 480px) {
+    .blocks-row { flex-direction: column; align-items: center; min-height: 0; gap: 18px; }
+    .place-col { min-width: 0; }
+    .place-items { min-height: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <p class="date-line" id="date-line"></p>
+  <h1>Unser Schultage-Zähler</h1>
+
+  <div class="banner" id="milestone-banner"></div>
+  <div class="banner" id="bundle-banner"></div>
+
+  <div class="card">
+    <p class="day-heading">Heute ist unser <span class="num" id="day-number">1</span>. Schultag!</p>
+    <p class="day-breakdown" id="day-breakdown"></p>
+
+    <div class="blocks-row" id="blocks-row">
+      <div class="place-col">
+        <span class="place-label h">Hunderter</span>
+        <div class="place-items" id="h-items"></div>
+      </div>
+      <div class="place-col">
+        <span class="place-label z">Zehner</span>
+        <div class="place-items" id="z-items"></div>
+      </div>
+      <div class="place-col">
+        <span class="place-label e">Einer</span>
+        <div class="place-items" id="e-items"></div>
+      </div>
+    </div>
+
+    <button type="button" class="main-btn" id="add-day-btn">Heutigen Schultag erfassen</button>
+
+    <details class="settings">
+      <summary>Einstellungen für die Lehrkraft</summary>
+      <div class="settings-row">
+        <label for="manual-count">Zähler manuell setzen:</label>
+        <input type="number" id="manual-count" min="0">
+        <button type="button" class="btn-small" id="manual-set-btn">Übernehmen</button>
+      </div>
+      <div class="settings-row">
+        <button type="button" class="btn-small danger" id="full-reset-btn">Zähler komplett zurücksetzen</button>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="overlay" id="confirm-overlay" hidden>
+  <div class="modal">
+    <p id="confirm-text">Zähler wirklich komplett auf 0 zurücksetzen?</p>
+    <div class="modal-actions">
+      <button class="btn-small" id="confirm-cancel-btn">Abbrechen</button>
+      <button class="btn-small danger" id="confirm-ok-btn">Zurücksetzen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORAGE_COUNT = "schultageZaehlerCount";
+  const STORAGE_DATE = "schultageZaehlerLastDate";
+
+  const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+  const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+  function todayKey(d) {
+    d = d || new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function formatDateDE(d) {
+    return WEEKDAYS[d.getDay()] + ", " + d.getDate() + ". " + MONTHS[d.getMonth()] + " " + d.getFullYear();
+  }
+
+  function getCount() {
+    const v = parseInt(localStorage.getItem(STORAGE_COUNT), 10);
+    return Number.isInteger(v) && v >= 0 ? v : 0;
+  }
+  function setCount(v) {
+    try { localStorage.setItem(STORAGE_COUNT, String(v)); } catch (e) { /* ignore */ }
+  }
+  function getLastDate() { return localStorage.getItem(STORAGE_DATE) || ""; }
+  function setLastDate(v) {
+    try { localStorage.setItem(STORAGE_DATE, v); } catch (e) { /* ignore */ }
+  }
+
+  function digitsHZE(n) {
+    return { h: Math.floor(n / 100), z: Math.floor((n % 100) / 10), e: n % 10 };
+  }
+
+  const els = {
+    dateLine: document.getElementById("date-line"),
+    dayNumber: document.getElementById("day-number"),
+    dayBreakdown: document.getElementById("day-breakdown"),
+    hItems: document.getElementById("h-items"),
+    zItems: document.getElementById("z-items"),
+    eItems: document.getElementById("e-items"),
+    addDayBtn: document.getElementById("add-day-btn"),
+    bundleBanner: document.getElementById("bundle-banner"),
+    milestoneBanner: document.getElementById("milestone-banner"),
+    manualCount: document.getElementById("manual-count"),
+    manualSetBtn: document.getElementById("manual-set-btn"),
+    fullResetBtn: document.getElementById("full-reset-btn"),
+    confirmOverlay: document.getElementById("confirm-overlay"),
+    confirmOkBtn: document.getElementById("confirm-ok-btn"),
+    confirmCancelBtn: document.getElementById("confirm-cancel-btn")
+  };
+
+  function showConfirm(text, onConfirm) {
+    document.getElementById("confirm-text").textContent = text;
+    els.confirmOverlay.hidden = false;
+    els.confirmOkBtn.focus();
+    function cleanup() {
+      els.confirmOverlay.hidden = true;
+      els.confirmOkBtn.removeEventListener("click", onOk);
+      els.confirmCancelBtn.removeEventListener("click", onCancel);
+    }
+    function onOk() { cleanup(); onConfirm(); }
+    function onCancel() { cleanup(); }
+    els.confirmOkBtn.addEventListener("click", onOk);
+    els.confirmCancelBtn.addEventListener("click", onCancel);
+  }
+
+  function renderBlocks(count) {
+    const d = digitsHZE(count);
+    els.hItems.innerHTML = d.h > 0 ? '<div class="hundred-block"></div>'.repeat(d.h) : '<span class="empty-note">–</span>';
+    els.zItems.innerHTML = d.z > 0 ? '<div class="ten-block"></div>'.repeat(d.z) : '<span class="empty-note">–</span>';
+    els.eItems.innerHTML = d.e > 0 ? '<div class="one-block"></div>'.repeat(d.e) : '<span class="empty-note">–</span>';
+
+    els.dayNumber.textContent = count;
+    els.dayBreakdown.innerHTML = "Das sind <b class=\"h\">" + d.h + " Hunderter</b>, <b class=\"z\">" + d.z + " Zehner</b> und <b class=\"e\">" + d.e + " Einer</b>.";
+  }
+
+  function renderDate() {
+    els.dateLine.textContent = formatDateDE(new Date());
+  }
+
+  function renderButtonState() {
+    const alreadyToday = getLastDate() === todayKey();
+    els.addDayBtn.disabled = alreadyToday;
+    els.addDayBtn.textContent = alreadyToday ? "✓ Heute schon erfasst – bis morgen!" : "Heutigen Schultag erfassen";
+  }
+
+  function render() {
+    renderDate();
+    renderBlocks(getCount());
+    renderButtonState();
+    els.manualCount.value = getCount();
+  }
+
+  function showBundleBanner(msg) {
+    els.bundleBanner.textContent = msg;
+    els.bundleBanner.className = "banner bundle show";
+  }
+  function hideBundleBanner() {
+    els.bundleBanner.className = "banner bundle";
+    els.bundleBanner.textContent = "";
+  }
+  function showMilestoneBanner(msg) {
+    els.milestoneBanner.textContent = msg;
+    els.milestoneBanner.className = "banner milestone show";
+  }
+  function hideMilestoneBanner() {
+    els.milestoneBanner.className = "banner milestone";
+    els.milestoneBanner.textContent = "";
+  }
+
+  els.addDayBtn.addEventListener("click", function () {
+    const today = todayKey();
+    if (getLastDate() === today) return;
+
+    const oldCount = getCount();
+    const newCount = oldCount + 1;
+    const oldD = digitsHZE(oldCount);
+    const newD = digitsHZE(newCount);
+
+    setCount(newCount);
+    setLastDate(today);
+    render();
+
+    hideBundleBanner();
+    hideMilestoneBanner();
+
+    if (newD.h > oldD.h) {
+      showBundleBanner("💯 10 Zehner werden zu 1 Hunderter gebündelt und umgetauscht!");
+    } else if (newD.z > oldD.z) {
+      showBundleBanner("🔟 10 Einer werden zu 1 Zehner gebündelt und umgetauscht!");
+    }
+
+    if (newCount > 0 && newCount % 100 === 0) {
+      showMilestoneBanner("🎉🎊 Heute ist der " + newCount + ". Schultag – ein besonderer Tag! 🎊🎉");
+    } else if (newCount > 0 && newCount % 10 === 0) {
+      showMilestoneBanner("✨ Schon " + newCount + " Schultage geschafft!");
+    }
+  });
+
+  els.manualSetBtn.addEventListener("click", function () {
+    const val = parseInt(els.manualCount.value, 10);
+    if (!Number.isInteger(val) || val < 0) return;
+    setCount(val);
+    render();
+    hideBundleBanner();
+    hideMilestoneBanner();
+  });
+
+  els.fullResetBtn.addEventListener("click", function () {
+    showConfirm("Zähler wirklich komplett auf 0 zurücksetzen? Das kann nicht rückgängig gemacht werden.", function () {
+      setCount(0);
+      setLastDate("");
+      render();
+      hideBundleBanner();
+      hideMilestoneBanner();
+    });
+  });
+
+  render();
+  // Datum/Sperre bei mitternächtigem Tageswechsel aktuell halten, falls die Seite offen bleibt.
+  window.setInterval(function () { renderDate(); renderButtonState(); }, 60000);
+})();
+</script>
+</body>
+</html>
