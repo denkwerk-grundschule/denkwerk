@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zahlen einsetzen – Rechenkonferenz</title>
+<style>
+  :root {
+    --paper: #f5f1e6;
+    --card: #ffffff;
+    --border: #ddd2b3;
+    --ink: #2e2a24;
+    --ink-soft: #6b6456;
+    --focus: #1a56db;
+
+    --board-green: #1f5c4e;
+    --board-border: #caa860;
+
+    --good: #2f8f57;
+    --good-bg: #e1f2e7;
+    --bad: #c0453a;
+    --bad-bg: #fbe6e3;
+    --na: #8a8578;
+    --na-bg: #efece3;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    line-height: 1.5;
+  }
+
+  .app { width: 100%; max-width: 820px; padding: 20px 16px 48px; }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  h1 { font-size: clamp(1.3rem, 4vw, 1.8rem); margin: 0; font-weight: 800; }
+  .subtitle { color: var(--ink-soft); font-size: 0.9rem; margin: 4px 0 18px; }
+
+  .icon-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .icon-btn:hover { background: #f4f0e2; }
+  .icon-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+
+  section.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 26px;
+    box-shadow: 0 3px 0 rgba(46, 42, 36, 0.05);
+    margin-bottom: 16px;
+  }
+  h2 { font-size: 1.1rem; margin: 0 0 10px; }
+
+  fieldset { border: none; padding: 0; margin: 0 0 20px; }
+  legend { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; padding: 0; }
+
+  .segmented { display: flex; flex-wrap: wrap; gap: 8px; }
+  .segmented label { position: relative; }
+  .segmented input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .segmented span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border: 2px solid var(--border); border-radius: 10px;
+    font-weight: 600; font-size: 0.92rem; color: var(--ink-soft); background: #fff;
+  }
+  .segmented input:checked + span { border-color: var(--focus); background: #eaf0fc; color: var(--focus); }
+  .segmented input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  details.legend-box {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #faf7ef;
+  }
+  details.legend-box summary { cursor: pointer; font-weight: 700; font-size: 0.92rem; }
+  details.legend-box p { margin: 10px 0 0; font-size: 0.92rem; color: var(--ink-soft); }
+
+  .start-btn {
+    display: inline-block;
+    background: var(--focus);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 26px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .start-btn:hover { background: #1544ad; }
+  .start-btn:focus-visible { outline: 3px solid #0a2e73; outline-offset: 2px; }
+
+  .conference-note {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    font-style: italic;
+    text-align: center;
+    margin: 0 0 18px;
+  }
+
+  .board-wrap { display: flex; justify-content: center; margin-bottom: 10px; }
+  .board {
+    background: var(--board-green);
+    border: 10px solid var(--board-border);
+    border-radius: 10px;
+    padding: 30px 40px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    text-align: center;
+  }
+  .board-expr {
+    color: #fff;
+    font-family: "Comic Sans MS", "Segoe Print", cursive, sans-serif;
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    margin: 0;
+  }
+  .board-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 0.95em;
+    border: 3px solid #fff;
+    border-radius: 6px;
+    vertical-align: middle;
+    margin: 0 0.08em;
+    font-size: 0.9em;
+  }
+  .board-box.filled {
+    background: #fff;
+    color: var(--board-green);
+    font-weight: 800;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .board-box.pulse { animation: boxPulse 0.35s ease; }
+  }
+  @keyframes boxPulse { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+  .calc-line {
+    text-align: center;
+    font-size: clamp(1rem, 2.6vw, 1.2rem);
+    font-weight: 700;
+    min-height: 1.6em;
+    margin: 12px 0 6px;
+  }
+  .calc-line.good { color: var(--good); }
+  .calc-line.bad { color: var(--bad); }
+  .calc-line.na { color: var(--na); }
+
+  .tally { text-align: center; font-size: 0.9rem; color: var(--ink-soft); margin: 0 0 18px; }
+
+  .cards-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 0 20px;
+  }
+  .num-card {
+    width: 52px;
+    height: 52px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: #fffdf6;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.06);
+    transition: transform 0.1s ease;
+  }
+  .num-card:hover { transform: translateY(-2px); }
+  .num-card.active { border-color: var(--focus); background: #eaf0fc; color: var(--focus); box-shadow: none; transform: translateY(2px); }
+  .num-card.mark-good { border-color: var(--good); background: var(--good-bg); color: var(--good); }
+  .num-card.mark-bad { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+  .num-card.mark-na { border-color: var(--na); background: var(--na-bg); color: var(--na); border-style: dashed; }
+  .num-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .choice-btn {
+    min-width: 60px;
+    height: 56px;
+    padding: 0 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: #fffdf6;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.06);
+    transition: transform 0.1s ease;
+  }
+  .choice-btn:hover:not(:disabled) { transform: translateY(-2px); }
+  .choice-btn:disabled { cursor: not-allowed; }
+  .choice-btn.mark-good { border-color: var(--good); background: var(--good-bg); color: var(--good); }
+  .choice-btn.mark-bad { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+  .choice-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .legend-marks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin: 0 0 18px;
+  }
+  .legend-marks span { display: inline-flex; align-items: center; gap: 5px; }
+  .swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+  .swatch.good { background: var(--good-bg); border: 2px solid var(--good); }
+  .swatch.bad { background: var(--bad-bg); border: 2px solid var(--bad); }
+  .swatch.na { background: var(--na-bg); border: 2px dashed var(--na); }
+
+  .btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: #fff;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .btn:hover:not(:disabled) { background: #f4f0e2; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .btn-primary { background: var(--focus); border-color: var(--focus); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1544ad; }
+
+  .feedback {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: none;
+    text-align: center;
+  }
+  .feedback.show { display: block; }
+
+  .round-footer { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; justify-content: space-between; }
+  .round-footer .left-group, .round-footer .right-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 480px) {
+    .board { padding: 22px 20px; }
+    .num-card { width: 44px; height: 44px; font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <h1>Zahlen einsetzen – Rechenkonferenz</h1>
+    </div>
+    <button class="icon-btn" id="header-reset-btn" hidden>Neu starten</button>
+  </header>
+  <p class="subtitle">Einführungsaufgabe fürs Plenum: gemeinsam Zahlen einsetzen, nachrechnen und begründen</p>
+
+  <section class="card" id="start-screen">
+    <h2>Einstellungen</h2>
+
+    <details class="legend-box">
+      <summary>Worum geht es?</summary>
+      <p id="legend-text"></p>
+    </details>
+
+    <fieldset>
+      <legend>Übungsart</legend>
+      <div class="segmented" id="mode-group">
+        <label><input type="radio" name="mode" value="plenum" checked><span>Zahlen einsetzen (Plenum)</span></label>
+        <label><input type="radio" name="mode" value="compare"><span>Vergleichszeichen finden</span></label>
+        <label><input type="radio" name="mode" value="operator"><span>Rechenzeichen finden</span></label>
+      </div>
+      <p class="conference-note" id="mode-desc" style="margin: 10px 0 0;"></p>
+    </fieldset>
+
+    <fieldset id="op-fieldset">
+      <legend>Rechenart</legend>
+      <div class="segmented" id="op-group">
+        <label><input type="radio" name="op" value="mult" checked><span>Malnehmen</span></label>
+        <label><input type="radio" name="op" value="add"><span>Plus</span></label>
+        <label><input type="radio" name="op" value="sub"><span>Minus</span></label>
+        <label><input type="radio" name="op" value="div"><span>Geteilt</span></label>
+        <label><input type="radio" name="op" value="mixed"><span>Gemischt</span></label>
+      </div>
+    </fieldset>
+
+    <button class="start-btn" id="start-btn">Los geht's</button>
+  </section>
+
+  <section class="card" id="practice-screen" hidden>
+    <p class="conference-note">Rechenkonferenz-Tipp: Eine Zahl anklicken, gemeinsam nachrechnen, begründen – dann die nächste Zahl testen.</p>
+
+    <div class="board-wrap">
+      <div class="board">
+        <p class="board-expr" id="board-expr"></p>
+      </div>
+    </div>
+
+    <p class="calc-line" id="calc-line"></p>
+    <p class="tally" id="tally">Getestet: 0 von 11</p>
+
+    <div class="cards-row" id="cards-row"></div>
+
+    <div class="legend-marks" id="legend-marks" hidden>
+      <span><span class="swatch good"></span> passt</span>
+      <span><span class="swatch bad"></span> passt nicht</span>
+      <span><span class="swatch na"></span> nicht sinnvoll berechenbar</span>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="round-footer">
+      <div class="left-group">
+        <button class="btn" id="reveal-btn">Alle Lösungen zeigen</button>
+        <button class="btn" id="reset-task-btn">Aufgabe zurücksetzen</button>
+      </div>
+      <div class="right-group">
+        <button class="btn btn-primary" id="new-task-btn">Neue Aufgabe</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="quiz-screen" hidden>
+    <p class="conference-note" id="quiz-note"></p>
+
+    <div class="board-wrap">
+      <div class="board">
+        <p class="board-expr" id="quiz-expr"></p>
+      </div>
+    </div>
+
+    <p class="tally" id="quiz-stats">Punkte: 0 · Richtig: 0 von 0</p>
+
+    <div class="cards-row" id="quiz-choices"></div>
+
+    <div class="feedback" id="quiz-feedback"></div>
+
+    <div class="round-footer">
+      <div class="right-group">
+        <button class="btn btn-primary" id="quiz-next-btn">Nächste Aufgabe</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function randInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
+  function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+
+  const OP_SYMBOLS = { mult: "·", add: "+", sub: "−", div: ":" };
+  const COMP_SYMBOLS = { "<": "<", ">": ">", "=": "=" };
+
+  // Liefert das Ergebnis von "box OP n", oder null, wenn es auf Grundschulniveau
+  // nicht sinnvoll berechenbar ist (negatives Ergebnis bei Minus, Rest bei Geteilt).
+  function computeValue(op, box, n) {
+    if (op === "mult") return box * n;
+    if (op === "add") return box + n;
+    if (op === "sub") return box >= n ? box - n : null;
+    if (op === "div") return (n > 0 && box % n === 0) ? box / n : null;
+    return null;
+  }
+
+  function computeValidSet(t) {
+    const valid = [];
+    for (let box = 0; box <= 10; box++) {
+      const value = computeValue(t.op, box, t.n);
+      if (value === null) continue;
+      let ok;
+      if (t.comp === "<") ok = value < t.m;
+      else if (t.comp === ">") ok = value > t.m;
+      else ok = value === t.m;
+      if (ok) valid.push(box);
+    }
+    return valid;
+  }
+
+  function generateTask(opSetting) {
+    const opPool = opSetting === "mixed" ? ["mult", "add", "sub", "div"] : [opSetting];
+    for (let attempt = 0; attempt < 400; attempt++) {
+      const op = pick(opPool);
+      const comp = pick(["<", ">", "="]);
+      let n;
+      if (op === "mult") n = randInt(2, 9);
+      else if (op === "add") n = randInt(1, 10);
+      else if (op === "sub") n = randInt(1, 5);
+      // Bei "<"/">" braucht Geteilt genug Kästchen auf beiden Seiten, deshalb
+      // bleibt der Teiler dort klein (2-5). Bei "=" reicht ein Treffer, darum
+      // darf der Teiler dort größer werden – das bringt zusätzliche Vielfalt.
+      else n = comp === "=" ? randInt(2, 10) : randInt(2, 5);
+
+      // Erreichbare Werte für box 0..10, aufsteigend sortiert (die Funktion ist
+      // in box monoton), daraus wird m so abgeleitet, dass die Trefferzahl passt –
+      // statt m zu raten und bei Misserfolg neu zu würfeln (das bevorzugte "=").
+      const values = [];
+      for (let box = 0; box <= 10; box++) {
+        const v = computeValue(op, box, n);
+        if (v !== null) values.push(v);
+      }
+      if (values.length === 0) continue;
+
+      let m;
+      if (comp === "=") {
+        m = pick(values);
+      } else {
+        const maxK = Math.min(9, values.length - 1);
+        if (maxK < 2) continue;
+        const k = randInt(2, maxK);
+        m = comp === "<" ? values[k] : values[values.length - 1 - k];
+      }
+
+      const t = { op, comp, n, m };
+      const validSet = computeValidSet(t);
+      const sizeOk = comp === "=" ? validSet.length === 1 : (validSet.length >= 2 && validSet.length <= 9);
+      if (sizeOk) { t.validSet = validSet; return t; }
+    }
+    const fallback = { op: "mult", comp: "<", n: 6, m: 40 };
+    fallback.validSet = computeValidSet(fallback);
+    return fallback;
+  }
+
+  function renderBoardExpr(t, filledValue) {
+    const boxHtml = filledValue === null
+      ? '<span class="board-box" id="board-box"></span>'
+      : '<span class="board-box filled pulse" id="board-box">' + filledValue + "</span>";
+    return boxHtml + " " + OP_SYMBOLS[t.op] + " " + t.n + " " + COMP_SYMBOLS[t.comp] + " " + t.m;
+  }
+
+  // --- Zusatzmodus: Vergleichszeichen finden ---
+  function makeExprSide(op) {
+    let a, b, value;
+    if (op === "mult") { a = randInt(2, 9); b = randInt(2, 9); value = a * b; }
+    else if (op === "add") { a = randInt(1, 10); b = randInt(1, 10); value = a + b; }
+    else if (op === "sub") { a = randInt(5, 20); b = randInt(1, a); value = a - b; }
+    else { b = randInt(2, 9); const q = randInt(1, 9); a = b * q; value = q; }
+    return { text: a + " " + OP_SYMBOLS[op] + " " + b, value: value };
+  }
+
+  function generateCompareTask(opSetting) {
+    const opPool = opSetting === "mixed" ? ["mult", "add", "sub", "div"] : [opSetting];
+    if (Math.random() < 0.4) {
+      const op = pick(opPool);
+      const left = makeExprSide(op);
+      const right = makeExprSide(op);
+      const comp = left.value < right.value ? "<" : left.value > right.value ? ">" : "=";
+      return { leftText: left.text, rightText: right.text, comp: comp };
+    }
+    const op = pick(opPool);
+    const left = makeExprSide(op);
+    const roll = Math.random();
+    let m;
+    if (roll < 0.34) m = left.value;
+    else if (roll < 0.67) m = left.value + randInt(1, 8);
+    else m = Math.max(0, left.value - randInt(1, 8));
+    const comp = left.value < m ? "<" : left.value > m ? ">" : "=";
+    return { leftText: left.text, rightText: String(m), comp: comp };
+  }
+
+  // --- Zusatzmodus: Rechenzeichen finden (a ○ a = m) ---
+  function generateOperatorTask() {
+    const a = randInt(3, 9);
+    const results = {};
+    results[OP_SYMBOLS.add] = 2 * a;
+    results[OP_SYMBOLS.sub] = 0;
+    results[OP_SYMBOLS.mult] = a * a;
+    results[OP_SYMBOLS.div] = 1;
+    const correctOp = pick(Object.keys(results));
+    return { a: a, m: results[correctOp], correctOp: correctOp };
+  }
+
+  function opWordAccusative(op) {
+    return op === "mult" ? "mal" : op === "add" ? "plus" : op === "sub" ? "minus" : "geteilt durch";
+  }
+  function compWord(comp) {
+    return comp === "<" ? "kleiner als" : comp === ">" ? "größer als" : "gleich";
+  }
+
+  const els = {
+    startScreen: document.getElementById("start-screen"),
+    practiceScreen: document.getElementById("practice-screen"),
+    headerResetBtn: document.getElementById("header-reset-btn"),
+    startBtn: document.getElementById("start-btn"),
+    boardExpr: document.getElementById("board-expr"),
+    calcLine: document.getElementById("calc-line"),
+    tally: document.getElementById("tally"),
+    cardsRow: document.getElementById("cards-row"),
+    legendMarks: document.getElementById("legend-marks"),
+    feedback: document.getElementById("feedback"),
+    revealBtn: document.getElementById("reveal-btn"),
+    resetTaskBtn: document.getElementById("reset-task-btn"),
+    newTaskBtn: document.getElementById("new-task-btn"),
+    legendText: document.getElementById("legend-text"),
+    modeDesc: document.getElementById("mode-desc"),
+    opFieldset: document.getElementById("op-fieldset"),
+    quizScreen: document.getElementById("quiz-screen"),
+    quizNote: document.getElementById("quiz-note"),
+    quizExpr: document.getElementById("quiz-expr"),
+    quizStats: document.getElementById("quiz-stats"),
+    quizChoices: document.getElementById("quiz-choices"),
+    quizFeedback: document.getElementById("quiz-feedback"),
+    quizNextBtn: document.getElementById("quiz-next-btn")
+  };
+
+  const CORRECT_POINTS = 10;
+  const STREAK_BONUS_AT = 3;
+  const STREAK_BONUS_POINTS = 5;
+
+  let settings = { op: "mult" };
+  let task = null;
+  let cardState = {}; // { [num]: 'good' | 'bad' | 'na' }
+
+  let quizState = { mode: null, op: "mult", points: 0, correct: 0, total: 0, streak: 0, task: null, answered: false };
+
+  function newTask() {
+    task = generateTask(settings.op);
+    cardState = {};
+    els.feedback.className = "feedback";
+    els.feedback.textContent = "";
+    els.legendMarks.hidden = true;
+    els.calcLine.textContent = "";
+    els.calcLine.className = "calc-line";
+    els.boardExpr.innerHTML = renderBoardExpr(task, null);
+    renderCards();
+    updateTally();
+  }
+
+  function resetTask() {
+    cardState = {};
+    els.feedback.className = "feedback";
+    els.feedback.textContent = "";
+    els.legendMarks.hidden = true;
+    els.calcLine.textContent = "";
+    els.calcLine.className = "calc-line";
+    els.boardExpr.innerHTML = renderBoardExpr(task, null);
+    renderCards();
+    updateTally();
+  }
+
+  function updateTally() {
+    const testedCount = Object.keys(cardState).length;
+    const foundCount = Object.values(cardState).filter(function (s) { return s === "good"; }).length;
+    els.tally.textContent = "Getestet: " + testedCount + " von 11 – gefunden: " + foundCount;
+  }
+
+  function renderCards() {
+    let html = "";
+    for (let n = 0; n <= 10; n++) {
+      const state = cardState[n];
+      const cls = state ? " mark-" + state : "";
+      html += '<button type="button" class="num-card' + cls + '" data-num="' + n + '">' + n + "</button>";
+    }
+    els.cardsRow.innerHTML = html;
+    els.cardsRow.querySelectorAll(".num-card").forEach(function (btn) {
+      btn.addEventListener("click", function () { testCard(parseInt(btn.dataset.num, 10)); });
+    });
+  }
+
+  function testCard(box) {
+    els.cardsRow.querySelectorAll(".num-card").forEach(function (btn) {
+      btn.classList.toggle("active", parseInt(btn.dataset.num, 10) === box);
+    });
+
+    const value = computeValue(task.op, box, task.n);
+    const opWord = opWordAccusative(task.op);
+
+    if (value === null) {
+      cardState[box] = "na";
+      els.boardExpr.innerHTML = renderBoardExpr(task, box);
+      const reason = task.op === "sub" ? "weil wir noch keine negativen Zahlen nutzen" : "weil dabei ein Rest bleibt";
+      els.calcLine.className = "calc-line na";
+      els.calcLine.textContent = box + " " + opWord + " " + task.n + " lässt sich hier nicht sinnvoll berechnen, " + reason + ".";
+    } else {
+      const ok = task.comp === "<" ? value < task.m : task.comp === ">" ? value > task.m : value === task.m;
+      cardState[box] = ok ? "good" : "bad";
+      els.boardExpr.innerHTML = renderBoardExpr(task, box);
+      els.calcLine.className = "calc-line " + (ok ? "good" : "bad");
+      els.calcLine.textContent = box + " " + opWord + " " + task.n + " = " + value + ". Das ist " + (ok ? "" : "nicht ") + compWord(task.comp) + " " + task.m + " – " + (ok ? "passt!" : "passt nicht.");
+    }
+
+    renderCards();
+    updateTally();
+    checkComplete();
+  }
+
+  function checkComplete() {
+    const testedCount = Object.keys(cardState).length;
+    if (testedCount < 11) { els.legendMarks.hidden = true; return; }
+    els.legendMarks.hidden = false;
+    const foundSet = Object.keys(cardState).filter(function (k) { return cardState[k] === "good"; }).map(Number).sort(function (a, b) { return a - b; });
+    const correctSet = task.validSet.slice().sort(function (a, b) { return a - b; });
+    const allMatch = JSON.stringify(foundSet) === JSON.stringify(correctSet);
+    els.feedback.className = "feedback show " + (allMatch ? "good" : "bad");
+    els.feedback.style.background = allMatch ? "#e1f2e7" : "#fbe6e3";
+    els.feedback.style.color = allMatch ? "#2f8f57" : "#c0453a";
+    els.feedback.textContent = "Alle 11 Zahlen getestet! Die passenden Zahlen sind: " + (correctSet.length ? correctSet.join(", ") : "keine");
+  }
+
+  function newQuizTask() {
+    quizState.task = quizState.mode === "compare" ? generateCompareTask(quizState.op) : generateOperatorTask();
+    quizState.answered = false;
+    renderQuizBoard();
+    renderQuizChoices();
+    els.quizFeedback.className = "feedback";
+    els.quizFeedback.textContent = "";
+    updateQuizStats();
+  }
+
+  function renderQuizBoard() {
+    const t = quizState.task;
+    if (quizState.mode === "compare") {
+      els.quizExpr.innerHTML = t.leftText + ' <span class="board-box" id="quiz-box">?</span> ' + t.rightText;
+    } else {
+      els.quizExpr.innerHTML = t.a + ' <span class="board-box" id="quiz-box">?</span> ' + t.a + " = " + t.m;
+    }
+  }
+
+  function renderQuizChoices() {
+    const options = quizState.mode === "compare" ? ["<", "=", ">"] : [OP_SYMBOLS.add, OP_SYMBOLS.sub, OP_SYMBOLS.mult, OP_SYMBOLS.div];
+    let html = "";
+    options.forEach(function (opt) {
+      html += '<button type="button" class="choice-btn" data-val="' + opt + '">' + opt + "</button>";
+    });
+    els.quizChoices.innerHTML = html;
+    els.quizChoices.querySelectorAll(".choice-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () { answerQuiz(btn.dataset.val); });
+    });
+  }
+
+  function answerQuiz(val) {
+    if (quizState.answered) return;
+    quizState.answered = true;
+    const t = quizState.task;
+    const correctVal = quizState.mode === "compare" ? t.comp : t.correctOp;
+    const ok = val === correctVal;
+    quizState.total++;
+
+    let bonusMsg = "";
+    if (ok) {
+      quizState.correct++;
+      quizState.streak++;
+      let gained = CORRECT_POINTS;
+      if (quizState.streak % STREAK_BONUS_AT === 0) {
+        gained += STREAK_BONUS_POINTS;
+        bonusMsg = " (+" + STREAK_BONUS_POINTS + " Serien-Bonus, " + quizState.streak + " richtig in Folge!)";
+      }
+      quizState.points += gained;
+    } else {
+      quizState.streak = 0;
+    }
+
+    const box = document.getElementById("quiz-box");
+    if (box) { box.textContent = val; box.classList.add("filled", "pulse"); }
+
+    els.quizChoices.querySelectorAll(".choice-btn").forEach(function (btn) {
+      btn.disabled = true;
+      if (btn.dataset.val === correctVal) btn.classList.add("mark-good");
+      else if (btn.dataset.val === val) btn.classList.add("mark-bad");
+    });
+
+    els.quizFeedback.className = "feedback show";
+    els.quizFeedback.style.background = ok ? "#e1f2e7" : "#fbe6e3";
+    els.quizFeedback.style.color = ok ? "#2f8f57" : "#c0453a";
+    els.quizFeedback.textContent = ok ? ("Richtig!" + bonusMsg) : ("Leider nicht. Richtig wäre: " + correctVal);
+
+    updateQuizStats();
+  }
+
+  function updateQuizStats() {
+    let text = "Punkte: " + quizState.points + " · Richtig: " + quizState.correct + " von " + quizState.total;
+    if (quizState.streak >= 2) text += " · Serie: " + quizState.streak;
+    els.quizStats.textContent = text;
+  }
+
+  function updateModeUI() {
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    els.opFieldset.hidden = mode === "operator";
+    if (mode === "plenum") {
+      els.legendText.textContent = "Für das Kästchen sollen alle Zahlen von 0 bis 10 gefunden werden, für die die Aufgabe stimmt. Klickt gemeinsam eine Zahl nach der anderen an: Sie wird ins Kästchen eingesetzt, die Klasse rechnet nach und begründet, ob sie passt.";
+      els.modeDesc.textContent = "Gemeinsame Einführung im Plenum – ohne Punkte.";
+    } else if (mode === "compare") {
+      els.legendText.textContent = "Auf beiden Seiten steht eine Zahl oder eine Rechenaufgabe. Gesucht ist das passende Zeichen: kleiner, gleich oder größer.";
+      els.modeDesc.textContent = "Übung danach – allein oder zu zweit, mit Punkten.";
+    } else {
+      els.legendText.textContent = "Dieselbe Zahl wird zweimal verwendet. Gesucht ist das Rechenzeichen, das die Gleichung wahr macht.";
+      els.modeDesc.textContent = "Übung danach – allein oder zu zweit, mit Punkten.";
+    }
+  }
+
+  document.querySelectorAll('input[name="mode"]').forEach(function (radio) {
+    radio.addEventListener("change", updateModeUI);
+  });
+  updateModeUI();
+
+  els.quizNextBtn.addEventListener("click", newQuizTask);
+
+  els.revealBtn.addEventListener("click", function () {
+    for (let box = 0; box <= 10; box++) {
+      if (cardState[box]) continue;
+      const value = computeValue(task.op, box, task.n);
+      if (value === null) { cardState[box] = "na"; continue; }
+      const ok = task.comp === "<" ? value < task.m : task.comp === ">" ? value > task.m : value === task.m;
+      cardState[box] = ok ? "good" : "bad";
+    }
+    renderCards();
+    updateTally();
+    checkComplete();
+  });
+
+  els.resetTaskBtn.addEventListener("click", resetTask);
+  els.newTaskBtn.addEventListener("click", newTask);
+
+  els.headerResetBtn.addEventListener("click", function () {
+    els.practiceScreen.hidden = true;
+    els.quizScreen.hidden = true;
+    els.headerResetBtn.hidden = true;
+    els.startScreen.hidden = false;
+  });
+
+  els.startBtn.addEventListener("click", function () {
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    settings.op = document.querySelector('input[name="op"]:checked').value;
+    els.startScreen.hidden = true;
+    els.headerResetBtn.hidden = false;
+
+    if (mode === "plenum") {
+      els.practiceScreen.hidden = false;
+      els.quizScreen.hidden = true;
+      newTask();
+    } else {
+      els.practiceScreen.hidden = true;
+      els.quizScreen.hidden = false;
+      quizState = { mode: mode, op: settings.op, points: 0, correct: 0, total: 0, streak: 0, task: null, answered: false };
+      els.quizNote.textContent = mode === "compare"
+        ? "Rechenkonferenz-Tipp: Erst beide Seiten ausrechnen, dann vergleichen und begründen."
+        : "Rechenkonferenz-Tipp: Erst alle vier Rechenzeichen im Kopf durchprobieren, dann entscheiden.";
+      newQuizTask();
+    }
+  });
+})();
+</script>
+</body>
+</html>
