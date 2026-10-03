@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mathe unter der Lupe</title>
+<style>
+  :root {
+    --paper: #f6f0e4;
+    --card: #fdf9ee;
+    --border: #ddd2b3;
+    --ink: #2e2a24;
+    --ink-soft: #6b6456;
+    --focus: #1a56db;
+
+    --c-pruefen: #2f6fae; --c-pruefen-bg: #e8f1fa;
+    --c-begruenden: #4f8f3f; --c-begruenden-bg: #eef6ea;
+    --c-reparieren: #d2822e; --c-reparieren-bg: #fdf0e3;
+    --c-weiterdenken: #8a4fae; --c-weiterdenken-bg: #f3ebf8;
+
+    --good: #2f8f57; --good-bg: #e1f2e7;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    line-height: 1.5;
+  }
+
+  .app { width: 100%; max-width: 760px; padding: 20px 16px 48px; }
+
+  header { text-align: center; margin-bottom: 14px; }
+  .logo { font-size: 2.2rem; line-height: 1; margin-bottom: 4px; }
+  h1 { font-size: clamp(1.4rem, 4.4vw, 1.9rem); margin: 0; font-weight: 800; }
+  .subtitle { color: var(--ink-soft); font-size: 0.95rem; margin: 4px 0 0; }
+
+  section.card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px 22px;
+    box-shadow: 0 3px 0 rgba(46, 42, 36, 0.05);
+    margin-bottom: 16px;
+  }
+
+  fieldset { border: none; padding: 0; margin: 0 0 14px; }
+  fieldset:last-child { margin-bottom: 0; }
+  legend { font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; padding: 0; }
+
+  .segmented { display: flex; flex-wrap: wrap; gap: 8px; }
+  .segmented label { position: relative; }
+  .segmented input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .segmented span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border: 2px solid var(--border); border-radius: 10px;
+    font-weight: 600; font-size: 0.88rem; color: var(--ink-soft); background: #fff;
+  }
+  .segmented input:checked + span { border-color: var(--focus); background: #eaf0fc; color: var(--focus); }
+  .segmented input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .type-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .type-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: 999px; border: 2px solid var(--border);
+    background: #fff; font-weight: 600; font-size: 0.82rem; color: var(--ink-soft); cursor: pointer;
+  }
+  .type-chip.active[data-type="P"] { border-color: var(--c-pruefen); background: var(--c-pruefen-bg); color: var(--c-pruefen); }
+  .type-chip.active[data-type="B"] { border-color: var(--c-begruenden); background: var(--c-begruenden-bg); color: var(--c-begruenden); }
+  .type-chip.active[data-type="R"] { border-color: var(--c-reparieren); background: var(--c-reparieren-bg); color: var(--c-reparieren); }
+  .type-chip.active[data-type="W"] { border-color: var(--c-weiterdenken); background: var(--c-weiterdenken-bg); color: var(--c-weiterdenken); }
+
+  details.legend-box {
+    margin: 0 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #faf7ef;
+  }
+  details.legend-box summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0; }
+  .legend-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.85rem; }
+  .legend-item .ic { font-size: 1.2rem; }
+  .legend-item b { display: block; }
+  .legend-note { font-size: 0.85rem; color: var(--ink-soft); margin: 10px 0 0; }
+
+  .progress-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 10px; flex-wrap: wrap; gap: 8px;
+  }
+  .goto-form { display: flex; align-items: center; gap: 6px; }
+  .goto-form input {
+    width: 60px; padding: 5px 7px; border: 2px solid var(--border); border-radius: 7px;
+    font-family: inherit; font-size: 0.85rem; text-align: center;
+  }
+
+  .flip-outer { perspective: 1600px; margin: 0 0 16px; }
+  .flip-inner {
+    position: relative; min-height: 280px; width: 100%;
+    transform-style: preserve-3d; transition: transform 0.5s;
+  }
+  .flip-inner.flipped { transform: rotateY(180deg); }
+  .flip-face {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    border: 3px solid var(--border); border-radius: 16px;
+    background: var(--card);
+    display: flex; flex-direction: column;
+    padding: 18px 20px;
+  }
+  .flip-face.back { transform: rotateY(180deg); }
+
+  .face-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .face-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 50%; color: #fff; font-weight: 800; font-size: 0.95rem;
+  }
+  .face-type { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.95rem; }
+  .face-type .ic { font-size: 1.15rem; }
+
+  .face-body {
+    flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+    font-size: clamp(1.05rem, 3vw, 1.3rem); font-weight: 700; white-space: pre-line; padding: 10px 4px;
+  }
+  .flip-face.back .face-body { font-weight: 600; font-size: clamp(1rem, 2.8vw, 1.2rem); }
+
+  .face-foot { text-align: center; font-size: 0.72rem; color: var(--ink-soft); }
+
+  .flip-face[data-type="P"] { border-color: var(--c-pruefen); }
+  .flip-face[data-type="B"] { border-color: var(--c-begruenden); }
+  .flip-face[data-type="R"] { border-color: var(--c-reparieren); }
+  .flip-face[data-type="W"] { border-color: var(--c-weiterdenken); }
+  .flip-face[data-type="P"] .face-num { background: var(--c-pruefen); }
+  .flip-face[data-type="B"] .face-num { background: var(--c-begruenden); }
+  .flip-face[data-type="R"] .face-num { background: var(--c-reparieren); }
+  .flip-face[data-type="W"] .face-num { background: var(--c-weiterdenken); }
+  .flip-face[data-type="P"] .face-type { color: var(--c-pruefen); }
+  .flip-face[data-type="B"] .face-type { color: var(--c-begruenden); }
+  .flip-face[data-type="R"] .face-type { color: var(--c-reparieren); }
+  .flip-face[data-type="W"] .face-type { color: var(--c-weiterdenken); }
+
+  .nav-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .btn {
+    padding: 10px 16px; border-radius: 8px; border: 2px solid var(--border);
+    background: #fff; font-weight: 600; font-size: 0.9rem; cursor: pointer; color: var(--ink);
+    font-family: inherit;
+  }
+  .btn:hover:not(:disabled) { background: #f4f0e2; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .btn-primary { background: var(--focus); border-color: var(--focus); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1544ad; }
+
+  .empty-state { text-align: center; color: var(--ink-soft); font-style: italic; padding: 40px 10px; }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 480px) {
+    .flip-inner { min-height: 340px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">🔍</div>
+    <h1>Mathe unter der Lupe</h1>
+    <p class="subtitle">Stimmt's oder Quatsch? – Eine Kartei zum Argumentieren</p>
+  </header>
+
+  <section class="card">
+    <fieldset>
+      <legend>Zahlenraum</legend>
+      <div class="segmented" id="range-group">
+        <label><input type="radio" name="range" value="20" checked><span>bis 20 · Klasse 1</span></label>
+        <label><input type="radio" name="range" value="100"><span>bis 100 · Klasse 2</span></label>
+        <label><input type="radio" name="range" value="1000"><span>bis 1000 · Klasse 3/4</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Kartentyp</legend>
+      <div class="type-chips" id="type-chips"></div>
+    </fieldset>
+
+    <details class="legend-box">
+      <summary>So geht's – die vier Zeichen</summary>
+      <div class="legend-grid">
+        <div class="legend-item"><span class="ic">🔍</span><span><b>prüfen</b>Stimmt die Aussage?</span></div>
+        <div class="legend-item"><span class="ic">💬</span><span><b id="legend-begruenden-label">begründen</b>Erkläre, warum.</span></div>
+        <div class="legend-item"><span class="ic">✏️</span><span><b>reparieren</b>Mach es richtig.</span></div>
+        <div class="legend-item"><span class="ic">💡</span><span><b>weiterdenken</b>Finde mehr.</span></div>
+      </div>
+      <p class="legend-note">1 Karte lesen. 2 Auf das Zeichen schauen. 3 Denken, rechnen, mit Material legen. 4 Karte umdrehen und vergleichen. Nicht jede Karte ist Quatsch – manche Aussagen stimmen!</p>
+    </details>
+  </section>
+
+  <section class="card" id="deck-screen">
+    <div class="progress-row">
+      <span id="progress-text">Karte 1 von 47</span>
+      <form class="goto-form" id="goto-form">
+        <label for="goto-input">Gehe zu Nr.</label>
+        <input type="number" id="goto-input" min="1">
+        <button type="submit" class="btn">Los</button>
+      </form>
+    </div>
+
+    <div class="flip-outer">
+      <div class="flip-inner" id="flip-inner">
+        <div class="flip-face front" id="face-front" data-type="P">
+          <div class="face-head">
+            <span class="face-num" id="front-num">1</span>
+            <span class="face-type"><span class="ic" id="front-icon">🔍</span><span id="front-type-label">prüfen</span></span>
+          </div>
+          <div class="face-body" id="front-text"></div>
+          <div class="face-foot" id="front-foot"></div>
+        </div>
+        <div class="flip-face back" id="face-back" data-type="P">
+          <div class="face-head">
+            <span class="face-num" id="back-num">1</span>
+            <span class="face-type"><span class="ic" id="back-icon">🔍</span><span>LÖSUNG</span></span>
+          </div>
+          <div class="face-body" id="back-text"></div>
+          <div class="face-foot" id="back-foot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button type="button" class="btn" id="prev-btn">⟵ Zurück</button>
+      <button type="button" class="btn btn-primary" id="flip-btn">Karte umdrehen</button>
+      <button type="button" class="btn" id="next-btn">Weiter ⟶</button>
+      <button type="button" class="btn" id="random-btn">🔀 Zufällige Karte</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const TYPE_META = {
+    P: { icon: "🔍", label: "prüfen" },
+    B: { icon: "💬", label: "begründen" },
+    E: { icon: "💬", label: "erklären" },
+    R: { icon: "✏️", label: "reparieren" },
+    W: { icon: "💡", label: "weiterdenken" }
+  };
+  // Für Filter/Farbe zählt erklären (Klasse 1) wie begründen.
+  function colorType(t) { return t === "E" ? "B" : t; }
+
+  const DECKS = {
+    20: {
+      count: 47,
+      footer: "Mathe unter der Lupe · bis 20 · © 2026 Katja Bender",
+      backFooter: "Hast du das auch so?",
+      cards: [
+        { n:1, t:"P", q:"7 ist mehr als 9.\nStimmt das?", a:"Nein.\n9 ist mehr als 7." },
+        { n:2, t:"P", q:"Nach der 12 kommt die 14.\nStimmt das?", a:"Nein.\nNach der 12 kommt die 13." },
+        { n:3, t:"R", q:"5 + 3 = 9.\nMach es richtig.", a:"5 + 3 = 8." },
+        { n:4, t:"E", q:"3 + 4 und 4 + 3 sind gleich viel.\nWarum?", a:"Beide sind 7.\nIch tausche nur die Zahlen." },
+        { n:5, t:"P", q:"15 hat 1 Zehner und 5 Einer.\nStimmt das?", a:"Ja.\n10 + 5 = 15." },
+        { n:6, t:"W", q:"Finde zwei Zahlen.\nZusammen sind sie 10.", a:"Zum Beispiel: 6 + 4, 7 + 3,\n9 + 1, 5 + 5 …" },
+        { n:7, t:"P", q:"Vor der 10 kommt die 11.\nStimmt das?", a:"Nein.\nVor der 10 kommt die 9.\nNach der 10 kommt die 11." },
+        { n:8, t:"R", q:"8 − 3 = 6.\nMach es richtig.", a:"8 − 3 = 5." },
+        { n:9, t:"E", q:"Tim hat 6 Äpfel.\nLea hat 6 Äpfel.\nWer hat mehr?", a:"Keiner.\nBeide haben gleich viele." },
+        { n:10, t:"P", q:"Das Doppelte von 6 ist 12.\nStimmt das?", a:"Ja.\n6 + 6 = 12." },
+        { n:11, t:"P", q:"Zwölf schreibt man 21.\nStimmt das?", a:"Nein.\nZwölf hat 1 Zehner und 2 Einer.\nMan schreibt 12." },
+        { n:12, t:"W", q:"Ich bin eine Zahl.\nIch liege zwischen 14 und 16.\nWer bin ich?", a:"Ich bin die 15." },
+        { n:13, t:"R", q:"9 + 0 = 0.\nMach es richtig.", a:"9 + 0 = 9.\nMit 0 bleibt die Zahl gleich." },
+        { n:14, t:"E", q:"10 − 10 = 0.\nWarum?", a:"Ich nehme alles weg.\nDann ist nichts mehr da." },
+        { n:15, t:"P", q:"8 + 5 ist mehr als 10.\nStimmt das?", a:"Ja.\n8 + 2 = 10. Dann noch 3 dazu.\nDas sind 13." },
+        { n:16, t:"P", q:"Im Bus sind 7 Kinder.\n2 steigen aus.\nJetzt sind 9 Kinder im Bus.\nStimmt das?", a:"Nein.\nWenn Kinder aussteigen,\nwerden es weniger.\n7 − 2 = 5." },
+        { n:17, t:"W", q:"Die Hälfte von 14 ist 7.\nFinde noch mehr Zahlen\nund ihre Hälfte.", a:"Zum Beispiel: Die Hälfte von\n10 ist 5. Die Hälfte von 16 ist 8." },
+        { n:18, t:"R", q:"17 ist kleiner als 13.\nMach es richtig.", a:"17 ist größer als 13.\nOder: 13 ist kleiner als 17." },
+        { n:19, t:"E", q:"6 + 7: Ich rechne\n6 + 6 + 1.\nGeht das?", a:"Ja.\n6 + 6 = 12. Dann noch 1 dazu.\nDas sind 13." },
+        { n:20, t:"P", q:"1 Zehner ist so viel wie\n10 Einer.\nStimmt das?", a:"Ja.\n10 Einer sind 1 Zehner." },
+        { n:21, t:"P", q:"20 ist die größte Zahl.\nEs gibt keine größere.\nStimmt das?", a:"Nein.\nNach der 20 kommt die 21.\nEs geht immer weiter." },
+        { n:22, t:"W", q:"4 + 4 = 8.\nFinde noch mehr\nAufgaben mit 8.", a:"Zum Beispiel: 5 + 3, 6 + 2,\n10 − 2, 9 − 1 …" },
+        { n:23, t:"R", q:"14 − 4 = 18.\nMach es richtig.", a:"14 − 4 = 10.\nMinus macht kleiner." },
+        { n:24, t:"E", q:"5 + 5 = 10.\nAlso ist 10 − 5 = 5.\nWarum?", a:"Die Aufgaben gehören zusammen.\nIch nehme die 5 wieder weg." },
+        { n:25, t:"P", q:"Auf dem Würfel ist die\n7 die größte Zahl.\nStimmt das?", a:"Nein.\nAuf dem Würfel gibt es nur\n1 bis 6. Die 6 ist die größte Zahl." },
+        { n:26, t:"P", q:"9 + 4 = 13 und 4 + 9 = 14.\nStimmt das?", a:"Nein.\nBeide sind 13.\nTauschen ändert das Ergebnis nicht." },
+        { n:27, t:"W", q:"Welche Zahlen bis 20\nhaben 1 Zehner?", a:"10, 11, 12, 13, 14, 15, 16, 17,\n18, 19." },
+        { n:28, t:"R", q:"Mia hat 3 Stifte.\nSie bekommt 5 dazu.\nJetzt hat sie 2 Stifte.\nMach es richtig.", a:"Dazu heißt plus.\n3 + 5 = 8. Mia hat 8 Stifte." },
+        { n:29, t:"P", q:"11 ist eine gerade Zahl.\nStimmt das?", a:"Nein.\n11 Kinder bilden Paare.\nEin Kind bleibt allein.\n11 ist ungerade." },
+        { n:30, t:"E", q:"8 + 6: Ich rechne\n8 + 2 + 4.\nWarum?", a:"So komme ich erst bis 10.\nDann ist es leicht: 10 + 4 = 14." },
+        { n:31, t:"P", q:"Zwei 5-Euro-Scheine sind\nso viel wie ein\n10-Euro-Schein.\nStimmt das?", a:"Ja.\n5 + 5 = 10." },
+        { n:32, t:"P", q:"16 liegt näher an 20 als\nan 10.\nStimmt das?", a:"Ja.\nVon 16 bis 20 sind es 4.\nVon 16 bis 10 sind es 6." },
+        { n:33, t:"R", q:"Nach der 19 kommt die\n110.\nMach es richtig.", a:"Nach der 19 kommt die 20." },
+        { n:34, t:"W", q:"Meine Zahl hat 1 Zehner.\nSie ist größer als 17.\nWelche Zahlen können\nes sein?", a:"18 oder 19." },
+        { n:35, t:"E", q:"12 − 2 = 10.\nDas sehe ich sofort.\nWarum?", a:"Ich nehme die 2 Einer weg.\nDann bleibt der Zehner." },
+        { n:36, t:"P", q:"In 13 stecken 13 Einer.\nStimmt das?", a:"Ja.\n1 Zehner und 3 Einer sind so\nviel wie 13 Einer." },
+        { n:37, t:"R", q:"7 + 7 = 15.\nMach es richtig.", a:"7 + 7 = 14.\nDas ist das Doppelte von 7." },
+        { n:38, t:"P", q:"Auf dem Teller sind\n10 Kekse.\nIch esse 3.\nEs sind noch 7.\nStimmt das?", a:"Ja.\n10 − 3 = 7." },
+        { n:39, t:"W", q:"Lege 9 Plättchen.\nTeile sie in zwei Gruppen.\nWie viele Möglichkeiten\nfindest du?", a:"8 und 1, 7 und 2, 6 und 3,\n5 und 4. Auch 9 und 0 geht." },
+        { n:40, t:"E", q:"Ein Kind sagt: 13 − 5 ist\nmehr als 13.\nWas sagst du?", a:"Das ist Quatsch.\nMinus nimmt etwas weg.\n13 − 5 = 8. Das ist weniger als 13." },
+        { n:41, t:"P", q:"18 hat 8 Zehner.\nStimmt das?", a:"Nein.\n18 hat 1 Zehner und 8 Einer." },
+        { n:42, t:"R", q:"Lea steht als Vierte in\nder Reihe.\nVor ihr stehen 4 Kinder.\nMach es richtig.", a:"Vor Lea stehen 3 Kinder.\nOder: Lea steht als Fünfte\nin der Reihe." },
+        { n:43, t:"W", q:"Erfinde selbst eine\nQuatsch-Aufgabe.\nEin anderes Kind macht\nsie richtig.", a:"Hier gibt es viele Lösungen.\nPrüft zusammen: Ist es\nwirklich Quatsch?" },
+        { n:44, t:"P", q:"15 − 5 = 10 und\n15 − 6 = 11.\nStimmt das?", a:"Nein.\nIch nehme mehr weg.\nDann bleibt weniger. 15 − 6 = 9." },
+        { n:45, t:"E", q:"20 Kinder bilden Paare.\nBleibt ein Kind allein?", a:"Nein.\nEs sind 10 Paare.\nKein Kind bleibt allein." },
+        { n:46, t:"P", q:"3 + 3 + 3 = 10.\nStimmt das?", a:"Nein.\n3 + 3 = 6. Dann noch 3 dazu.\nDas sind 9." },
+        { n:47, t:"W", q:"Ich denke mir eine Zahl.\nIch rechne plus 5.\nDann habe ich 12.\nWie heißt meine Zahl?", a:"Meine Zahl ist 7.\nDenn 7 + 5 = 12." }
+      ]
+    },
+    100: {
+      count: 100,
+      footer: "Mathe unter der Lupe · bis 100 · © 2026 Katja Bender",
+      backFooter: "Vergleiche mit deiner Begründung.",
+      cards: [
+        { n:1, t:"B", q:"9 Zehner und 12 Einer ergeben\neine Zahl unter 100. Entscheide\nund begründe.", a:"Quatsch.\n9 Z + 12 E = 90 + 12 = 102. Das ist\nmehr als 100." },
+        { n:2, t:"W", q:"Ich ziehe ganze Zehner ab, zum\nBeispiel 68 − 30. Bleibt die\nEinerziffer gleich? Immer,\nmanchmal oder nie?", a:"Immer. Es werden nur Zehner\nweggenommen, die Einer bleiben,\nwie sie sind: 68 − 30 = 38." },
+        { n:3, t:"R", q:"In 80 stecken genau 8 Einer.\nRepariere die Aussage.", a:"Quatsch. In 80 stecken\n8 Zehner oder 80 Einer." },
+        { n:4, t:"B", q:"28 + 37 ist kleiner als 28 + 40.\nEntscheide, ohne auszurechnen.", a:"Stimmt. Der erste Summand ist\ngleich, und 37 ist kleiner als 40." },
+        { n:5, t:"B", q:"Ich bündele 28 Einer. Danach\nhabe ich 2 Zehner und 8 Einer.\nErkläre das Bündeln.", a:"Stimmt. Je 10 Einer werden zu\neinem Zehner. Aus 20 Einern\nwerden 2 Zehner, 8 Einer bleiben\nübrig." },
+        { n:6, t:"R", q:"Wenn ich beim Addieren einen\nSummanden um 1 erhöhe, wird\ndie Summe um 1 kleiner.\nRepariere.", a:"Quatsch. Bleibt der andere\nSummand gleich, wird die Summe\num 1 größer." },
+        { n:7, t:"P", q:"In 26 und 62 hat die\n6 denselben Wert. Stimmt's?", a:"Quatsch. In 26 ist die 6 nur\n6 wert, in 62 ist sie 60 wert." },
+        { n:8, t:"W", q:"Auf einem Regal stehen\n46 Bücher. 19 kommen dazu.\nJetzt sind es weniger Bücher.\nKann das trotzdem stimmen?\nErfinde eine passende\nGeschichte.", a:"Nur wenn noch etwas anderes\npassiert. Zum Beispiel werden\ngleichzeitig mehr als 19 Bücher\nausgeliehen." },
+        { n:9, t:"B", q:"4 Zehner und 18 Einer sind\nweniger als 6 Zehner.\nEntscheide, ohne alles\nauszurechnen.", a:"Stimmt. 4 Z + 18 E = 58, und 58 ist\nkleiner als 60." },
+        { n:10, t:"R", q:"In der Klasse sind 26 Kinder.\nHeute fehlen 4. Es sind\n30 Kinder da. Ändere möglichst\nwenig.", a:"Zum Beispiel: Heute kommen\n4 Kinder dazu, dann sind 30 da.\nOder: 4 fehlen, dann sind 22 da." },
+        { n:11, t:"P", q:"5 Zehner und 4 Einer schreibt\nman 504. Was könnte das Kind\ngedacht haben?", a:"Es hat 50 und 4 einfach\nhintereinander geschrieben.\nRichtig ist 54." },
+        { n:12, t:"B", q:"48 + 27: Ich mache aus\n48 zuerst 50. Dann muss ich am\nEnde 2 ausgleichen. Erkläre,\nwie.", a:"Ich habe 2 zu viel dazugenommen.\nAlso ziehe ich 2 wieder ab:\n50 + 27 = 77, 77 − 2 = 75." },
+        { n:13, t:"B", q:"In 36 stecken 3 Zehner und\ngleichzeitig 36 Einer. Kann\nbeides stimmen?", a:"Ja. 3 Zehner und 6 Einer sind gleich\nviel wie 36 Einer. Nur die\nBündelung ist anders." },
+        { n:14, t:"P", q:"Eine Zahl ist größer als 54 und\nkleiner als 56. Es gibt drei\nMöglichkeiten. Quatsch oder\nnicht?", a:"Quatsch. Es gibt nur eine ganze\nZahl: 55." },
+        { n:15, t:"P", q:"47 besteht aus 4 Zehnern und\n7 Einern. Stimmt's? Begründe.", a:"Stimmt. 4 Z + 7 E = 40 + 7 = 47." },
+        { n:16, t:"B", q:"71 − 38 kann nicht 63 sein.\nWoher weißt du das, ohne\ngenau zu rechnen?", a:"Ich nehme fast 40 weg, also muss\nungefähr 30 herauskommen. 63 ist\nnur 8 weniger als 71. Genau:\n71 − 38 = 33." },
+        { n:17, t:"W", q:"47 besteht aus 3 Zehnern und\n17 Einern. Geht das auch?", a:"Ja. Ein Zehner wurde entbündelt:\n30 + 17 = 47." },
+        { n:18, t:"R", q:"Tom hat 28 Sticker, Leni 35.\nTom hat 7 mehr. Repariere nur\nein Wort.", a:"Tom hat 7 weniger." },
+        { n:19, t:"B", q:"In 73 ist die 7 zehnmal so\nviel wert wie in 27. Begründe.", a:"Stimmt. In 73 ist die 7 siebzig wert,\nin 27 nur sieben. 70 ist zehnmal so\nviel wie 7." },
+        { n:20, t:"P", q:"Zwischen 39 und 41 liegt keine\nganze Zahl. Quatsch oder\nnicht?", a:"Quatsch. 40 liegt dazwischen." },
+        { n:21, t:"B", q:"10 Einer sind mehr als\n1 Zehner, weil 10 größer ist als\n1. Überzeuge das Kind.", a:"Quatsch. 10 Einer und 1 Zehner\nsind gleich viel, beides ist 10.\nLege es mit Material." },
+        { n:22, t:"B", q:"8 · 7 ist größer als 8 · 6.\nBegründe, ohne beide\nErgebnisse auszurechnen.", a:"Stimmt. 8 Siebener sind mehr als\n8 Sechser. Jeder Siebener hat\n1 mehr, also sind es 8 mehr:\n8 · 7 = 8 · 6 + 8." },
+        { n:23, t:"W", q:"3 Zehner und 25 Einer ergeben\n55. Stimmt's? Finde noch eine\nandere Darstellung.", a:"Stimmt. 30 + 25 = 55. Andere\nDarstellungen: 5 Z + 5 E, 4 Z + 15 E,\n2 Z + 35 E …" },
+        { n:24, t:"R", q:"Wenn ich die Einer um\n1 erhöhe, wird die Zahl immer\num 10 größer. Repariere die\nAussage.", a:"Quatsch. Die Zahl wird immer um\n1 größer. Auch von 39 zu 40: Dort\nwird gebündelt, aber es kommt\ntrotzdem nur 1 dazu." },
+        { n:25, t:"P", q:"Bei 64 tausche ich einen Zehner\ngegen 10 Einer. Jetzt habe ich\n5 Z und 14 E. Stimmt's?", a:"Stimmt. 50 + 14 = 64. Die Zahl\nbleibt gleich." },
+        { n:26, t:"W", q:"4 Kinder teilen 25 Euro\ngerecht. Jedes bekommt 6 Euro,\n1 Euro bleibt übrig. Muss der\nEuro übrig bleiben?", a:"Nein. Den Euro kann man in Cent\nwechseln und weiter teilen. Jedes\nKind bekommt 6 Euro und 25 Cent." },
+        { n:27, t:"B", q:"52 − 18: Ich rechne 52 − 20 + 2.\nStimmt's? Erkläre, warum.", a:"Stimmt. Ich habe 2 zu viel\nabgezogen und gebe sie wieder\ndazu: 52 − 20 = 32, 32 + 2 = 34." },
+        { n:28, t:"P", q:"Auf dem Schulhof sind\n34 Kinder. 18 kommen dazu.\nJetzt sind es 52. Stimmt's?", a:"Stimmt. 34 + 18 = 52. Nicht jede\nKarte ist Quatsch!" },
+        { n:29, t:"P", q:"10 Zehner ergeben 100 Einer.\nStimmt's?", a:"Stimmt. 10 Z = 100 E = 100." },
+        { n:30, t:"B", q:"62 − 28 = 64 − 30. Stimmt's?\nErkläre die Veränderung.", a:"Stimmt. Beide Zahlen wurden um\n2 größer. Der Abstand bleibt gleich,\nbeide Aufgaben ergeben 34." },
+        { n:31, t:"W", q:"42 : 7 = 6. Also ist auch\n42 : 6 = 7. Zufall oder\nZusammenhang?", a:"Zusammenhang. Beide Aufgaben\ngehören zu 6 · 7 = 42. Das sind\nUmkehraufgaben." },
+        { n:32, t:"P", q:"Ein Bus hat 60 Plätze. 48 sind\nbesetzt. 22 sind frei. Prüfe,\nohne schriftlich zu rechnen.", a:"Quatsch. 48 + 22 wäre 70. Frei sind\n12 Plätze." },
+        { n:33, t:"W", q:"38 = 3 Z + 8 E. Finde drei\nungewöhnlichere Darstellungen.", a:"Zum Beispiel: 2 Z + 18 E, 1 Z + 28 E,\n38 E." },
+        { n:34, t:"B", q:"38 und 83 sind gleich groß, weil\nbeide aus 3 und 8 bestehen.\nÜberzeuge das Kind.", a:"Quatsch. Die Stelle entscheidet\nüber den Wert. 83 hat 8 Zehner,\n38 nur 3 Zehner. 83 > 38." },
+        { n:35, t:"R", q:"48 Kinder bilden Zweierteams.\nEs entstehen 24 Teams und ein\nKind bleibt übrig. Repariere die\nGeschichte.", a:"Bei 48 Kindern entstehen genau\n24 Zweierteams, niemand bleibt\nübrig. Oder: Es sind 49 Kinder." },
+        { n:36, t:"B", q:"64 − 19 ist größer als 64 − 20.\nBegründe ohne Ergebnis.", a:"Stimmt. Wenn ich weniger\nwegnehme, bleibt mehr übrig." },
+        { n:37, t:"P", q:"Mia hat 8 Euro mehr als Ben.\nBen hat 27 Euro. Mia hat\n19 Euro. Welche Angabe passt\nnicht?", a:"Wenn Ben 27 Euro hat, müsste Mia\n35 Euro haben. 19 Euro passt nicht\nzu „8 Euro mehr“." },
+        { n:38, t:"P", q:"In 62 ist die 6 genau 6 wert.\nWas wurde verwechselt?", a:"Ziffer und Stellenwert. Die 6 steht\nan der Zehnerstelle und ist 60 wert." },
+        { n:39, t:"P", q:"Zwischen 39 und 40 liegt keine\nganze Zahl. Stimmt das?\nVergleiche mit Karte 20.", a:"Stimmt. 39 und 40 sind\nNachbarzahlen. Zwischen 39 und\n41 liegt dagegen die 40." },
+        { n:40, t:"W", q:"Ich suche zwei Zahlen mit der\nSumme 70. Eine davon muss\n35 sein. Quatsch oder nicht?\nFinde Gegenbeispiele.", a:"Quatsch. Zum Beispiel 30 + 40,\n20 + 50 oder 1 + 69." },
+        { n:41, t:"R", q:"6 Zehner und 0 Einer sind keine\nzweistellige Zahl, weil die Einer\nfehlen. Repariere den Quatsch.", a:"6 Zehner und 0 Einer sind 60. Die\n0 hält die Einerstelle frei. 60 ist\nzweistellig." },
+        { n:42, t:"W", q:"Erfinde eine richtige Aussage,\ndie zuerst wie Quatsch klingt.\nÜberzeuge ein anderes Kind.", a:"Hier gibt es viele Lösungen, zum\nBeispiel: 72 = 5 Z + 22 E. Prüft\ngemeinsam, ob eure Aussage\nstimmt." },
+        { n:43, t:"P", q:"38 + 24 = 52, denn\n30 + 20 = 50 und 8 + 4 = 12. Wo\ngeht es schief?", a:"Beim Zusammensetzen:\n50 + 12 = 62, nicht 52. In der\n12 steckt noch ein Zehner." },
+        { n:44, t:"P", q:"Dreiundsechzig schreibt man\n36. Was könnte hier passiert\nsein?", a:"Das Kind hat in der Reihenfolge\ngeschrieben, in der man spricht:\nerst „drei“, dann „sechzig“.\nRichtig ist 63." },
+        { n:45, t:"W", q:"25 Kinder sollen 4 gleich große\nTeams bilden. Geht das? Was\nmüsste man klären?", a:"Ohne Rest geht es nicht: 4 Teams zu\n6 Kindern, 1 Kind bleibt übrig. Man\nkönnte 5 Teams zu 5 Kindern\nbilden, oder ein Kind pfeift." },
+        { n:46, t:"W", q:"Bei 35 : 5 frage ich: Wie oft\npasst die 5 in die 35? Welche\nandere Geschichte könnte dazu\npassen?", a:"Zum Beispiel Verteilen: 35 Murmeln\nwerden gerecht an 5 Kinder\nverteilt. Jedes bekommt 7." },
+        { n:47, t:"P", q:"7 Zehner sind mehr als\n69 Einer. Stimmt's?", a:"Stimmt. 7 Zehner sind 70, und\n70 > 69." },
+        { n:48, t:"P", q:"Ein Buch hat 82 Seiten. Ben hat\n39 gelesen. Er muss noch\n53 lesen. Stimmt's?", a:"Quatsch. 82 − 39 = 43. Er muss\nnoch 43 Seiten lesen." },
+        { n:49, t:"W", q:"Ich denke mir eine Zahl. Sie hat\n4 Zehner und mehr als 9 Einer.\nFinde möglichst viele\nMöglichkeiten.", a:"Jede Zahl ab 50 geht:\n4 Z + 10 E = 50, 4 Z + 11 E = 51 …\nbis 4 Z + 60 E = 100." },
+        { n:50, t:"P", q:"Wenn ich bei 73 die Ziffern\ntausche, wird die Zahl größer.\nPrüfe die Aussage.", a:"Quatsch. Aus 73 wird 37. Die Zahl\nwird kleiner." },
+        { n:51, t:"B", q:"4 Kinder teilen 25 Murmeln.\nJedes bekommt 6, eine Murmel\nbleibt übrig. Kann das gerecht\nsein?", a:"Ja. Murmeln kann man nicht\nzerteilen. Alle bekommen gleich\nviel, eine bleibt übrig. Vergleiche\nmit Karte 26." },
+        { n:52, t:"B", q:"83 − 27 = 66. Das könnte\nstimmen, weil 66 kleiner als\n83 ist. Reicht diese\nBegründung?", a:"Nein. „Kleiner“ reicht nicht. Ich\nnehme fast 30 weg, also muss\nungefähr 55 herauskommen. Genau:\n83 − 27 = 56." },
+        { n:53, t:"W", q:"Ich habe 58 gelegt. Ich darf\ngenau einen Zehner entbündeln.\nWie sieht meine Darstellung\ndanach aus?", a:"Aus 5 Z + 8 E wird 4 Z + 18 E." },
+        { n:54, t:"P", q:"Eine Lehrerin hat 32 Hefte. Sie\nverteilt an 25 Kinder je ein\nHeft. 7 bleiben übrig. Stimmt's?", a:"Stimmt. 32 − 25 = 7." },
+        { n:55, t:"P", q:"5 · 9 ist dasselbe wie 10 · 9 : 2.\nStimmt's?", a:"Stimmt. 10 · 9 = 90, die Hälfte\ndavon ist 45. Und 5 · 9 = 45." },
+        { n:56, t:"B", q:"39 + 21 ist ungefähr 60.\nStimmt's? Wie hast du\ngeschätzt?", a:"Stimmt. 39 ist fast 40, 21 ist fast\n20. 40 + 20 = 60. Genau sind es\nauch 60." },
+        { n:57, t:"R", q:"Eine Zahl besteht aus 5 Z und\n23 E. Sie heißt 523. Repariere.", a:"Quatsch. 5 Z + 23 E = 50 + 23 = 73." },
+        { n:58, t:"B", q:"Alle Zahlen mit 8 Zehnern sind\ngrößer als alle Zahlen mit\n7 Zehnern. Begründe, ohne\nBeispiele aufzuzählen.", a:"Stimmt. Auch die größte Zahl mit\n7 Zehnern, die 79, ist kleiner als\n80. Und 80 ist die kleinste Zahl mit\n8 Zehnern." },
+        { n:59, t:"P", q:"63 Bonbons werden auf\n9 Kinder verteilt. Jedes\nbekommt 7. Stimmt's?", a:"Stimmt. 9 · 7 = 63, also 63 : 9 = 7." },
+        { n:60, t:"R", q:"Mia hat 42 Euro. Sie kauft\netwas für 47 Euro und bekommt\n5 Euro zurück. Was stimmt an\nder Geschichte nicht?", a:"Mia hat zu wenig Geld: 47 Euro sind\nmehr als 42 Euro. Rückgeld gibt es\nnur, wenn man mehr bezahlt, als\netwas kostet." },
+        { n:61, t:"W", q:"Erfinde eine Quatschaussage\nzur Zahl 72, die man nicht\nsofort erkennt. Tauscht und\nprüft eure Karten.", a:"Hier gibt es viele Lösungen.\nWichtig: Man muss die Aussage\nmathematisch prüfen können." },
+        { n:62, t:"B", q:"15 Einer kann ich nicht\ndarstellen. Ich darf höchstens\n9 Einer haben. Was antwortest\ndu dem Kind?", a:"Doch. 10 davon kann man zu\n1 Zehner bündeln: 1 Z + 5 E. Nur\nbeim Aufschreiben steht an der\nEinerstelle höchstens eine 9." },
+        { n:63, t:"P", q:"59 liegt näher an 50 als an 60.\nStimmt's? Zeige es am\nZahlenstrahl.", a:"Quatsch. Von 59 bis 60 ist es 1,\nvon 59 bis 50 sind es 9." },
+        { n:64, t:"B", q:"49 + 28 muss kleiner als\n70 sein, weil beide Zahlen\nkleiner als 50 sind. Prüfe, ohne\ngenau zu rechnen.", a:"Quatsch. 49 + 20 ist schon 69, dazu\nkommen noch 8. Genau sind es 77." },
+        { n:65, t:"P", q:"Wenn ich bei 64 die Ziffern\ntausche, wird die Zahl um\n18 kleiner. Stimmt's?", a:"Stimmt. Aus 64 wird 46.\n64 − 46 = 18." },
+        { n:66, t:"P", q:"28 Kinder fahren mit. In jedes\nAuto passen 4 Kinder. Wir\nbrauchen 6 Autos. Stimmt's?", a:"Quatsch. 6 Autos reichen nur für\n24 Kinder. Wir brauchen 7 Autos:\n7 · 4 = 28." },
+        { n:67, t:"P", q:"Ich tausche bei 72 einen\nZehner gegen 10 Einer. Jetzt\nhabe ich eine andere Zahl. Wo\nsteckt der Denkfehler?", a:"Nur die Darstellung ändert sich:\n6 Z + 12 E. Die Zahl bleibt 72." },
+        { n:68, t:"B", q:"46 + 28 = 74. Das könnte\nstimmen. Prüfe zuerst nur, ob\ndas Ergebnis sein kann.", a:"Ja. Ungefähr 50 + 30 = 80, aber\nbeide Zahlen sind etwas kleiner.\n74 passt. Es ist auch genau richtig." },
+        { n:69, t:"W", q:"___ Z + 17 E = 57. Finde eine\nLösung. Gibt es noch eine?", a:"4 Z, denn 40 + 17 = 57. In dieser\nForm gibt es nur diese eine\nLösung." },
+        { n:70, t:"P", q:"7 Kinder bekommen je\n8 Murmeln. Dafür brauchen wir\n54 Murmeln. Quatsch oder\nnicht?", a:"Quatsch. 7 · 8 = 56. Wir brauchen\n56 Murmeln." },
+        { n:71, t:"B", q:"Die kleinste zweistellige Zahl\nmit einer 7 ist 17. Stimmt's?\nBegründe.", a:"Stimmt. Von 10 bis 16 hat keine\nZahl eine 7. Die 17 ist die erste." },
+        { n:72, t:"R", q:"37 Autos stehen auf dem\nParkplatz. 18 fahren weg.\nDanach stehen dort 29. Finde\nund repariere den Quatsch.", a:"37 − 18 = 19. Entweder stehen\ndanach 19 Autos dort, oder es\nfahren nur 8 Autos weg." },
+        { n:73, t:"W", q:"Zwei Zahlen haben die\nDifferenz 10. Dann muss eine\ndavon 10 sein. Widerlege mit\nBeispielen.", a:"Quatsch. Zum Beispiel 27 und\n17 oder 80 und 70." },
+        { n:74, t:"W", q:"6 · 8 passt zu: 48 Kinder bilden\nGruppen mit je 6 Kindern.\nStimmt's? Welche Frage fehlt?", a:"Es fehlt die Frage: Wie viele\nGruppen gibt es? 48 : 6 = 8. Es sind\n8 Sechsergruppen, also 8 · 6.\n6 · 8 hat dasselbe Ergebnis." },
+        { n:75, t:"P", q:"73 kann man nicht mit nur\n6 Zehnern darstellen. Quatsch\noder nicht?", a:"Quatsch. 6 Z + 13 E = 60 + 13 = 73." },
+        { n:76, t:"W", q:"32 + 18 = 30 + 20. Wie kann\neine veränderte Aufgabe\ndasselbe Ergebnis haben?", a:"Beide ergeben 50. Vom ersten\nSummanden wurden\n2 weggenommen und zum zweiten\ndazugegeben." },
+        { n:77, t:"P", q:"47 besteht aus 2 Zehnern und\n27 Einern. Quatsch oder\nmöglich?", a:"Möglich. 20 + 27 = 47." },
+        { n:78, t:"P", q:"Die größte zweistellige Zahl mit\neiner 7 ist 79. Stimmt's?", a:"Quatsch. 97 ist größer und hat auch\neine 7." },
+        { n:79, t:"W", q:"5 Schachteln mit je 6 Stiften\nsind 30 Stifte. Finde zwei\npassende Rechnungen.", a:"Zum Beispiel 5 · 6 = 30 und\n30 : 5 = 6. Auch 30 : 6 = 5 passt." },
+        { n:80, t:"B", q:"Emma hat 54 Perlen und\nverschenkt 28. Danach hat sie\n36. Prüfe durch Überschlagen.", a:"Quatsch. 54 − 30 ist ungefähr 24.\n36 ist viel zu viel. Genau:\n54 − 28 = 26." },
+        { n:81, t:"B", q:"87 − 42 muss ungefähr 40 sein.\nPlausibel oder Quatsch?", a:"Ungefähr passt es. 87 − 40 = 47,\ndann noch 2 weg. Genau sind es 45." },
+        { n:82, t:"B", q:"64 = 50 + 14. Ein Kind sagt:\n„Das ist keine richtige\nZerlegung.“ Überzeuge es.", a:"Die Zerlegung stimmt: 50 + 14 = 64.\nEine Zerlegung muss nicht aus\nvollen Zehnern und einer\nEinerziffer bestehen." },
+        { n:83, t:"P", q:"5 Zehner und 16 Einer ergeben\n56. Finde den Quatsch.", a:"Quatsch. 50 + 16 = 66. Für\n56 bräuchte man 5 Z + 6 E." },
+        { n:84, t:"W", q:"5 Z + ___ E = 73. Fülle die\nLücke. Gibt es nur eine\nAntwort?", a:"23 E. Wenn genau 5 Zehner\nvorgegeben sind, gibt es nur diese\neine Antwort." },
+        { n:85, t:"B", q:"6 · 4 und 4 · 6 haben dasselbe\nErgebnis. Also erzählen sie\nimmer dieselbe Geschichte.\nQuatsch oder nicht?", a:"Quatsch. Das Ergebnis ist gleich,\ndie Geschichte nicht: 6 Teller mit\n4 Keksen sehen anders aus als\n4 Teller mit 6 Keksen." },
+        { n:86, t:"W", q:"24 Kinder bilden 6 gleich große\nGruppen. Stelle eine passende\nFrage und löse.", a:"Zum Beispiel: Wie viele Kinder sind\nin jeder Gruppe? 24 : 6 = 4." },
+        { n:87, t:"W", q:"99 + 1 ist dreistellig. Das kann\nim Zahlenraum bis 100 nicht\nsein. Was bedeutet\n„Zahlenraum bis 100“?", a:"Die 100 gehört dazu. Sie ist die\neinzige dreistellige Zahl im\nZahlenraum bis 100." },
+        { n:88, t:"R", q:"57 − 29: Ich rechne 57 − 30 und\ndann noch 1 weg. Repariere die\nStrategie.", a:"Ich habe 1 zu viel weggenommen.\nAlso muss 1 wieder dazu:\n57 − 30 = 27, 27 + 1 = 28." },
+        { n:89, t:"W", q:"Erfinde selbst eine\nQuatschaufgabe im\nZahlenraum bis 100. Schreibe\nauch eine Reparatur dazu.", a:"Hier gibt es viele Lösungen. Prüft\ngemeinsam: Ist der Quatsch\nwirklich Quatsch? Stimmt die\nReparatur?" },
+        { n:90, t:"P", q:"In einer Kiste liegen\n36 Perlen. Ich nehme einige\nheraus. Danach liegen 41 darin.\nQuatsch oder möglich?", a:"Quatsch. Wenn ich nur etwas\nherausnehme, werden es weniger." },
+        { n:91, t:"R", q:"Bei 35 + 20 verändert sich nur\ndie Einerstelle. Repariere.", a:"Quatsch. Es kommen nur Zehner\ndazu. Die Einerstelle bleibt gleich,\ndie Zehnerstelle ändert sich:\n35 + 20 = 55." },
+        { n:92, t:"B", q:"8 Zehner und 13 Einer ergeben\n93. Erkläre, ohne schriftlich zu\nrechnen.", a:"Stimmt. 80 + 13 = 93. Aus 10 der\n13 Einer wird ein neuer Zehner:\n9 Z + 3 E." },
+        { n:93, t:"B", q:"70 hat einen Einer mehr als\n69. Stimmt das? Erkläre genau.", a:"Als Zahl ist 70 um 1 größer. An der\nEinerstelle hat 70 aber eine 0 und\n69 eine 9. Beim Weiterzählen wird\ngebündelt." },
+        { n:94, t:"W", q:"Eine ungerade Zahl kann man\nnie gerecht teilen. Finde ein\nGegenbeispiel.", a:"Zum Beispiel 15 : 3 = 5 oder\n21 : 7 = 3. Nur durch 2 geht es bei\nungeraden Zahlen nicht ohne Rest." },
+        { n:95, t:"W", q:"Lina hat 29 Kastanien, Paul 36.\nZusammen haben sie 65.\nWelche zweite Frage könnte\nman stellen?", a:"Zum Beispiel: Wie viele Kastanien\nhat Paul mehr? 36 − 29 = 7." },
+        { n:96, t:"R", q:"48 : 6 passt zu: 6 Kinder\nbekommen jeweils 48 Bonbons.\nRepariere die Geschichte.", a:"Zum Beispiel: 48 Bonbons werden\ngerecht auf 6 Kinder verteilt. Jedes\nbekommt 8." },
+        { n:97, t:"P", q:"Meine Zahl hat 6 Zehner und ist\nkleiner als 60. Kann das sein?", a:"Nein. 6 Zehner sind schon 60.\nKommen Einer dazu, wird die Zahl\nnur größer." },
+        { n:98, t:"R", q:"6 Z + 15 E = 75. Verändere nur\ndie Anzahl der Einer, sodass\n81 entsteht.", a:"6 Z + 21 E = 60 + 21 = 81." },
+        { n:99, t:"B", q:"Wenn ich bei 70 − 26 die\n26 größer mache, wird das\nErgebnis größer. Stimmt's?", a:"Quatsch. Wenn ich mehr\nwegnehme, bleibt weniger übrig.\nDas Ergebnis wird kleiner." },
+        { n:100, t:"P", q:"6 Zehner und 14 Einer ergeben\n74. Stimmt's? Zeige es.", a:"Stimmt. 60 + 14 = 74. Lege es mit\nMaterial." }
+      ]
+    },
+    1000: {
+      count: 63,
+      footer: "Mathe unter der Lupe · bis 1000 · © 2026 Katja Bender",
+      backFooter: "Vergleiche mit deiner Begründung.",
+      cards: [
+        { n:1, t:"P", q:"In 405 steht die 0 für nichts.\nMan kann sie also auch\nweglassen. Stimmt's?", a:"Quatsch. Die 0 hält die\nZehnerstelle frei. Ohne sie wäre\nes 45." },
+        { n:2, t:"B", q:"7 Hunderter, 3 Zehner und\n15 Einer sind 745. Begründe.", a:"Stimmt. 700 + 30 + 15 = 745. 10 der\n15 Einer bilden einen weiteren\nZehner: 7 H + 4 Z + 5 E." },
+        { n:3, t:"R", q:"Der Vorgänger von 600 ist 599.\nDer Nachfolger von 600 ist 610.\nRepariere.", a:"Der Nachfolger von 600 ist 601.\n610 ist der nächste Zehner." },
+        { n:4, t:"P", q:"389 gerundet auf Hunderter ist\n300. Stimmt's?", a:"Quatsch. 389 liegt näher an 400.\nGerundet ergibt das 400." },
+        { n:5, t:"B", q:"Jede Zahl mit 3 Hundertern ist\nkleiner als jede Zahl mit\n4 Hundertern. Begründe, ohne\nBeispiele aufzuzählen.", a:"Stimmt. Auch die größte Zahl mit\n3 Hundertern, die 399, ist kleiner\nals 400. Und 400 ist die kleinste\nZahl mit 4 Hundertern." },
+        { n:6, t:"W", q:"Finde drei verschiedene\nDarstellungen von 520 mit\nHundertern, Zehnern und\nEinern.", a:"Zum Beispiel: 5 H + 2 Z, 4 H + 12 Z,\n52 Z, 5 H + 1 Z + 10 E …" },
+        { n:7, t:"P", q:"In 444 haben alle drei Vieren\ndenselben Wert. Stimmt's?", a:"Quatsch. Die Vieren sind 400,\n40 und 4 wert." },
+        { n:8, t:"R", q:"Fünfhundertsiebenundachtzig\nschreibt man 50087. Repariere.", a:"Das Kind hat 500 und\n87 hintereinander geschrieben.\nRichtig ist 587." },
+        { n:9, t:"B", q:"1000 sind 10 Hunderter,\n100 Zehner und 1000 Einer.\nKann alles gleichzeitig\nstimmen?", a:"Ja. 10 · 100 = 1000 und\n100 · 10 = 1000. Es sind nur\nverschiedene Bündelungen\nderselben Zahl." },
+        { n:10, t:"P", q:"Zwischen 699 und 701 liegt\nkeine ganze Zahl. Quatsch oder\nnicht?", a:"Quatsch. 700 liegt dazwischen." },
+        { n:11, t:"P", q:"348 + 251 = 599. Stimmt's?\nPrüfe zuerst mit einem\nÜberschlag.", a:"Stimmt. Überschlag:\n350 + 250 = 600. Genau sind es\n599." },
+        { n:12, t:"R", q:"456 + 278 = 624. Finde den\nFehler und repariere.", a:"456 + 278 = 734. Beide Überträge\nwurden vergessen." },
+        { n:13, t:"B", q:"503 − 198: Ich rechne\n503 − 200 + 2. Erkläre.", a:"Ich ziehe 2 zu viel ab und gebe sie\nwieder dazu: 503 − 200 = 303,\n303 + 2 = 305." },
+        { n:14, t:"P", q:"800 − 299 = 501. Stimmt's?", a:"Stimmt. 800 − 300 = 500. Ich habe\n1 zu viel abgezogen, also 501." },
+        { n:15, t:"W", q:"Finde zwei dreistellige Zahlen\nmit der Summe 1000. Gibt es\nnur eine Lösung?", a:"Nein, es gibt viele. Zum Beispiel\n400 + 600, 250 + 750 oder\n123 + 877." },
+        { n:16, t:"B", q:"625 − 387 kann nicht 338 sein.\nWoher weißt du das, ohne\ngenau zu rechnen?", a:"Überschlag: 600 − 400 = 200. 338\nist viel zu groß. Genau:\n625 − 387 = 238." },
+        { n:17, t:"R", q:"Probe zu 742 − 368 = 374: Ich\nrechne 374 − 368. Repariere die\nProbe.", a:"Die Probe heißt 374 + 368 = 742.\nBei Minusaufgaben prüft man mit\nder Plusaufgabe." },
+        { n:18, t:"B", q:"Wenn ich bei einer\nMinusaufgabe beide Zahlen um\n100 vergrößere, bleibt das\nErgebnis gleich. Begründe.", a:"Stimmt. Der Abstand zwischen den\nZahlen ändert sich nicht:\n500 − 200 = 300 und\n600 − 300 = 300." },
+        { n:19, t:"P", q:"Wenn ich bei einer Plusaufgabe\nbeide Zahlen um 100 vergrößere,\nbleibt das Ergebnis auch gleich.\nVergleiche mit Karte 18.", a:"Quatsch. Die Summe wird um\n200 größer: 300 + 200 = 500,\n400 + 300 = 700." },
+        { n:20, t:"W", q:"3 _ 7 + 2 _ 3 = 600. Finde\npassende Ziffern. Gibt es\nmehrere Lösungen?", a:"Ja. Die beiden fehlenden Ziffern\nmüssen zusammen 9 ergeben, zum\nBeispiel 347 + 253 oder 307 + 293." },
+        { n:21, t:"P", q:"4 · 25 = 100. Also ist\n8 · 25 = 200. Stimmt's?", a:"Stimmt. 8 · 25 ist das Doppelte von\n4 · 25." },
+        { n:22, t:"R", q:"6 · 80 = 4800. Repariere.", a:"6 · 8 = 48, also ist 6 · 80 = 480. Das\nErgebnis ist zehnmal so groß, nicht\nhundertmal." },
+        { n:23, t:"B", q:"7 · 19 rechne ich als 7 · 20 − 7.\nErkläre.", a:"7 · 20 sind 7 Zwanziger. Jeder ist\n1 zu groß, also 7 zu viel:\n140 − 7 = 133." },
+        { n:24, t:"P", q:"9 · 60 ist dasselbe wie 90 · 6.\nStimmt's?", a:"Stimmt. Beides ergibt 540." },
+        { n:25, t:"W", q:"Finde Malaufgaben mit dem\nErgebnis 360. Wie viele findest\ndu?", a:"Zum Beispiel 6 · 60, 4 · 90, 9 · 40,\n3 · 120, 10 · 36 …" },
+        { n:26, t:"P", q:"250 : 5 = 5. Stimmt's?", a:"Quatsch. 250 : 5 = 50, denn\n5 · 50 = 250." },
+        { n:27, t:"P", q:"43 : 5 = 8 Rest 3. Stimmt's?", a:"Stimmt. 5 · 8 = 40, und\n43 − 40 = 3." },
+        { n:28, t:"B", q:"Wenn ich durch 4 teile, kann\nder Rest nie 5 sein. Begründe.", a:"Stimmt. Bei 5 Rest passt die 4 noch\neinmal hinein. Der Rest ist immer\nkleiner als 4." },
+        { n:29, t:"W", q:"Eine Zahl geteilt durch 6 ergibt\n7 Rest 2. Welche Zahl ist es?\nGibt es mehrere?", a:"Es ist 44, denn 6 · 7 + 2 = 44. Es\ngibt nur diese eine Zahl." },
+        { n:30, t:"P", q:"Jede Zahl, die durch 10 teilbar\nist, ist auch durch 5 teilbar.\nStimmt's?", a:"Stimmt. 10 = 2 · 5. Jeder Zehner\nbesteht aus zwei Fünfern." },
+        { n:31, t:"P", q:"Jede Zahl, die durch 5 teilbar\nist, ist auch durch 10 teilbar.\nStimmt's? Vergleiche mit\nKarte 30.", a:"Quatsch. Gegenbeispiele: 15, 35,\n105." },
+        { n:32, t:"R", q:"Ein Meter hat 10 Zentimeter.\nRepariere.", a:"1 m = 100 cm." },
+        { n:33, t:"P", q:"3 m 5 cm sind 350 cm.\nStimmt's?", a:"Quatsch. 3 m 5 cm sind 305 cm.\n350 cm wären 3 m 50 cm." },
+        { n:34, t:"B", q:"1 kg Federn ist leichter als\n1 kg Steine. Überzeuge das\nKind.", a:"Quatsch. Beides wiegt 1 kg. Die\nFedern brauchen nur viel mehr\nPlatz." },
+        { n:35, t:"P", q:"Ein Schulbus ist ungefähr\n12 cm lang. Stimmt's?", a:"Quatsch. Ein Bus ist ungefähr 12 m\nlang. 12 cm ist ungefähr so lang\nwie ein Stift." },
+        { n:36, t:"R", q:"Die Pause dauert 20 Minuten.\nSie beginnt um 9.40 Uhr und\nendet um 9.60 Uhr. Repariere.", a:"Eine Stunde hat 60 Minuten. Die\nPause endet um 10.00 Uhr." },
+        { n:37, t:"P", q:"750 g und 250 g sind zusammen\n1 kg. Stimmt's?", a:"Stimmt.\n750 g + 250 g = 1000 g = 1 kg." },
+        { n:38, t:"W", q:"Lisa hat 10 €. Sie kauft\n3 Hefte zu je 1,20 €. Wie viel\nGeld bleibt übrig? Erfinde eine\nweitere Frage.", a:"3 · 1,20 € = 3,60 €. Es bleiben\n6,40 € übrig. Für die eigene Frage\ngibt es viele Lösungen." },
+        { n:39, t:"B", q:"2,50 € sind 250 Cent.\nBegründe.", a:"Stimmt. 2 € sind 200 ct, dazu\nkommen 50 ct. Das sind 250 ct." },
+        { n:40, t:"R", q:"1,05 € sind 150 Cent.\nRepariere.", a:"1,05 € sind 105 ct. 150 ct wären\n1,50 €." },
+        { n:41, t:"P", q:"Ein Kino hat 18 Reihen mit je\n20 Plätzen. Es passen\n360 Personen hinein. Stimmt's?", a:"Stimmt. 18 · 20 = 360." },
+        { n:42, t:"P", q:"27 Kinder und 3 Erwachsene\nfahren los. In einen Kleinbus\npassen 8 Personen. 3 Busse\nreichen. Stimmt's?", a:"Quatsch. 30 : 8 = 3 Rest 6. Für die\nübrigen 6 Personen braucht man\neinen 4. Bus." },
+        { n:43, t:"B", q:"Bei 999 + 1 ändern sich alle\nZiffern. Begründe.", a:"Stimmt. 999 + 1 = 1000. An jeder\nStelle wird gebündelt, aus den drei\nNeunen wird 1000." },
+        { n:44, t:"W", q:"Bilde mit den Ziffern 2, 5 und\n8 die größte und die kleinste\nZahl. Wie groß ist der\nUnterschied?", a:"852 und 258. Der Unterschied ist\n852 − 258 = 594." },
+        { n:45, t:"P", q:"199 hat größere Ziffern als\n201. Also ist 199 größer.\nStimmt's?", a:"Quatsch. 201 hat 2 Hunderter,\n199 nur 1. Zuerst entscheidet die\nHunderterstelle." },
+        { n:46, t:"R", q:"Am Zahlenstrahl von 0 bis\n1000 liegt die 500 ganz am\nAnfang. Repariere.", a:"Die 500 liegt genau in der Mitte\nzwischen 0 und 1000." },
+        { n:47, t:"B", q:"Der Abstand von 300 bis\n900 ist dreimal so groß wie der\nAbstand von 300 bis 500.\nBegründe.", a:"Stimmt. 900 − 300 = 600 und\n500 − 300 = 200. 600 ist dreimal so\nviel wie 200." },
+        { n:48, t:"P", q:"Das Doppelte von 375 ist 650.\nStimmt's?", a:"Quatsch. 375 + 375 = 750." },
+        { n:49, t:"R", q:"Die Hälfte von 530 ist 215.\nRepariere.", a:"Die Hälfte von 530 ist 265. Probe:\n265 + 265 = 530." },
+        { n:50, t:"W", q:"Ich denke mir eine Zahl,\nverdopple sie und ziehe 100 ab.\nIch erhalte 500. Welche Zahl\nwar es?", a:"300. Rückwärts gerechnet:\n500 + 100 = 600, die Hälfte davon\nist 300." },
+        { n:51, t:"B", q:"5 · 40 + 5 · 6 ist dasselbe wie\n5 · 46. Begründe.", a:"Stimmt. 46 = 40 + 6. Also ist\n5 · 46 = 200 + 30 = 230." },
+        { n:52, t:"P", q:"Bei der schriftlichen Addition\nbeginnt man links bei den\nHundertern. Stimmt's?", a:"Quatsch. Man beginnt rechts bei\nden Einern. Nur so kann man\nÜberträge weitergeben." },
+        { n:53, t:"R", q:"Ein Kind rechnet 600 − 4 = 560.\nWas hat es verwechselt?\nRepariere.", a:"600 − 4 = 596. Das Kind hat\n40 statt 4 abgezogen." },
+        { n:54, t:"W", q:"Finde eine Zahl, die gerundet\nauf Zehner und gerundet auf\nHunderter dasselbe Ergebnis\nhat.", a:"Zum Beispiel 302: Beides ergibt\n300. Oder 498: Beides ergibt 500." },
+        { n:55, t:"P", q:"1000 ist die kleinste\nvierstellige Zahl. Stimmt's?", a:"Stimmt. 999 ist die größte\ndreistellige Zahl, danach kommt\n1000." },
+        { n:56, t:"B", q:"Lena sagt: 8 · 125 = 1000, denn\n8 · 100 = 800 und 8 · 25 = 200.\nErkläre ihren Rechenweg.", a:"Sie zerlegt 125 in 100 + 25 und\nrechnet beide Teile mal 8:\n800 + 200 = 1000." },
+        { n:57, t:"R", q:"Jonas zählt in Zehnerschritten:\n470, 480, 490, 4100. Repariere.", a:"Nach 490 kommt 500." },
+        { n:58, t:"P", q:"Mia läuft 7 Runden auf einer\n100-Meter-Bahn. Das sind\n700 m. Stimmt's?", a:"Stimmt. 7 · 100 m = 700 m." },
+        { n:59, t:"W", q:"Erfinde eine Quatschaussage\nzu Hundertern, Zehnern und\nEinern, die nicht sofort\nauffällt. Tauscht und prüft\neure Karten.", a:"Hier gibt es viele Lösungen.\nWichtig: Man muss die Aussage\nmathematisch prüfen können." },
+        { n:60, t:"B", q:"538 ist gerade, weil die\n8 gerade ist. Die anderen\nZiffern sind egal. Begründe.", a:"Stimmt. Hunderter und Zehner\nlassen sich immer in Paare teilen.\nOb einer übrig bleibt, entscheiden\nnur die Einer." },
+        { n:61, t:"P", q:"Die Summe von zwei ungeraden\nZahlen ist immer ungerade.\nStimmt's?", a:"Quatsch. 3 + 5 = 8 und\n101 + 99 = 200. Die Summe ist\nimmer gerade." },
+        { n:62, t:"R", q:"Im Theater sind 450 Plätze.\n320 sind besetzt. Es sind\n230 Plätze frei. Repariere.", a:"450 − 320 = 130. Es sind\n130 Plätze frei." },
+        { n:63, t:"W", q:"Erfinde eine Rechengeschichte\nzu 1000 − 375 und löse sie.", a:"Zum Beispiel: Ein Weg ist 1000 m\nlang. 375 m sind geschafft. Es\nfehlen noch 625 m." }
+      ]
+    }
+  };
+
+  const STORAGE_RANGE = "mudlRange";
+  const STORAGE_INDEX_PREFIX = "mudlIndex_";
+
+  const els = {
+    rangeGroup: document.getElementById("range-group"),
+    typeChips: document.getElementById("type-chips"),
+    legendBegruendenLabel: document.getElementById("legend-begruenden-label"),
+    progressText: document.getElementById("progress-text"),
+    gotoForm: document.getElementById("goto-form"),
+    gotoInput: document.getElementById("goto-input"),
+    flipInner: document.getElementById("flip-inner"),
+    faceFront: document.getElementById("face-front"),
+    faceBack: document.getElementById("face-back"),
+    frontNum: document.getElementById("front-num"),
+    frontIcon: document.getElementById("front-icon"),
+    frontTypeLabel: document.getElementById("front-type-label"),
+    frontText: document.getElementById("front-text"),
+    frontFoot: document.getElementById("front-foot"),
+    backNum: document.getElementById("back-num"),
+    backIcon: document.getElementById("back-icon"),
+    backText: document.getElementById("back-text"),
+    backFoot: document.getElementById("back-foot"),
+    prevBtn: document.getElementById("prev-btn"),
+    nextBtn: document.getElementById("next-btn"),
+    flipBtn: document.getElementById("flip-btn"),
+    randomBtn: document.getElementById("random-btn"),
+    deckScreen: document.getElementById("deck-screen")
+  };
+
+  let activeTypes = new Set(["P", "B", "R", "W"]);
+  let filtered = [];
+  let posIndex = 0; // Index innerhalb von "filtered"
+  let flipped = false;
+
+  function currentRange() { return parseInt(document.querySelector('input[name="range"]:checked').value, 10); }
+
+  function buildTypeChips() {
+    const order = ["P", "B", "R", "W"];
+    let html = "";
+    order.forEach(function (t) {
+      html += '<button type="button" class="type-chip active" data-type="' + t + '">' + TYPE_META[t].icon + " " + TYPE_META[t].label + "</button>";
+    });
+    els.typeChips.innerHTML = html;
+    els.typeChips.querySelectorAll(".type-chip").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        const t = chip.dataset.type;
+        if (activeTypes.has(t)) {
+          if (activeTypes.size === 1) return; // mindestens ein Typ muss aktiv bleiben
+          activeTypes.delete(t);
+          chip.classList.remove("active");
+        } else {
+          activeTypes.add(t);
+          chip.classList.add("active");
+        }
+        rebuildFiltered(true);
+      });
+    });
+  }
+
+  function cardMatchesActiveTypes(card) {
+    return activeTypes.has(colorType(card.t));
+  }
+
+  function rebuildFiltered(resetPos) {
+    const deck = DECKS[currentRange()];
+    filtered = deck.cards.filter(cardMatchesActiveTypes);
+    if (filtered.length === 0) {
+      // Sicherheitsnetz: falls Filter leer, alle Karten anzeigen
+      filtered = deck.cards.slice();
+    }
+    if (resetPos) posIndex = 0;
+    if (posIndex >= filtered.length) posIndex = filtered.length - 1;
+    if (posIndex < 0) posIndex = 0;
+    flipped = false;
+    render();
+  }
+
+  function fillFace(prefix, card) {
+    const meta = TYPE_META[card.t];
+    const face = prefix === "front" ? els.faceFront : els.faceBack;
+    face.dataset.type = colorType(card.t);
+    els[prefix + "Num"].textContent = card.n;
+    els[prefix + "Icon"].textContent = meta.icon;
+    if (prefix === "front") {
+      els.frontTypeLabel.textContent = meta.label;
+      els.frontText.textContent = card.q;
+    } else {
+      els.backText.textContent = card.a;
+    }
+  }
+
+  function render() {
+    const range = currentRange();
+    const deck = DECKS[range];
+    const card = filtered[posIndex];
+
+    els.legendBegruendenLabel.textContent = range === 20 ? "erklären" : "begründen";
+
+    fillFace("front", card);
+    fillFace("back", card);
+    els.frontFoot.textContent = deck.footer;
+    els.backFoot.textContent = deck.backFooter;
+
+    els.flipInner.classList.toggle("flipped", flipped);
+    els.progressText.textContent = "Karte " + (posIndex + 1) + " von " + filtered.length + " (Nr. " + card.n + " von " + deck.count + ")";
+    els.gotoInput.max = deck.count;
+
+    els.prevBtn.disabled = posIndex === 0;
+    els.nextBtn.disabled = posIndex === filtered.length - 1;
+
+    try {
+      localStorage.setItem(STORAGE_RANGE, String(range));
+      localStorage.setItem(STORAGE_INDEX_PREFIX + range, String(posIndex));
+    } catch (e) { /* ignore */ }
+  }
+
+  function goToPos(i) {
+    if (i < 0 || i >= filtered.length) return;
+    posIndex = i;
+    flipped = false;
+    render();
+  }
+
+  els.prevBtn.addEventListener("click", function () { goToPos(posIndex - 1); });
+  els.nextBtn.addEventListener("click", function () { goToPos(posIndex + 1); });
+  els.flipBtn.addEventListener("click", function () { flipped = !flipped; els.flipInner.classList.toggle("flipped", flipped); });
+  els.flipInner.addEventListener("click", function () { flipped = !flipped; els.flipInner.classList.toggle("flipped", flipped); });
+  els.randomBtn.addEventListener("click", function () {
+    if (filtered.length <= 1) return;
+    let r;
+    do { r = Math.floor(Math.random() * filtered.length); } while (r === posIndex);
+    goToPos(r);
+  });
+
+  els.gotoForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const n = parseInt(els.gotoInput.value, 10);
+    if (!Number.isInteger(n)) return;
+    const idx = filtered.findIndex(function (c) { return c.n === n; });
+    if (idx >= 0) { goToPos(idx); els.gotoInput.value = ""; }
+  });
+
+  document.querySelectorAll('input[name="range"]').forEach(function (radio) {
+    radio.addEventListener("change", function () {
+      const range = currentRange();
+      let savedIdx = 0;
+      try {
+        const v = parseInt(localStorage.getItem(STORAGE_INDEX_PREFIX + range), 10);
+        if (Number.isInteger(v) && v >= 0) savedIdx = v;
+      } catch (e) { /* ignore */ }
+      rebuildFiltered(false);
+      posIndex = Math.min(savedIdx, filtered.length - 1);
+      flipped = false;
+      render();
+    });
+  });
+
+  // Start: letzten Zahlenraum/letzte Position wiederherstellen, falls vorhanden.
+  (function init() {
+    buildTypeChips();
+    let savedRange = 20;
+    try {
+      const v = parseInt(localStorage.getItem(STORAGE_RANGE), 10);
+      if (DECKS[v]) savedRange = v;
+    } catch (e) { /* ignore */ }
+    const radio = document.querySelector('input[name="range"][value="' + savedRange + '"]');
+    if (radio) radio.checked = true;
+
+    let savedIdx = 0;
+    try {
+      const v = parseInt(localStorage.getItem(STORAGE_INDEX_PREFIX + savedRange), 10);
+      if (Number.isInteger(v) && v >= 0) savedIdx = v;
+    } catch (e) { /* ignore */ }
+
+    rebuildFiltered(false);
+    posIndex = Math.min(savedIdx, filtered.length - 1);
+    render();
+  })();
+})();
+</script>
+</body>
+</html>
