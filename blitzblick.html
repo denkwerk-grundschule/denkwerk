@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blitzblick</title>
+<style>
+  :root {
+    --paper: #f5f1e6;
+    --card: #ffffff;
+    --border: #ddd2b3;
+    --ink: #2e2a24;
+    --ink-soft: #6b6456;
+    --focus: #1a56db;
+
+    --good: #2f8f57; --good-bg: #e1f2e7;
+    --bad: #c0453a; --bad-bg: #fbe6e3;
+
+    --h-color: #b8860b; --h-bg: #faf1d9;
+    --z-color: #c0453a; --z-bg: #f8dedb;
+    --e-color: #1a56db; --e-bg: #dbe6f8;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    line-height: 1.5;
+  }
+
+  .app { width: 100%; max-width: 760px; padding: 20px 16px 48px; }
+
+  header { text-align: center; margin-bottom: 14px; }
+  .logo { font-size: 2.2rem; line-height: 1; margin-bottom: 4px; }
+  h1 { font-size: clamp(1.4rem, 4.4vw, 1.9rem); margin: 0; font-weight: 800; }
+  .subtitle { color: var(--ink-soft); font-size: 0.95rem; margin: 4px 0 0; }
+
+  section.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px 22px;
+    box-shadow: 0 3px 0 rgba(46, 42, 36, 0.05);
+    margin-bottom: 16px;
+  }
+
+  fieldset { border: none; padding: 0; margin: 0 0 14px; }
+  fieldset:last-child { margin-bottom: 0; }
+  legend { font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; padding: 0; }
+
+  .segmented { display: flex; flex-wrap: wrap; gap: 8px; }
+  .segmented label { position: relative; }
+  .segmented input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .segmented span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border: 2px solid var(--border); border-radius: 10px;
+    font-weight: 600; font-size: 0.88rem; color: var(--ink-soft); background: #fff;
+  }
+  .segmented input:checked + span { border-color: var(--focus); background: #eaf0fc; color: var(--focus); }
+  .segmented input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .quiz-note { font-size: 0.85rem; color: var(--ink-soft); font-style: italic; text-align: center; margin: 0 0 14px; }
+
+  .stage {
+    min-height: 220px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fbf8f2; border: 2px dashed var(--border); border-radius: 14px;
+    padding: 20px; margin: 0 0 16px;
+    overflow-x: auto;
+  }
+  .stage > * { max-width: 100%; }
+  .stage-placeholder { font-size: 3rem; color: var(--border); }
+  .stage-ready-text { color: var(--ink-soft); font-size: 1rem; text-align: center; }
+
+  /* Würfel */
+  .dice-row { display: flex; align-items: center; justify-content: center; gap: 16px; }
+  .die-face {
+    width: 120px; height: 120px; border: 3px solid var(--ink); border-radius: 18px;
+    background: #fff; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+    padding: 14px; gap: 2px; flex-shrink: 0;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+  }
+  .die-cell { display: flex; align-items: center; justify-content: center; }
+  .die-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--ink); }
+  .dice-plus { font-size: 2rem; font-weight: 800; color: var(--ink-soft); }
+
+  /* Zwanzigerfeld (Größen schrumpfen auf schmalen Bildschirmen mit, damit
+     die zwei Zehnerreihen immer in den Kasten passen). */
+  .zwanzig-grid { display: flex; flex-direction: column; gap: clamp(4px, 2vw, 10px); width: max-content; max-width: 100%; }
+  .zwanzig-row { display: flex; gap: clamp(8px, 4vw, 20px); }
+  .zwanzig-half { display: flex; gap: clamp(2px, 1vw, 7px); }
+  .zw-dot {
+    width: clamp(13px, 4.6vw, 24px); height: clamp(13px, 4.6vw, 24px);
+    border-radius: 50%; border: 2px solid var(--border); background: #fff; flex-shrink: 0;
+  }
+  .zw-dot.filled { background: var(--focus); border-color: var(--focus); }
+
+  /* Plättchen (Kraft der 5) */
+  .plaettchen-grid {
+    display: grid; grid-template-columns: repeat(5, max-content); grid-auto-rows: max-content;
+    gap: clamp(4px, 1.8vw, 8px); justify-content: center; align-items: center;
+  }
+  .plaettchen-dot {
+    width: clamp(15px, 5vw, 26px); height: clamp(15px, 5vw, 26px);
+    border-radius: 50%; background: var(--focus); flex-shrink: 0;
+  }
+
+  /* Dienes-Anschauung (bis 100) */
+  .dienes-row { display: flex; justify-content: center; align-items: flex-end; gap: clamp(10px, 4vw, 28px); flex-wrap: wrap; }
+  .dienes-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .dienes-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+  .dienes-label.h { color: var(--h-color); }
+  .dienes-label.z { color: var(--z-color); }
+  .dienes-label.e { color: var(--e-color); }
+  .dienes-items { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 4px; max-width: 170px; min-height: 90px; }
+  .dienes-empty { font-size: 0.8rem; color: var(--ink-soft); font-style: italic; align-self: center; }
+  .hundred-block {
+    width: clamp(55px, 18vw, 90px); height: clamp(55px, 18vw, 90px);
+    border: 2px solid var(--h-color); background: var(--h-bg);
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 7px, var(--h-color) 7px 8px, transparent 8px 9px),
+      repeating-linear-gradient(90deg, transparent 0 7px, var(--h-color) 7px 8px, transparent 8px 9px);
+    border-radius: 5px; flex-shrink: 0;
+  }
+  .ten-block {
+    width: clamp(10px, 3.2vw, 16px); height: clamp(55px, 18vw, 90px);
+    border: 2px solid var(--z-color); background: var(--z-bg);
+    background-image: repeating-linear-gradient(0deg, transparent 0 7px, var(--z-color) 7px 8px, transparent 8px 9px);
+    border-radius: 4px; flex-shrink: 0;
+  }
+  .one-block {
+    width: clamp(10px, 3.2vw, 16px); height: clamp(6px, 1.8vw, 8px);
+    border: 2px solid var(--e-color); background: var(--e-bg);
+    border-radius: 3px; flex-shrink: 0;
+  }
+
+  .duration-note { text-align: center; font-size: 0.82rem; color: var(--ink-soft); margin: 0 0 10px; }
+
+  .answer-row { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 0 0 14px; flex-wrap: wrap; }
+  .answer-row input[type="number"] {
+    width: 110px; padding: 10px 12px; border: 2px solid var(--border); border-radius: 8px;
+    font-size: 1.2rem; font-weight: 700; font-family: inherit; text-align: center; color: var(--ink);
+  }
+  .answer-row input[type="number"]:focus { outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
+
+  .feedback {
+    margin: 0 0 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: none;
+    text-align: center;
+  }
+  .feedback.show { display: block; animation: pop 0.25s ease; }
+  @keyframes pop { from { transform: scale(0.96); opacity: 0.5; } to { transform: scale(1); opacity: 1; } }
+
+  .stats-row { text-align: center; font-size: 0.9rem; color: var(--ink-soft); margin: 0 0 14px; }
+
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .btn {
+    padding: 11px 20px; border-radius: 8px; border: 2px solid var(--border);
+    background: #fff; font-weight: 600; font-size: 0.92rem; cursor: pointer; color: var(--ink);
+    font-family: inherit;
+  }
+  .btn:hover:not(:disabled) { background: #f4f0e2; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .btn-primary { background: var(--focus); border-color: var(--focus); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1544ad; }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">⚡</div>
+    <h1>Blitzblick</h1>
+    <p class="subtitle">Kurz hinschauen, Menge erfassen, nicht zählen!</p>
+  </header>
+
+  <section class="card">
+    <fieldset>
+      <legend>Darstellung</legend>
+      <div class="segmented" id="form-group">
+        <label><input type="radio" name="form" value="wuerfel" checked><span>Würfelbild</span></label>
+        <label><input type="radio" name="form" value="doppelwuerfel"><span>Doppelwürfel</span></label>
+        <label><input type="radio" name="form" value="zwanzigerfeld"><span>Zwanzigerfeld</span></label>
+        <label><input type="radio" name="form" value="plaettchen"><span>Plättchen</span></label>
+        <label><input type="radio" name="form" value="dienes"><span>Dienes (bis 100)</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset id="range-fieldset">
+      <legend>Zahlenraum (Plättchen)</legend>
+      <div class="segmented" id="range-group">
+        <label><input type="radio" name="range" value="10" checked><span>bis 10</span></label>
+        <label><input type="radio" name="range" value="20"><span>bis 20</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Anzeigedauer</legend>
+      <div class="segmented" id="duration-group">
+        <label><input type="radio" name="duration" value="1"><span>1 Sekunde</span></label>
+        <label><input type="radio" name="duration" value="2" checked><span>2 Sekunden</span></label>
+        <label><input type="radio" name="duration" value="3"><span>3 Sekunden</span></label>
+      </div>
+    </fieldset>
+  </section>
+
+  <section class="card">
+    <p class="quiz-note" id="quiz-note">Blitzblick-Tipp: Erst alle hinschauen lassen, dann verdecken und gemeinsam überlegen – nicht einzeln zählen, sondern die Struktur erkennen.</p>
+
+    <div class="stage" id="stage">
+      <p class="stage-ready-text" id="stage-ready-text">Bereit? Klickt auf „Zeigen!“</p>
+    </div>
+
+    <div class="answer-row" id="answer-row" hidden>
+      <input type="number" id="answer-input" placeholder="Wie viele?" autocomplete="off">
+      <button type="button" class="btn btn-primary" id="check-btn">Prüfen</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <p class="stats-row" id="stats-row">Punkte: 0 · Richtig: 0 von 0</p>
+
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary" id="show-btn">Zeigen!</button>
+      <button type="button" class="btn" id="again-btn" hidden>Nochmal zeigen</button>
+      <button type="button" class="btn" id="next-btn" hidden>Neue Aufgabe</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function randInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
+
+  const CORRECT_POINTS = 10;
+  const STREAK_BONUS_AT = 3;
+  const STREAK_BONUS_POINTS = 5;
+
+  const DIE_DOTS = {
+    1: [4],
+    2: [0, 8],
+    3: [0, 4, 8],
+    4: [0, 2, 6, 8],
+    5: [0, 2, 4, 6, 8],
+    6: [0, 2, 3, 5, 6, 8]
+  };
+
+  const els = {
+    formGroup: document.getElementById("form-group"),
+    rangeFieldset: document.getElementById("range-fieldset"),
+    quizNote: document.getElementById("quiz-note"),
+    stage: document.getElementById("stage"),
+    stageReadyText: document.getElementById("stage-ready-text"),
+    answerRow: document.getElementById("answer-row"),
+    answerInput: document.getElementById("answer-input"),
+    checkBtn: document.getElementById("check-btn"),
+    feedback: document.getElementById("feedback"),
+    statsRow: document.getElementById("stats-row"),
+    showBtn: document.getElementById("show-btn"),
+    againBtn: document.getElementById("again-btn"),
+    nextBtn: document.getElementById("next-btn")
+  };
+
+  let stats = { points: 0, correct: 0, total: 0, streak: 0 };
+  let task = null; // { answer, html }
+  let phase = "ready"; // ready -> showing -> hidden -> answered
+
+  function currentForm() { return document.querySelector('input[name="form"]:checked').value; }
+  function currentRange() { return parseInt(document.querySelector('input[name="range"]:checked').value, 10); }
+  function currentDuration() { return parseFloat(document.querySelector('input[name="duration"]:checked').value) * 1000; }
+
+  function dieFaceHtml(value) {
+    const dots = DIE_DOTS[value];
+    let html = '<div class="die-face">';
+    for (let i = 0; i < 9; i++) {
+      html += '<div class="die-cell">' + (dots.indexOf(i) >= 0 ? '<span class="die-dot"></span>' : "") + "</div>";
+    }
+    html += "</div>";
+    return html;
+  }
+
+  function zwanzigerfeldHtml(n) {
+    let html = '<div class="zwanzig-grid">';
+    for (let row = 0; row < 2; row++) {
+      html += '<div class="zwanzig-row">';
+      for (let half = 0; half < 2; half++) {
+        html += '<div class="zwanzig-half">';
+        for (let i = 0; i < 5; i++) {
+          const idx = row * 10 + half * 5 + i;
+          html += '<span class="zw-dot' + (idx < n ? " filled" : "") + '"></span>';
+        }
+        html += "</div>";
+      }
+      html += "</div>";
+    }
+    html += "</div>";
+    return html;
+  }
+
+  function plaettchenHtml(n) {
+    let html = '<div class="plaettchen-grid">';
+    for (let i = 0; i < n; i++) html += '<span class="plaettchen-dot"></span>';
+    html += "</div>";
+    return html;
+  }
+
+  function dienesHtml(n) {
+    const h = Math.floor(n / 100), z = Math.floor((n % 100) / 10), e = n % 10;
+    function col(label, cls, count, blockClass) {
+      let items = "";
+      if (count > 0) { for (let i = 0; i < count; i++) items += '<div class="' + blockClass + '"></div>'; }
+      else { items = '<span class="dienes-empty">–</span>'; }
+      return '<div class="dienes-col"><span class="dienes-label ' + cls + '">' + label + '</span><div class="dienes-items">' + items + "</div></div>";
+    }
+    return '<div class="dienes-row">' + col("Hunderter", "h", h, "hundred-block") + col("Zehner", "z", z, "ten-block") + col("Einer", "e", e, "one-block") + "</div>";
+  }
+
+  function generateTask(form, range) {
+    if (form === "wuerfel") {
+      const v = randInt(1, 6);
+      return { answer: v, html: dieFaceHtml(v) };
+    }
+    if (form === "doppelwuerfel") {
+      const a = randInt(1, 6), b = randInt(1, 6);
+      return { answer: a + b, html: '<div class="dice-row">' + dieFaceHtml(a) + '<span class="dice-plus">+</span>' + dieFaceHtml(b) + "</div>" };
+    }
+    if (form === "zwanzigerfeld") {
+      const n = randInt(0, 20);
+      return { answer: n, html: zwanzigerfeldHtml(n) };
+    }
+    if (form === "dienes") {
+      const n = randInt(0, 100);
+      return { answer: n, html: dienesHtml(n) };
+    }
+    // plaettchen
+    const n = randInt(0, range);
+    return { answer: n, html: plaettchenHtml(n) };
+  }
+
+  function updateRangeFieldsetVisibility() {
+    els.rangeFieldset.hidden = currentForm() !== "plaettchen";
+  }
+
+  function setPhase(p) {
+    phase = p;
+    if (p === "ready") {
+      els.stage.innerHTML = '<p class="stage-ready-text" id="stage-ready-text">Bereit? Klickt auf „Zeigen!“</p>';
+      els.answerRow.hidden = true;
+      els.feedback.className = "feedback";
+      els.feedback.textContent = "";
+      els.showBtn.hidden = false;
+      els.showBtn.disabled = false;
+      els.againBtn.hidden = true;
+      els.nextBtn.hidden = true;
+    } else if (p === "showing") {
+      els.stage.innerHTML = task.html;
+      els.answerRow.hidden = true;
+      els.showBtn.disabled = true;
+    } else if (p === "hidden") {
+      els.stage.innerHTML = '<p class="stage-placeholder">❓</p>';
+      els.answerRow.hidden = false;
+      els.answerInput.value = "";
+      els.answerInput.disabled = false;
+      els.checkBtn.disabled = false;
+      els.showBtn.hidden = true;
+      els.answerInput.focus();
+    } else if (p === "answered") {
+      els.answerInput.disabled = true;
+      els.checkBtn.disabled = true;
+      els.againBtn.hidden = false;
+      els.nextBtn.hidden = false;
+    }
+  }
+
+  function newTask() {
+    task = generateTask(currentForm(), currentRange());
+    setPhase("ready");
+  }
+
+  function updateStats() {
+    let text = "Punkte: " + stats.points + " · Richtig: " + stats.correct + " von " + stats.total;
+    if (stats.streak >= 2) text += " · Serie: " + stats.streak;
+    els.statsRow.textContent = text;
+  }
+
+  els.showBtn.addEventListener("click", function () {
+    setPhase("showing");
+    window.setTimeout(function () { setPhase("hidden"); }, currentDuration());
+  });
+
+  function checkAnswer() {
+    if (els.checkBtn.disabled) return;
+    const raw = els.answerInput.value.trim();
+    const guess = parseInt(raw, 10);
+    const ok = Number.isInteger(guess) && guess === task.answer;
+    stats.total++;
+    let bonusMsg = "";
+    if (ok) {
+      stats.correct++;
+      stats.streak++;
+      let gained = CORRECT_POINTS;
+      if (stats.streak % STREAK_BONUS_AT === 0) {
+        gained += STREAK_BONUS_POINTS;
+        bonusMsg = " (+" + STREAK_BONUS_POINTS + " Serien-Bonus, " + stats.streak + " richtig in Folge!)";
+      }
+      stats.points += gained;
+    } else {
+      stats.streak = 0;
+    }
+    setPhase("answered");
+    els.feedback.className = "feedback show";
+    els.feedback.style.background = ok ? "#e1f2e7" : "#fbe6e3";
+    els.feedback.style.color = ok ? "#2f8f57" : "#c0453a";
+    els.feedback.textContent = ok ? ("Richtig! Es waren " + task.answer + "." + bonusMsg) : ("Leider nicht. Es waren " + task.answer + ".");
+    updateStats();
+  }
+
+  els.checkBtn.addEventListener("click", checkAnswer);
+  els.answerInput.addEventListener("keydown", function (e) { if (e.key === "Enter") checkAnswer(); });
+
+  els.againBtn.addEventListener("click", function () {
+    els.stage.innerHTML = task.html;
+  });
+
+  els.nextBtn.addEventListener("click", newTask);
+
+  document.querySelectorAll('input[name="form"]').forEach(function (radio) {
+    radio.addEventListener("change", function () {
+      updateRangeFieldsetVisibility();
+      newTask();
+    });
+  });
+  document.querySelectorAll('input[name="range"]').forEach(function (radio) {
+    radio.addEventListener("change", newTask);
+  });
+
+  updateRangeFieldsetVisibility();
+  newTask();
+  updateStats();
+})();
+</script>
+</body>
+</html>
