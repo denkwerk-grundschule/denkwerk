@@ -361,19 +361,20 @@
       'Q76,123 65,123 L35,123 Q24,123 20,116 Z" />';
   }
 
-  function handSvg(n, mirrored) {
+  function handSvg(n) {
+    // Zählweise: immer Daumen zuerst (1 = nur Daumen), Daumen sitzt links.
     const raised = Math.min(Math.max(n, 0), 5);
+    const thumbUp = raised >= 1;
     let fingers = "";
-    HAND_FINGER_SLOTS.forEach(function (slot, i) { fingers += handFingerShape(slot, i < raised); });
-    const thumb = handThumbShape(raised === 5);
-    const g = '<g' + (mirrored ? ' transform="scale(-1,1) translate(-100,0)"' : "") + '>' +
-      handPalmShape() + fingers + thumb + "</g>";
+    HAND_FINGER_SLOTS.forEach(function (slot, i) { fingers += handFingerShape(slot, raised >= i + 2); });
+    const thumb = handThumbShape(thumbUp);
+    const g = "<g>" + handPalmShape() + fingers + thumb + "</g>";
     return '<svg viewBox="0 0 100 130" class="hand-svg" aria-hidden="true" focusable="false">' + g + "</svg>";
   }
 
   function fingerbilderHtml(n) {
-    if (n <= 5) return '<div class="fingerbild-row">' + handSvg(n, false) + "</div>";
-    return '<div class="fingerbild-row two-hands">' + handSvg(5, false) + handSvg(n - 5, true) + "</div>";
+    if (n <= 5) return '<div class="fingerbild-row">' + handSvg(n) + "</div>";
+    return '<div class="fingerbild-row two-hands">' + handSvg(5) + handSvg(n - 5) + "</div>";
   }
 
   function plaettchenHtml(n) {
