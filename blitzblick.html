@@ -19,6 +19,8 @@
     --h-color: #b8860b; --h-bg: #faf1d9;
     --z-color: #c0453a; --z-bg: #f8dedb;
     --e-color: #1a56db; --e-bg: #dbe6f8;
+
+    --skin: #f1c391; --skin-shade: #d9a265; --skin-line: #6b4423;
   }
 
   * { box-sizing: border-box; }
@@ -104,17 +106,15 @@
   .zw-dot.zw-blau { border-color: var(--e-color); }
   .zw-dot.zw-blau.filled { background: var(--e-color); }
 
-  /* Fingerbilder (bis 10) - Hand als Ausmalbild-Umriss */
+  /* Fingerbilder (bis 10) - hautfarbene Hand mit geknickten Fingern */
   .fingerbild-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(10px, 4vw, 24px); }
   .hand-svg {
-    width: clamp(92px, 24vw, 160px); height: auto; flex-shrink: 0;
+    width: clamp(100px, 26vw, 175px); height: auto; flex-shrink: 0;
     overflow: visible;
   }
-  .fingerbild-row.two-hands .hand-svg { width: clamp(70px, 17vw, 125px); }
-  .hand-svg rect, .hand-svg circle, .hand-svg path {
-    fill: var(--card); stroke: var(--ink); stroke-width: 3.2;
-    stroke-linejoin: round; stroke-linecap: round;
-  }
+  .fingerbild-row.two-hands .hand-svg { width: clamp(76px, 18.5vw, 135px); }
+  .hand-skin { fill: var(--skin); stroke: var(--skin-line); stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
+  .hand-crease { fill: none; stroke: var(--skin-shade); stroke-width: 2; stroke-linecap: round; }
 
   /* Plättchen (Kraft der 5) */
   .plaettchen-grid {
@@ -332,44 +332,82 @@
     return html;
   }
 
-  // Zählweise wie auf klassischen Fingerbilder-Karten: erst Zeigefinger,
-  // Mittelfinger, Ringfinger, kleiner Finger - der Daumen kommt bei 5 dazu.
-  const HAND_FINGER_SLOTS = [
-    { x: 27, len: 38 },
-    { x: 42, len: 45 },
-    { x: 57, len: 41 },
-    { x: 72, len: 32 }
+  // Zählweise: immer Daumen zuerst (1 = nur Daumen, links), dann Zeige-,
+  // Mittel-, Ring- und kleiner Finger. Gestreckte Finger haben eine
+  // Gelenkfalte, eingerollte zeigen sich als Knöchel am Handrücken.
+  const HAND_FINGERS = [
+    { base: 30, width: 12, len: 36 },
+    { base: 44, width: 13, len: 43 },
+    { base: 58, width: 12, len: 39 },
+    { base: 71, width: 10.5, len: 29 }
   ];
-  const HAND_PALM_TOP = 55;
+  const HAND_PALM_TOP = 58;
+  const HAND_THUMB_BASE = { x: 10, y: 92 };
 
-  function handFingerShape(slot, up) {
-    const w = 13, half = w / 2;
-    if (up) {
-      const yTop = HAND_PALM_TOP - slot.len;
-      return '<rect x="' + (slot.x - half) + '" y="' + yTop + '" width="' + w + '" height="' + (slot.len + 12) + '" rx="' + half + '" />';
-    }
-    return '<circle cx="' + slot.x + '" cy="' + (HAND_PALM_TOP + 3) + '" r="7.5" />';
+  function handFingerUp(f) {
+    const xL = f.base - f.width / 2, xR = f.base + f.width / 2;
+    const yTip = HAND_PALM_TOP - f.len;
+    const yKnuckle = HAND_PALM_TOP - f.len * 0.42;
+    const r = f.width / 2;
+    let html = '<path class="hand-skin" d="M' + xL + ',' + (HAND_PALM_TOP + 10) +
+      ' L' + xL + ',' + (yTip + r) +
+      ' Q' + xL + ',' + yTip + ' ' + f.base + ',' + yTip +
+      ' Q' + xR + ',' + yTip + ' ' + xR + ',' + (yTip + r) +
+      ' L' + xR + ',' + (HAND_PALM_TOP + 10) + ' Z" />';
+    html += '<path class="hand-crease" d="M' + (xL + 1.5) + ',' + yKnuckle + ' Q' + f.base + ',' + (yKnuckle + 2.2) + ' ' + (xR - 1.5) + ',' + yKnuckle + '" />';
+    const yJoint2 = yTip + f.width * 1.15;
+    html += '<path class="hand-crease" d="M' + (xL + 1.8) + ',' + yJoint2 + ' Q' + f.base + ',' + (yJoint2 + 1.8) + ' ' + (xR - 1.8) + ',' + yJoint2 + '" />';
+    return html;
   }
 
-  function handThumbShape(up) {
-    if (up) return '<rect x="1" y="67" width="14" height="37" rx="7" transform="rotate(-42 8 85.5)" />';
-    return '<rect x="9" y="80" width="14" height="20" rx="7" transform="rotate(-8 16 90)" />';
+  function handFingerDown(f) {
+    const xL = f.base - f.width / 2 - 1, xR = f.base + f.width / 2 + 1;
+    const yTop = HAND_PALM_TOP - f.width * 0.95;
+    let html = '<path class="hand-skin" d="M' + xL + ',' + (HAND_PALM_TOP + 10) +
+      ' L' + xL + ',' + (yTop + 4) +
+      ' Q' + xL + ',' + yTop + ' ' + f.base + ',' + yTop +
+      ' Q' + xR + ',' + yTop + ' ' + xR + ',' + (yTop + 4) +
+      ' L' + xR + ',' + (HAND_PALM_TOP + 10) + ' Z" />';
+    html += '<path class="hand-crease" d="M' + (xL + 1) + ',' + (yTop + f.width * 0.55) + ' Q' + f.base + ',' + (yTop + f.width * 0.85) + ' ' + (xR - 1) + ',' + (yTop + f.width * 0.55) + '" />';
+    return html;
+  }
+
+  function handThumbUp() {
+    const w = 15, len = 34, b = HAND_THUMB_BASE;
+    return '<g transform="rotate(-46 ' + b.x + ' ' + b.y + ')">' +
+      '<path class="hand-skin" d="M' + (b.x - w / 2) + ',' + (b.y + 8) +
+      ' L' + (b.x - w / 2) + ',' + (b.y - len + w / 2) +
+      ' Q' + (b.x - w / 2) + ',' + (b.y - len) + ' ' + b.x + ',' + (b.y - len) +
+      ' Q' + (b.x + w / 2) + ',' + (b.y - len) + ' ' + (b.x + w / 2) + ',' + (b.y - len + w / 2) +
+      ' L' + (b.x + w / 2) + ',' + (b.y + 8) + ' Z" />' +
+      '<path class="hand-crease" d="M' + (b.x - w / 2 + 1.5) + ',' + (b.y - len * 0.5) + ' Q' + b.x + ',' + (b.y - len * 0.5 + 2) + ' ' + (b.x + w / 2 - 1.5) + ',' + (b.y - len * 0.5) + '" />' +
+      "</g>";
+  }
+
+  function handThumbDown() {
+    return '<path class="hand-skin" d="M6,100 Q6,88 18,86 Q26,85 27,92 Q27,100 18,101 Q10,102 6,100 Z" />' +
+      '<path class="hand-crease" d="M10,93 Q17,90 23,93" />';
   }
 
   function handPalmShape() {
-    return '<path d="M20,116 Q15,116 15,106 L15,70 Q15,54 30,51 L70,51 Q85,54 85,70 L85,106 Q85,116 80,116 ' +
-      'Q76,123 65,123 L35,123 Q24,123 20,116 Z" />';
+    return '<path class="hand-skin" d="M24,120 Q16,120 16,109 L16,76 Q16,60 24,57 Q27,55.5 30,57 Q33,59 35,58 ' +
+      'Q39,56 44,57 Q48,58 51,57 Q55,56 58,57.5 Q61,59 64,58 Q68,56.5 72,58 Q80,61 82,76 L82,109 ' +
+      'Q82,120 74,120 Q70,127 60,127 L38,127 Q28,127 24,120 Z" />';
+  }
+
+  function handPalmCreases() {
+    return '<path class="hand-crease" d="M30,78 Q45,88 32,106" />' +
+      '<path class="hand-crease" d="M44,74 Q56,90 46,112" />' +
+      '<path class="hand-crease" d="M66,80 Q70,92 64,104" opacity="0.7" />';
   }
 
   function handSvg(n) {
-    // Zählweise: immer Daumen zuerst (1 = nur Daumen), Daumen sitzt links.
     const raised = Math.min(Math.max(n, 0), 5);
-    const thumbUp = raised >= 1;
     let fingers = "";
-    HAND_FINGER_SLOTS.forEach(function (slot, i) { fingers += handFingerShape(slot, raised >= i + 2); });
-    const thumb = handThumbShape(thumbUp);
-    const g = "<g>" + handPalmShape() + fingers + thumb + "</g>";
-    return '<svg viewBox="0 0 100 130" class="hand-svg" aria-hidden="true" focusable="false">' + g + "</svg>";
+    HAND_FINGERS.forEach(function (f, i) { fingers += (raised >= i + 2) ? handFingerUp(f) : handFingerDown(f); });
+    const thumb = raised >= 1 ? handThumbUp() : handThumbDown();
+    const g = "<g>" + thumb + handPalmShape() + fingers + handPalmCreases() + "</g>";
+    return '<svg viewBox="0 0 100 132" class="hand-svg" aria-hidden="true" focusable="false">' + g + "</svg>";
   }
 
   function fingerbilderHtml(n) {
