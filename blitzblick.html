@@ -104,16 +104,17 @@
   .zw-dot.zw-blau { border-color: var(--e-color); }
   .zw-dot.zw-blau.filled { background: var(--e-color); }
 
-  /* Fingerbilder (bis 10) */
-  .fingerbild-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(14px, 5vw, 32px); }
-  .hand { display: flex; align-items: flex-end; gap: clamp(3px, 1.2vw, 7px); }
-  .finger {
-    width: clamp(10px, 3vw, 16px); height: clamp(42px, 13vw, 72px);
-    border-radius: 999px; border: 2px solid var(--border); background: #fff; flex-shrink: 0;
+  /* Fingerbilder (bis 10) - Hand als Ausmalbild-Umriss */
+  .fingerbild-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(10px, 4vw, 24px); }
+  .hand-svg {
+    width: clamp(92px, 24vw, 160px); height: auto; flex-shrink: 0;
+    overflow: visible;
   }
-  .finger.up { background: var(--focus); border-color: var(--focus); }
-  .finger.thumb { height: 70%; align-self: flex-end; transform: rotate(-12deg); }
-  .hand.mirrored .finger.thumb { transform: rotate(12deg); }
+  .fingerbild-row.two-hands .hand-svg { width: clamp(70px, 17vw, 125px); }
+  .hand-svg rect, .hand-svg circle, .hand-svg path {
+    fill: var(--card); stroke: var(--ink); stroke-width: 3.2;
+    stroke-linejoin: round; stroke-linecap: round;
+  }
 
   /* Plättchen (Kraft der 5) */
   .plaettchen-grid {
@@ -331,22 +332,48 @@
     return html;
   }
 
-  function fingerHandHtml(n, mirrored) {
-    const names = ["thumb", "index", "middle", "ring", "pinky"];
-    let fingers = names.map(function (name, i) { return { name: name, up: i < n }; });
-    if (mirrored) fingers = fingers.slice().reverse();
-    let html = '<div class="hand' + (mirrored ? " mirrored" : "") + '">';
-    fingers.forEach(function (f) {
-      html += '<span class="finger ' + f.name + (f.up ? " up" : "") + '"></span>';
-    });
-    html += "</div>";
-    return html;
+  // Zählweise wie auf klassischen Fingerbilder-Karten: erst Zeigefinger,
+  // Mittelfinger, Ringfinger, kleiner Finger - der Daumen kommt bei 5 dazu.
+  const HAND_FINGER_SLOTS = [
+    { x: 27, len: 38 },
+    { x: 42, len: 45 },
+    { x: 57, len: 41 },
+    { x: 72, len: 32 }
+  ];
+  const HAND_PALM_TOP = 55;
+
+  function handFingerShape(slot, up) {
+    const w = 13, half = w / 2;
+    if (up) {
+      const yTop = HAND_PALM_TOP - slot.len;
+      return '<rect x="' + (slot.x - half) + '" y="' + yTop + '" width="' + w + '" height="' + (slot.len + 12) + '" rx="' + half + '" />';
+    }
+    return '<circle cx="' + slot.x + '" cy="' + (HAND_PALM_TOP + 3) + '" r="7.5" />';
+  }
+
+  function handThumbShape(up) {
+    if (up) return '<rect x="1" y="67" width="14" height="37" rx="7" transform="rotate(-42 8 85.5)" />';
+    return '<rect x="9" y="80" width="14" height="20" rx="7" transform="rotate(-8 16 90)" />';
+  }
+
+  function handPalmShape() {
+    return '<path d="M20,116 Q15,116 15,106 L15,70 Q15,54 30,51 L70,51 Q85,54 85,70 L85,106 Q85,116 80,116 ' +
+      'Q76,123 65,123 L35,123 Q24,123 20,116 Z" />';
+  }
+
+  function handSvg(n, mirrored) {
+    const raised = Math.min(Math.max(n, 0), 5);
+    let fingers = "";
+    HAND_FINGER_SLOTS.forEach(function (slot, i) { fingers += handFingerShape(slot, i < raised); });
+    const thumb = handThumbShape(raised === 5);
+    const g = '<g' + (mirrored ? ' transform="scale(-1,1) translate(-100,0)"' : "") + '>' +
+      handPalmShape() + fingers + thumb + "</g>";
+    return '<svg viewBox="0 0 100 130" class="hand-svg" aria-hidden="true" focusable="false">' + g + "</svg>";
   }
 
   function fingerbilderHtml(n) {
-    const first = Math.min(n, 5);
-    const second = Math.max(0, n - 5);
-    return '<div class="fingerbild-row">' + fingerHandHtml(first, false) + fingerHandHtml(second, true) + "</div>";
+    if (n <= 5) return '<div class="fingerbild-row">' + handSvg(n, false) + "</div>";
+    return '<div class="fingerbild-row two-hands">' + handSvg(5, false) + handSvg(n - 5, true) + "</div>";
   }
 
   function plaettchenHtml(n) {
