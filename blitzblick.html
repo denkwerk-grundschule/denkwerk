@@ -99,7 +99,22 @@
     width: clamp(13px, 4.6vw, 24px); height: clamp(13px, 4.6vw, 24px);
     border-radius: 50%; border: 2px solid var(--border); background: #fff; flex-shrink: 0;
   }
-  .zw-dot.filled { background: var(--focus); border-color: var(--focus); }
+  .zw-dot.zw-rot { border-color: var(--z-color); }
+  .zw-dot.zw-rot.filled { background: var(--z-color); }
+  .zw-dot.zw-blau { border-color: var(--e-color); }
+  .zw-dot.zw-blau.filled { background: var(--e-color); }
+
+  /* Fingerbilder (bis 10) - Hand als Ausmalbild-Umriss */
+  .fingerbild-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(10px, 4vw, 24px); }
+  .hand-svg {
+    width: clamp(92px, 24vw, 160px); height: auto; flex-shrink: 0;
+    overflow: visible;
+  }
+  .fingerbild-row.two-hands .hand-svg { width: clamp(70px, 17vw, 125px); }
+  .hand-svg rect, .hand-svg circle, .hand-svg path {
+    fill: var(--card); stroke: var(--ink); stroke-width: 3.2;
+    stroke-linejoin: round; stroke-linecap: round;
+  }
 
   /* Plättchen (Kraft der 5) */
   .plaettchen-grid {
@@ -192,6 +207,7 @@
       <div class="segmented" id="form-group">
         <label><input type="radio" name="form" value="wuerfel" checked><span>Würfelbild</span></label>
         <label><input type="radio" name="form" value="doppelwuerfel"><span>Doppelwürfel</span></label>
+        <label><input type="radio" name="form" value="fingerbilder"><span>Fingerbilder</span></label>
         <label><input type="radio" name="form" value="zwanzigerfeld"><span>Zwanzigerfeld</span></label>
         <label><input type="radio" name="form" value="plaettchen"><span>Plättchen</span></label>
         <label><input type="radio" name="form" value="dienes"><span>Dienes (bis 100)</span></label>
@@ -212,6 +228,7 @@
         <label><input type="radio" name="duration" value="1"><span>1 Sekunde</span></label>
         <label><input type="radio" name="duration" value="2" checked><span>2 Sekunden</span></label>
         <label><input type="radio" name="duration" value="3"><span>3 Sekunden</span></label>
+        <label><input type="radio" name="duration" value="5"><span>5 Sekunden</span></label>
       </div>
     </fieldset>
   </section>
@@ -299,10 +316,13 @@
     for (let row = 0; row < 2; row++) {
       html += '<div class="zwanzig-row">';
       for (let half = 0; half < 2; half++) {
+        // 5 rot, 5 blau, 5 blau, 5 rot
+        const groupIndex = row * 2 + half;
+        const groupClass = (groupIndex === 0 || groupIndex === 3) ? "zw-rot" : "zw-blau";
         html += '<div class="zwanzig-half">';
         for (let i = 0; i < 5; i++) {
           const idx = row * 10 + half * 5 + i;
-          html += '<span class="zw-dot' + (idx < n ? " filled" : "") + '"></span>';
+          html += '<span class="zw-dot ' + groupClass + (idx < n ? " filled" : "") + '"></span>';
         }
         html += "</div>";
       }
@@ -310,6 +330,51 @@
     }
     html += "</div>";
     return html;
+  }
+
+  // Zählweise wie auf klassischen Fingerbilder-Karten: erst Zeigefinger,
+  // Mittelfinger, Ringfinger, kleiner Finger - der Daumen kommt bei 5 dazu.
+  const HAND_FINGER_SLOTS = [
+    { x: 27, len: 38 },
+    { x: 42, len: 45 },
+    { x: 57, len: 41 },
+    { x: 72, len: 32 }
+  ];
+  const HAND_PALM_TOP = 55;
+
+  function handFingerShape(slot, up) {
+    const w = 13, half = w / 2;
+    if (up) {
+      const yTop = HAND_PALM_TOP - slot.len;
+      return '<rect x="' + (slot.x - half) + '" y="' + yTop + '" width="' + w + '" height="' + (slot.len + 12) + '" rx="' + half + '" />';
+    }
+    return '<circle cx="' + slot.x + '" cy="' + (HAND_PALM_TOP + 3) + '" r="7.5" />';
+  }
+
+  function handThumbShape(up) {
+    if (up) return '<rect x="1" y="67" width="14" height="37" rx="7" transform="rotate(-42 8 85.5)" />';
+    return '<rect x="9" y="80" width="14" height="20" rx="7" transform="rotate(-8 16 90)" />';
+  }
+
+  function handPalmShape() {
+    return '<path d="M20,116 Q15,116 15,106 L15,70 Q15,54 30,51 L70,51 Q85,54 85,70 L85,106 Q85,116 80,116 ' +
+      'Q76,123 65,123 L35,123 Q24,123 20,116 Z" />';
+  }
+
+  function handSvg(n) {
+    // Zählweise: immer Daumen zuerst (1 = nur Daumen), Daumen sitzt links.
+    const raised = Math.min(Math.max(n, 0), 5);
+    const thumbUp = raised >= 1;
+    let fingers = "";
+    HAND_FINGER_SLOTS.forEach(function (slot, i) { fingers += handFingerShape(slot, raised >= i + 2); });
+    const thumb = handThumbShape(thumbUp);
+    const g = "<g>" + handPalmShape() + fingers + thumb + "</g>";
+    return '<svg viewBox="0 0 100 130" class="hand-svg" aria-hidden="true" focusable="false">' + g + "</svg>";
+  }
+
+  function fingerbilderHtml(n) {
+    if (n <= 5) return '<div class="fingerbild-row">' + handSvg(n) + "</div>";
+    return '<div class="fingerbild-row two-hands">' + handSvg(5) + handSvg(n - 5) + "</div>";
   }
 
   function plaettchenHtml(n) {
@@ -338,6 +403,10 @@
     if (form === "doppelwuerfel") {
       const a = randInt(1, 6), b = randInt(1, 6);
       return { answer: a + b, html: '<div class="dice-row">' + dieFaceHtml(a) + '<span class="dice-plus">+</span>' + dieFaceHtml(b) + "</div>" };
+    }
+    if (form === "fingerbilder") {
+      const n = randInt(0, 10);
+      return { answer: n, html: fingerbilderHtml(n) };
     }
     if (form === "zwanzigerfeld") {
       const n = randInt(0, 20);
