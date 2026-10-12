@@ -99,7 +99,21 @@
     width: clamp(13px, 4.6vw, 24px); height: clamp(13px, 4.6vw, 24px);
     border-radius: 50%; border: 2px solid var(--border); background: #fff; flex-shrink: 0;
   }
-  .zw-dot.filled { background: var(--focus); border-color: var(--focus); }
+  .zw-dot.zw-rot { border-color: var(--z-color); }
+  .zw-dot.zw-rot.filled { background: var(--z-color); }
+  .zw-dot.zw-blau { border-color: var(--e-color); }
+  .zw-dot.zw-blau.filled { background: var(--e-color); }
+
+  /* Fingerbilder (bis 10) */
+  .fingerbild-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(14px, 5vw, 32px); }
+  .hand { display: flex; align-items: flex-end; gap: clamp(3px, 1.2vw, 7px); }
+  .finger {
+    width: clamp(10px, 3vw, 16px); height: clamp(42px, 13vw, 72px);
+    border-radius: 999px; border: 2px solid var(--border); background: #fff; flex-shrink: 0;
+  }
+  .finger.up { background: var(--focus); border-color: var(--focus); }
+  .finger.thumb { height: 70%; align-self: flex-end; transform: rotate(-12deg); }
+  .hand.mirrored .finger.thumb { transform: rotate(12deg); }
 
   /* Plättchen (Kraft der 5) */
   .plaettchen-grid {
@@ -192,6 +206,7 @@
       <div class="segmented" id="form-group">
         <label><input type="radio" name="form" value="wuerfel" checked><span>Würfelbild</span></label>
         <label><input type="radio" name="form" value="doppelwuerfel"><span>Doppelwürfel</span></label>
+        <label><input type="radio" name="form" value="fingerbilder"><span>Fingerbilder</span></label>
         <label><input type="radio" name="form" value="zwanzigerfeld"><span>Zwanzigerfeld</span></label>
         <label><input type="radio" name="form" value="plaettchen"><span>Plättchen</span></label>
         <label><input type="radio" name="form" value="dienes"><span>Dienes (bis 100)</span></label>
@@ -212,6 +227,7 @@
         <label><input type="radio" name="duration" value="1"><span>1 Sekunde</span></label>
         <label><input type="radio" name="duration" value="2" checked><span>2 Sekunden</span></label>
         <label><input type="radio" name="duration" value="3"><span>3 Sekunden</span></label>
+        <label><input type="radio" name="duration" value="5"><span>5 Sekunden</span></label>
       </div>
     </fieldset>
   </section>
@@ -299,10 +315,13 @@
     for (let row = 0; row < 2; row++) {
       html += '<div class="zwanzig-row">';
       for (let half = 0; half < 2; half++) {
+        // 5 rot, 5 blau, 5 blau, 5 rot
+        const groupIndex = row * 2 + half;
+        const groupClass = (groupIndex === 0 || groupIndex === 3) ? "zw-rot" : "zw-blau";
         html += '<div class="zwanzig-half">';
         for (let i = 0; i < 5; i++) {
           const idx = row * 10 + half * 5 + i;
-          html += '<span class="zw-dot' + (idx < n ? " filled" : "") + '"></span>';
+          html += '<span class="zw-dot ' + groupClass + (idx < n ? " filled" : "") + '"></span>';
         }
         html += "</div>";
       }
@@ -310,6 +329,24 @@
     }
     html += "</div>";
     return html;
+  }
+
+  function fingerHandHtml(n, mirrored) {
+    const names = ["thumb", "index", "middle", "ring", "pinky"];
+    let fingers = names.map(function (name, i) { return { name: name, up: i < n }; });
+    if (mirrored) fingers = fingers.slice().reverse();
+    let html = '<div class="hand' + (mirrored ? " mirrored" : "") + '">';
+    fingers.forEach(function (f) {
+      html += '<span class="finger ' + f.name + (f.up ? " up" : "") + '"></span>';
+    });
+    html += "</div>";
+    return html;
+  }
+
+  function fingerbilderHtml(n) {
+    const first = Math.min(n, 5);
+    const second = Math.max(0, n - 5);
+    return '<div class="fingerbild-row">' + fingerHandHtml(first, false) + fingerHandHtml(second, true) + "</div>";
   }
 
   function plaettchenHtml(n) {
@@ -338,6 +375,10 @@
     if (form === "doppelwuerfel") {
       const a = randInt(1, 6), b = randInt(1, 6);
       return { answer: a + b, html: '<div class="dice-row">' + dieFaceHtml(a) + '<span class="dice-plus">+</span>' + dieFaceHtml(b) + "</div>" };
+    }
+    if (form === "fingerbilder") {
+      const n = randInt(0, 10);
+      return { answer: n, html: fingerbilderHtml(n) };
     }
     if (form === "zwanzigerfeld") {
       const n = randInt(0, 20);
