@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stellenwert-Trainer</title>
+<style>
+  :root {
+    --paper: #f5f1e6;
+    --card: #ffffff;
+    --border: #ddd2b3;
+    --ink: #2e2a24;
+    --ink-soft: #6b6456;
+    --focus: #1a56db;
+
+    --good: #2f8f57; --good-bg: #e1f2e7;
+    --bad: #c0453a; --bad-bg: #fbe6e3;
+
+    --col-m: #f4b3b0; --col-m-ink: #8a2f2a;
+    --col-ht: #f6da85; --col-ht-ink: #7a5a0c;
+    --col-zt: #a9cdf0; --col-zt-ink: #254a85;
+    --col-t: #f4b3b0; --col-t-ink: #8a2f2a;
+    --col-h: #f6da85; --col-h-ink: #7a5a0c;
+    --col-z: #a9cdf0; --col-z-ink: #254a85;
+    --col-e: #f4b3b0; --col-e-ink: #8a2f2a;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    line-height: 1.5;
+  }
+  .app { width: 100%; max-width: 760px; padding: 20px 16px 48px; }
+
+  header { text-align: center; margin-bottom: 14px; }
+  .logo { font-size: 2.2rem; line-height: 1; margin-bottom: 4px; }
+  h1 { font-size: clamp(1.4rem, 4.4vw, 1.9rem); margin: 0; font-weight: 800; }
+  .subtitle { color: var(--ink-soft); font-size: 0.95rem; margin: 4px 0 0; }
+
+  section.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px 22px;
+    box-shadow: 0 3px 0 rgba(46, 42, 36, 0.05);
+    margin-bottom: 16px;
+  }
+
+  fieldset { border: none; padding: 0; margin: 0 0 14px; }
+  legend { font-weight: 700; font-size: 0.88rem; margin-bottom: 8px; padding: 0; }
+
+  .segmented { display: flex; flex-wrap: wrap; gap: 8px; }
+  .segmented label { position: relative; }
+  .segmented input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .segmented span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border: 2px solid var(--border); border-radius: 10px;
+    font-weight: 600; font-size: 0.9rem; color: var(--ink-soft); background: #fff; cursor: pointer;
+  }
+  .segmented input:checked + span { border-color: var(--focus); background: #eaf0fc; color: var(--focus); }
+  .segmented input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .btn {
+    padding: 11px 20px; border-radius: 8px; border: 2px solid var(--border);
+    background: #fff; font-weight: 600; font-size: 0.92rem; cursor: pointer; color: var(--ink);
+    font-family: inherit;
+  }
+  .btn:hover:not(:disabled) { background: #f4f0e2; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--focus); border-color: var(--focus); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1544ad; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 14px; }
+
+  .score-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 14px;
+  }
+  .score-row b { color: var(--ink); }
+
+  .task-prompt {
+    text-align: center; font-size: 1.05rem; font-weight: 700; margin: 0 0 18px;
+  }
+
+  /* --- Stellenwerttafel --- */
+  .swt-wrap { overflow-x: auto; margin: 0 0 18px; }
+  table.swt { border-collapse: collapse; margin: 0 auto; }
+  table.swt th, table.swt td {
+    border: 1px solid var(--border); text-align: center; padding: 0;
+    width: 48px; height: 40px;
+  }
+  table.swt th {
+    font-size: 0.78rem; font-weight: 800; padding: 6px 2px;
+  }
+  table.swt th[data-col="m"] { background: var(--col-m); color: var(--col-m-ink); }
+  table.swt th[data-col="ht"] { background: var(--col-ht); color: var(--col-ht-ink); }
+  table.swt th[data-col="zt"] { background: var(--col-zt); color: var(--col-zt-ink); }
+  table.swt th[data-col="t"] { background: var(--col-t); color: var(--col-t-ink); }
+  table.swt th[data-col="h"] { background: var(--col-h); color: var(--col-h-ink); }
+  table.swt th[data-col="z"] { background: var(--col-z); color: var(--col-z-ink); }
+  table.swt th[data-col="e"] { background: var(--col-e); color: var(--col-e-ink); }
+
+  table.swt input.cell-input {
+    width: 100%; height: 100%; border: none; text-align: center;
+    font-size: 1.15rem; font-weight: 800; font-family: inherit; color: var(--ink);
+    background: transparent;
+  }
+  table.swt input.cell-input:focus { outline: 2px solid var(--focus); outline-offset: -2px; background: #eaf0fc; }
+  table.swt input.cell-input.disabled-cell { background: #f1ede0; color: var(--border); }
+  table.swt input.cell-input.correct { background: var(--good-bg); color: var(--good); }
+  table.swt input.cell-input.wrong { background: var(--bad-bg); color: var(--bad); }
+
+  /* --- Karten (Stellenwert- und Zahlenkarten) --- */
+  .card-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 0 0 18px; }
+  .value-card {
+    border-radius: 10px; padding: 10px 16px; font-weight: 800; font-size: 1.05rem;
+    border: 1.5px solid rgba(0,0,0,0.15); min-width: 60px; text-align: center;
+  }
+  .value-card small { display: block; font-size: 0.65rem; font-weight: 700; opacity: 0.75; margin-top: 2px; }
+  .value-card[data-col="m"] { background: var(--col-m); color: var(--col-m-ink); }
+  .value-card[data-col="ht"] { background: var(--col-ht); color: var(--col-ht-ink); }
+  .value-card[data-col="zt"] { background: var(--col-zt); color: var(--col-zt-ink); }
+  .value-card[data-col="t"] { background: var(--col-t); color: var(--col-t-ink); }
+  .value-card[data-col="h"] { background: var(--col-h); color: var(--col-h-ink); }
+  .value-card[data-col="z"] { background: var(--col-z); color: var(--col-z-ink); }
+  .value-card[data-col="e"] { background: var(--col-e); color: var(--col-e-ink); }
+
+  /* --- Zahlenkarten zum Übereinanderlegen --- */
+  .drag-hint { text-align: center; font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 12px; }
+  .karten-play-area { position: relative; max-width: 340px; margin: 0 auto 10px; }
+  .stack-zone {
+    position: relative; height: 150px; border: 2px dashed var(--border); border-radius: 10px;
+    background: #fbf8f2; margin-bottom: 14px; overflow: visible;
+  }
+  .stack-zone.drag-over { border-color: var(--focus); background: #eaf0fc; }
+  .stack-zone-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 0.9rem; color: var(--border); font-weight: 700; pointer-events: none;
+  }
+  .deck-zone {
+    position: relative; min-height: 84px; display: flex; flex-wrap: wrap; gap: 14px;
+    justify-content: center; align-content: flex-start;
+  }
+  .drag-card {
+    border-radius: 10px; padding: 18px 20px; font-weight: 800;
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 2.1rem; border: 2px solid rgba(0,0,0,0.15); text-align: center;
+    cursor: grab; touch-action: none; user-select: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+    position: relative; transition: box-shadow 0.15s ease;
+  }
+  .drag-card.placed {
+    position: absolute; left: 20px; padding: 18px 0; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.22);
+    transition: left 0.25s ease, top 0.25s ease;
+  }
+  .drag-card.dragging { cursor: grabbing; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 999 !important; }
+  .drag-card[data-col="m"] { background: var(--col-m); color: var(--col-m-ink); }
+  .drag-card[data-col="ht"] { background: var(--col-ht); color: var(--col-ht-ink); }
+  .drag-card[data-col="zt"] { background: var(--col-zt); color: var(--col-zt-ink); }
+  .drag-card[data-col="t"] { background: var(--col-t); color: var(--col-t-ink); }
+  .drag-card[data-col="h"] { background: var(--col-h); color: var(--col-h-ink); }
+  .drag-card[data-col="z"] { background: var(--col-z); color: var(--col-z-ink); }
+  .drag-card[data-col="e"] { background: var(--col-e); color: var(--col-e-ink); }
+
+  .answer-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; }
+  .answer-row label { font-weight: 700; font-size: 0.92rem; }
+  .answer-row input[type="text"] {
+    padding: 10px 12px; border: 2px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 1.1rem; font-weight: 700; color: var(--ink);
+    width: 160px; text-align: center; letter-spacing: 0.05em;
+  }
+  .answer-row input[type="text"]:focus { outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
+
+  .feedback {
+    margin: 0 0 4px; padding: 14px 16px; border-radius: 10px; font-weight: 700;
+    display: none; text-align: center;
+  }
+  .feedback.show { display: block; animation: pop 0.25s ease; }
+  .feedback.good { background: var(--good-bg); color: var(--good); }
+  .feedback.bad { background: var(--bad-bg); color: var(--bad); }
+  @keyframes pop { from { transform: scale(0.96); opacity: 0.5; } to { transform: scale(1); opacity: 1; } }
+
+  .streak { text-align: center; font-size: 0.85rem; color: var(--ink-soft); margin-top: 10px; }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 480px) {
+    table.swt th, table.swt td { width: 38px; height: 34px; }
+    table.swt input.cell-input { font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">🔢</div>
+    <h1>Stellenwert-Trainer</h1>
+    <p class="subtitle">Zahlen bis zur Million lesen, schreiben und in die Stellenwerttafel eintragen.</p>
+  </header>
+
+  <section class="card">
+    <fieldset>
+      <legend>Zahlenbereich</legend>
+      <div class="segmented" id="range-group">
+        <label><input type="radio" name="range" value="5" checked><span>5-stellig</span></label>
+        <label><input type="radio" name="range" value="6"><span>6-stellig</span></label>
+        <label><input type="radio" name="range" value="7"><span>7-stellig</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Übungsart</legend>
+      <div class="segmented" id="mode-group">
+        <label><input type="radio" name="mode" value="eintragen" checked><span>Zahl eintragen</span></label>
+        <label><input type="radio" name="mode" value="ablesen"><span>Zahl ablesen</span></label>
+        <label><input type="radio" name="mode" value="karten"><span>Zahlenkarten</span></label>
+      </div>
+    </fieldset>
+  </section>
+
+  <section class="card">
+    <div class="score-row">
+      <span>Richtig: <b id="score-correct">0</b> / <b id="score-total">0</b></span>
+      <span id="streak-label"></span>
+    </div>
+
+    <p class="task-prompt" id="task-prompt"></p>
+
+    <!-- Modus: Zahl eintragen -->
+    <div id="mode-eintragen">
+      <div class="swt-wrap">
+        <table class="swt" id="swt-table"></table>
+      </div>
+    </div>
+
+    <!-- Modus: Zahl ablesen -->
+    <div id="mode-ablesen" hidden>
+      <div class="card-row" id="ablesen-cards"></div>
+      <div class="answer-row">
+        <label for="ablesen-input">Zahl:</label>
+        <input type="text" id="ablesen-input" inputmode="numeric" maxlength="8" autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Modus: Zahlenkarten -->
+    <div id="mode-karten" hidden>
+      <p class="drag-hint">Ziehe alle Karten in das Feld – sie legen sich automatisch richtig übereinander. Welche Zahl entsteht?</p>
+      <div class="karten-play-area">
+        <div class="stack-zone" id="stack-zone"><span class="stack-zone-label">hier stapeln</span></div>
+        <div class="deck-zone" id="deck-zone"></div>
+      </div>
+      <div class="answer-row">
+        <label for="karten-input">Zahl:</label>
+        <input type="text" id="karten-input" inputmode="numeric" maxlength="8" autocomplete="off">
+        <button type="button" class="btn" id="karten-reset-btn">Karten zurücksetzen</button>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary" id="check-btn">Prüfen</button>
+      <button type="button" class="btn" id="next-btn" hidden>Neue Aufgabe</button>
+    </div>
+
+    <p class="streak" id="hint-label"></p>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const COLS = ["m", "ht", "zt", "t", "h", "z", "e"];
+  const COL_LABELS = { m: "M", ht: "HT", zt: "ZT", t: "T", h: "H", z: "Z", e: "E" };
+  const COL_PLACE = { m: 1000000, ht: 100000, zt: 10000, t: 1000, h: 100, z: 10, e: 1 };
+  const COL_WORD = { m: "Millionen", ht: "Hunderttausender", zt: "Zehntausender", t: "Tausender", h: "Hunderter", z: "Zehner", e: "Einer" };
+
+  const els = {
+    rangeGroup: document.getElementById("range-group"),
+    modeGroup: document.getElementById("mode-group"),
+    scoreCorrect: document.getElementById("score-correct"),
+    scoreTotal: document.getElementById("score-total"),
+    streakLabel: document.getElementById("streak-label"),
+    taskPrompt: document.getElementById("task-prompt"),
+    modeEintragen: document.getElementById("mode-eintragen"),
+    modeAblesen: document.getElementById("mode-ablesen"),
+    modeKarten: document.getElementById("mode-karten"),
+    swtTable: document.getElementById("swt-table"),
+    ablesenCards: document.getElementById("ablesen-cards"),
+    ablesenInput: document.getElementById("ablesen-input"),
+    stackZone: document.getElementById("stack-zone"),
+    deckZone: document.getElementById("deck-zone"),
+    kartenInput: document.getElementById("karten-input"),
+    kartenResetBtn: document.getElementById("karten-reset-btn"),
+    feedback: document.getElementById("feedback"),
+    checkBtn: document.getElementById("check-btn"),
+    nextBtn: document.getElementById("next-btn"),
+    hintLabel: document.getElementById("hint-label")
+  };
+
+  let scoreCorrect = 0;
+  let scoreTotal = 0;
+  let streak = 0;
+  let current = null; // { mode, digits, number, activeCols }
+
+  function digitsLen() {
+    return parseInt(document.querySelector('input[name="range"]:checked').value, 10);
+  }
+  function currentMode() {
+    return document.querySelector('input[name="mode"]:checked').value;
+  }
+
+  function randomNumber(len) {
+    const min = Math.pow(10, len - 1);
+    const max = Math.pow(10, len) - 1;
+    return min + Math.floor(Math.random() * (max - min + 1));
+  }
+
+  function digitsOf(number) {
+    // returns object col -> digit, always 7 columns, leading cols 0 if unused
+    const s = String(number).padStart(7, "0");
+    const d = {};
+    for (let i = 0; i < COLS.length; i++) d[COLS[i]] = parseInt(s[i], 10);
+    return d;
+  }
+
+  function activeColsForLen(len) {
+    // last `len` columns are active (non-leading-zero columns)
+    return COLS.slice(COLS.length - len);
+  }
+
+  function formatNumber(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  /* ---------- Modus: Zahl eintragen ---------- */
+  function buildSwtTable(activeCols, editable) {
+    let headHtml = "<tr>";
+    COLS.forEach(function (c) {
+      headHtml += '<th data-col="' + c + '">' + COL_LABELS[c] + "</th>";
+    });
+    headHtml += "</tr>";
+
+    let bodyHtml = "<tr>";
+    COLS.forEach(function (c) {
+      const isActive = activeCols.indexOf(c) >= 0;
+      if (editable) {
+        bodyHtml += '<td><input type="text" inputmode="numeric" maxlength="1" class="cell-input' + (isActive ? "" : " disabled-cell") + '" data-col="' + c + '"' + (isActive ? "" : " disabled") + "></td>";
+      } else {
+        bodyHtml += '<td><input type="text" class="cell-input" data-col="' + c + '" value="" readonly></td>';
+      }
+    });
+    bodyHtml += "</tr>";
+    els.swtTable.innerHTML = headHtml + bodyHtml;
+
+    if (editable) {
+      const inputs = Array.from(els.swtTable.querySelectorAll("input.cell-input:not([disabled])"));
+      inputs.forEach(function (inp, idx) {
+        inp.addEventListener("input", function () {
+          inp.value = inp.value.replace(/[^0-9]/g, "").slice(0, 1);
+          if (inp.value && idx < inputs.length - 1) inputs[idx + 1].focus();
+        });
+        inp.addEventListener("keydown", function (e) {
+          if (e.key === "Backspace" && !inp.value && idx > 0) inputs[idx - 1].focus();
+        });
+      });
+    }
+  }
+
+  function newTaskEintragen(len) {
+    const number = randomNumber(len);
+    const activeCols = activeColsForLen(len);
+    current = { mode: "eintragen", number: number, activeCols: activeCols };
+    els.taskPrompt.textContent = "Trage die Zahl " + formatNumber(number) + " in die Stellenwerttafel ein.";
+    buildSwtTable(activeCols, true);
+    const firstInput = els.swtTable.querySelector("input.cell-input:not([disabled])");
+    if (firstInput) firstInput.focus();
+  }
+
+  function checkEintragen() {
+    const digits = digitsOf(current.number);
+    let allCorrect = true;
+    current.activeCols.forEach(function (c) {
+      const inp = els.swtTable.querySelector('input.cell-input[data-col="' + c + '"]');
+      const val = parseInt(inp.value, 10);
+      const ok = val === digits[c];
+      inp.classList.remove("correct", "wrong");
+      inp.classList.add(ok ? "correct" : "wrong");
+      inp.readOnly = true;
+      if (!ok) allCorrect = false;
+    });
+    return allCorrect;
+  }
+
+  /* ---------- Modus: Zahl ablesen ---------- */
+  function newTaskAblesen(len) {
+    const number = randomNumber(len);
+    const digits = digitsOf(number);
+    const activeCols = activeColsForLen(len);
+    // choose a subset of active cols with non-zero digit to show as cards (always include all non-zero active cols)
+    const shownCols = activeCols.filter(function (c) { return digits[c] !== 0; });
+    current = { mode: "ablesen", number: number };
+    els.taskPrompt.textContent = "Welche Zahl ist das? Lies die Stellenwert-Karten und notiere die Zahl.";
+    const shuffled = shuffle(shownCols);
+    let html = "";
+    shuffled.forEach(function (c) {
+      html += '<div class="value-card" data-col="' + c + '">' + digits[c] + " " + COL_LABELS[c] + "<small>" + COL_WORD[c] + "</small></div>";
+    });
+    els.ablesenCards.innerHTML = html;
+    els.ablesenInput.value = "";
+    els.ablesenInput.focus();
+  }
+
+  function checkAblesen() {
+    const val = parseInt(els.ablesenInput.value.replace(/\s/g, ""), 10);
+    return val === current.number;
+  }
+
+  /* ---------- Modus: Zahlenkarten (Zerlegen, zum Übereinanderlegen) ---------- */
+  function newTaskKarten(len) {
+    const number = randomNumber(len);
+    const digits = digitsOf(number);
+    const activeCols = activeColsForLen(len);
+    current = { mode: "karten", number: number };
+    els.taskPrompt.textContent = "Lege die Karten übereinander – welche Zahl entsteht?";
+    const parts = [];
+    activeCols.forEach(function (c) {
+      if (digits[c] !== 0) {
+        parts.push({ col: c, value: digits[c] * COL_PLACE[c] });
+      }
+    });
+    const shuffled = shuffle(parts);
+
+    els.deckZone.innerHTML = "";
+    Array.from(els.stackZone.querySelectorAll(".drag-card")).forEach(function (c) { c.remove(); });
+    shuffled.forEach(function (p) {
+      const card = document.createElement("div");
+      card.className = "drag-card";
+      card.dataset.col = p.col;
+      card.dataset.value = String(p.value);
+      const raw = String(p.value);
+      card.dataset.digitlen = String(raw.length);
+      card.textContent = raw;
+      attachDrag(card);
+      els.deckZone.appendChild(card);
+    });
+    els.kartenInput.value = "";
+  }
+
+  /* Ordnet alle gestapelten Karten als Faecher an: groesster Wert links/hinten,
+     jede kleinere Karte deckt die Nullen der vorherigen ab und zeigt nur ihre
+     eigene(n) Ziffer(n) - dadurch entsteht die Zahl zuverlaessig und lesbar. */
+  function layoutStack() {
+    const placed = Array.from(els.stackZone.querySelectorAll(".drag-card.placed"));
+    placed.sort(function (a, b) { return parseInt(b.dataset.value, 10) - parseInt(a.dataset.value, 10); });
+    let chOffset = 0;
+    placed.forEach(function (card, idx) {
+      const digitLen = parseInt(card.dataset.digitlen, 10);
+      card.style.width = digitLen + "ch";
+      card.style.left = "calc(20px + " + chOffset + "ch)";
+      card.style.top = (20 + idx * 5) + "px";
+      card.style.zIndex = String(idx);
+      chOffset += digitLen;
+      const next = placed[idx + 1];
+      if (next) chOffset -= parseInt(next.dataset.digitlen, 10);
+    });
+  }
+
+  function resetKartenCards() {
+    if (!current || current.mode !== "karten") return;
+    Array.from(els.stackZone.querySelectorAll(".drag-card")).forEach(function (card) {
+      card.classList.remove("placed");
+      card.style.position = "";
+      card.style.left = "";
+      card.style.top = "";
+      card.style.width = "";
+      card.style.zIndex = "";
+      els.deckZone.appendChild(card);
+    });
+  }
+
+  function attachDrag(card) {
+    // Waehrend des Ziehens bleibt die Karte an ihrem Platz im DOM (kein Reparenting,
+    // kein Reflow der Geschwister) und bewegt sich nur optisch per transform.
+    // Erst beim Loslassen wird sie tatsaechlich in die Stapel- oder Kartenablage verschoben.
+    let dragging = false;
+    let startClientX = 0, startClientY = 0;
+
+    card.addEventListener("pointerdown", function (e) {
+      dragging = true;
+      card.setPointerCapture(e.pointerId);
+      card.classList.add("dragging");
+      startClientX = e.clientX;
+      startClientY = e.clientY;
+      card.style.zIndex = "999";
+    });
+
+    card.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      const dx = e.clientX - startClientX;
+      const dy = e.clientY - startClientY;
+      card.style.transform = "translate(" + dx + "px, " + dy + "px)";
+
+      const stackRect = els.stackZone.getBoundingClientRect();
+      const over = e.clientX >= stackRect.left && e.clientX <= stackRect.right &&
+        e.clientY >= stackRect.top && e.clientY <= stackRect.bottom;
+      els.stackZone.classList.toggle("drag-over", over);
+    });
+
+    function endDrag(e) {
+      if (!dragging) return;
+      dragging = false;
+      card.classList.remove("dragging");
+      card.style.transform = "";
+      card.style.zIndex = "";
+      els.stackZone.classList.remove("drag-over");
+
+      const stackRect = els.stackZone.getBoundingClientRect();
+      const cx = e.clientX, cy = e.clientY;
+      const over = cx >= stackRect.left && cx <= stackRect.right && cy >= stackRect.top && cy <= stackRect.bottom;
+
+      if (over) {
+        card.classList.add("placed");
+        els.stackZone.appendChild(card);
+        layoutStack();
+      } else if (card.parentElement !== els.deckZone) {
+        card.classList.remove("placed");
+        card.style.left = "";
+        card.style.top = "";
+        card.style.width = "";
+        card.style.zIndex = "";
+        els.deckZone.appendChild(card);
+        layoutStack();
+      }
+    }
+
+    card.addEventListener("pointerup", endDrag);
+    card.addEventListener("pointercancel", endDrag);
+  }
+
+  function checkKarten() {
+    const val = parseInt(els.kartenInput.value.replace(/\s/g, ""), 10);
+    return val === current.number;
+  }
+
+  /* ---------- Steuerung ---------- */
+  function showModeUI(mode) {
+    els.modeEintragen.hidden = mode !== "eintragen";
+    els.modeAblesen.hidden = mode !== "ablesen";
+    els.modeKarten.hidden = mode !== "karten";
+  }
+
+  function newTask() {
+    const mode = currentMode();
+    const len = digitsLen();
+    showModeUI(mode);
+    els.feedback.className = "feedback";
+    els.feedback.textContent = "";
+    els.checkBtn.hidden = false;
+    els.nextBtn.hidden = true;
+    els.hintLabel.textContent = "";
+
+    if (mode === "eintragen") newTaskEintragen(len);
+    else if (mode === "ablesen") newTaskAblesen(len);
+    else newTaskKarten(len);
+  }
+
+  function check() {
+    const mode = currentMode();
+    let ok = false;
+    if (mode === "eintragen") ok = checkEintragen();
+    else if (mode === "ablesen") ok = checkAblesen();
+    else ok = checkKarten();
+
+    scoreTotal++;
+    els.scoreTotal.textContent = String(scoreTotal);
+    if (ok) {
+      scoreCorrect++;
+      streak++;
+      els.scoreCorrect.textContent = String(scoreCorrect);
+      els.feedback.className = "feedback show good";
+      els.feedback.textContent = "Richtig! Die Zahl ist " + formatNumber(current.number) + ".";
+      els.streakLabel.textContent = streak >= 2 ? streak + " richtig in Folge! 🌟" : "";
+    } else {
+      streak = 0;
+      els.streakLabel.textContent = "";
+      els.feedback.className = "feedback show bad";
+      els.feedback.textContent = "Nicht ganz. Die richtige Zahl ist " + formatNumber(current.number) + ".";
+      if (mode === "ablesen") els.ablesenInput.value = String(current.number);
+      if (mode === "karten") els.kartenInput.value = String(current.number);
+    }
+    els.checkBtn.hidden = true;
+    els.nextBtn.hidden = false;
+    els.nextBtn.focus();
+  }
+
+  els.checkBtn.addEventListener("click", check);
+  els.nextBtn.addEventListener("click", newTask);
+  els.kartenResetBtn.addEventListener("click", resetKartenCards);
+
+  [els.ablesenInput, els.kartenInput].forEach(function (inp) {
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !els.checkBtn.hidden) check();
+    });
+  });
+
+  document.querySelectorAll('input[name="range"]').forEach(function (r) {
+    r.addEventListener("change", newTask);
+  });
+  document.querySelectorAll('input[name="mode"]').forEach(function (r) {
+    r.addEventListener("change", newTask);
+  });
+
+  newTask();
+})();
+</script>
+</body>
+</html>
