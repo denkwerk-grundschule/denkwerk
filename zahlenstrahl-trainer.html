@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zahlenstrahl-Trainer</title>
+<style>
+  :root {
+    --bg: #faf6ee;
+    --card: #ffffff;
+    --border: #d9cdb8;
+    --ink: #3a332a;
+    --accent: #2f6f6b;
+    --accent-dark: #1f4d4a;
+    --accent-light: #e4f0ee;
+    --line-color: #3a332a;
+    --tick-color: #3a332a;
+    --tick-color-dim: #b9ada0;
+    --good: #3f8f4a;
+    --good-bg: #e8f5ea;
+    --bad: #c0463a;
+    --bad-bg: #fbe9e7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    padding: 18px 14px 60px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 {
+    font-size: 1.5rem;
+    margin: 4px 0 2px;
+    color: var(--accent-dark);
+  }
+  .sub {
+    margin: 0 0 18px;
+    color: #6b6052;
+    font-size: 0.95rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 16px 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #8a7e6c;
+    margin: 0 0 10px;
+    font-weight: 700;
+  }
+  .segmented {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .seg-btn {
+    flex: 1 1 auto;
+    min-width: 72px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: #fff;
+    color: var(--ink);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+  }
+  .seg-btn.active {
+    background: var(--accent);
+    border-color: var(--accent-dark);
+    color: #fff;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .field {
+    flex: 1 1 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field label {
+    font-size: 0.8rem;
+    color: #8a7e6c;
+    font-weight: 600;
+  }
+  select, input[type="number"], input[type="text"] {
+    font-size: 1rem;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: #fff;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .range-label {
+    text-align: center;
+    font-weight: 700;
+    color: var(--accent-dark);
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+  }
+  .line-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .line-area {
+    position: relative;
+    height: 130px;
+    margin: 8px 20px 0;
+    touch-action: pan-x;
+  }
+  .main-line {
+    position: absolute;
+    left: 0; right: 0; top: 54px;
+    height: 4px;
+    background: var(--line-color);
+    border-radius: 2px;
+  }
+  .tick {
+    position: absolute;
+    top: 0; bottom: 0;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    pointer-events: none;
+    width: 60px;
+  }
+  .tick-mark {
+    width: 3px;
+    height: 20px;
+    margin-top: 46px;
+    background: var(--tick-color);
+    border-radius: 1px;
+  }
+  .tick.endpoint .tick-mark {
+    width: 4px;
+    height: 26px;
+    margin-top: 43px;
+  }
+  .tick-label {
+    margin-top: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+  .tick.endpoint .tick-label { font-size: 1.05rem; }
+  .tick.dim .tick-mark { background: var(--tick-color-dim); }
+  .tick-input {
+    width: 58px;
+    text-align: center;
+    margin-top: 6px;
+    padding: 5px 2px;
+    font-size: 0.95rem;
+    pointer-events: auto;
+  }
+  .tick-input.correct { border-color: var(--good); background: var(--good-bg); }
+  .tick-input.wrong { border-color: var(--bad); background: var(--bad-bg); }
+  .marker {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+  }
+  .marker-label {
+    background: var(--accent-dark);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    margin-bottom: 2px;
+  }
+  .marker.wrong .marker-label { background: var(--bad); }
+  .marker.correct .marker-label { background: var(--good); }
+  .marker-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-dark);
+    border: 3px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    margin-top: 38px;
+  }
+  .marker.wrong .marker-dot { background: var(--bad); }
+  .marker.correct .marker-dot { background: var(--good); }
+  .marker.ghost .marker-dot { background: transparent; border: 3px dashed var(--good); }
+  .marker.ghost .marker-label { background: transparent; color: var(--good); border: 2px dashed var(--good); }
+  .hint {
+    font-size: 0.85rem;
+    color: #8a7e6c;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 6px;
+  }
+  .controls-row input[type="text"] { flex: 1 1 140px; }
+  button {
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: #fff;
+    color: var(--accent-dark);
+    border: 2px solid var(--accent);
+  }
+  button:active { transform: translateY(1px); }
+  .aufgabe-text {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent-dark);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .feedback {
+    text-align: center;
+    font-weight: 700;
+    margin-top: 10px;
+    min-height: 1.3em;
+  }
+  .feedback.good { color: var(--good); }
+  .feedback.bad { color: var(--bad); }
+  .error-text {
+    color: var(--bad);
+    font-size: 0.85rem;
+    margin-top: 4px;
+    text-align: center;
+  }
+  @media (max-width: 480px) {
+    .tick-label { font-size: 0.82rem; }
+    .tick.endpoint .tick-label { font-size: 0.88rem; }
+    .line-area { margin: 8px 2px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Zahlenstrahl-Trainer</h1>
+  <p class="sub">Zahlenraum, Strichwert und Ausschnitt frei wählen – zum Zeigen oder zum Üben.</p>
+
+  <div class="card">
+    <h2>Zahlenraum</h2>
+    <div class="segmented" id="zrButtons">
+      <button class="seg-btn" data-zr="10">ZR 10</button>
+      <button class="seg-btn" data-zr="20">ZR 20</button>
+      <button class="seg-btn" data-zr="100">ZR 100</button>
+      <button class="seg-btn" data-zr="10000">ZR 10.000</button>
+      <button class="seg-btn" data-zr="100000">ZR 100.000</button>
+    </div>
+    <div class="row">
+      <div class="field" id="strichField">
+        <label for="strichSelect">1 Strich =</label>
+        <select id="strichSelect"></select>
+      </div>
+      <div class="field" id="seg1Field" style="display:none;">
+        <label for="seg1Select">Ausschnitt</label>
+        <select id="seg1Select"></select>
+      </div>
+      <div class="field" id="seg2Field" style="display:none;">
+        <label for="seg2Select">Feinerer Ausschnitt</label>
+        <select id="seg2Select"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Modus</h2>
+    <div class="segmented" id="modeButtons">
+      <button class="seg-btn" data-mode="zeigen">Zeigen</button>
+      <button class="seg-btn" data-mode="ueben">Üben</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="range-label" id="rangeLabel"></div>
+    <div class="line-scroll">
+      <div class="line-area" id="lineArea">
+        <div class="main-line"></div>
+      </div>
+    </div>
+
+    <div id="zeigenControls">
+      <div class="controls-row">
+        <input type="text" id="anzeigenInput" placeholder="Zahl eingeben, z. B. 3450">
+        <button id="anzeigenBtn">Anzeigen</button>
+        <button class="secondary" id="clearMarkerBtn">Punkt löschen</button>
+      </div>
+      <div class="error-text" id="anzeigenError"></div>
+      <div class="hint">Oder einfach auf den Strahl tippen und den Punkt ziehen.</div>
+    </div>
+
+    <div id="uebenControls" style="display:none;">
+      <div class="aufgabe-text" id="aufgabeText"></div>
+      <div class="controls-row" style="justify-content:center;">
+        <button id="pruefenBtn">Prüfen</button>
+        <button class="secondary" id="neueAufgabeBtn">Neue Aufgabe</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var ZR_CONFIG = {
+    10:     { max: 10,     strichOptions: [1] },
+    20:     { max: 20,     strichOptions: [1, 2] },
+    100:    { max: 100,    strichOptions: [10, 5, 1], segmentWidthByStrich: { 1: 10 } },
+    10000:  { max: 10000,  strichOptions: [1000, 100, 10], segmentWidthByStrich: { 100: 1000, 10: [1000, 100] } },
+    100000: { max: 100000, strichOptions: [10000, 1000, 100], segmentWidthByStrich: { 1000: 10000, 100: [10000, 1000] } }
+  };
+
+  var state = {
+    zr: 10,
+    strich: 1,
+    seg1: 0,
+    seg2: 0,
+    mode: "zeigen",
+    markerValue: null,
+    task: null // { type: 'luecken' } or { type: 'markieren', target: n }
+  };
+
+  var els = {
+    zrButtons: document.getElementById("zrButtons"),
+    strichSelect: document.getElementById("strichSelect"),
+    strichField: document.getElementById("strichField"),
+    seg1Select: document.getElementById("seg1Select"),
+    seg1Field: document.getElementById("seg1Field"),
+    seg2Select: document.getElementById("seg2Select"),
+    seg2Field: document.getElementById("seg2Field"),
+    modeButtons: document.getElementById("modeButtons"),
+    rangeLabel: document.getElementById("rangeLabel"),
+    lineArea: document.getElementById("lineArea"),
+    zeigenControls: document.getElementById("zeigenControls"),
+    uebenControls: document.getElementById("uebenControls"),
+    anzeigenInput: document.getElementById("anzeigenInput"),
+    anzeigenBtn: document.getElementById("anzeigenBtn"),
+    anzeigenError: document.getElementById("anzeigenError"),
+    clearMarkerBtn: document.getElementById("clearMarkerBtn"),
+    aufgabeText: document.getElementById("aufgabeText"),
+    pruefenBtn: document.getElementById("pruefenBtn"),
+    neueAufgabeBtn: document.getElementById("neueAufgabeBtn"),
+    feedback: document.getElementById("feedback")
+  };
+
+  function fmt(n) { return Math.round(n).toLocaleString("de-DE"); }
+
+  function currentConfig() { return ZR_CONFIG[state.zr]; }
+
+  function segDefFor(zr, strich) {
+    var cfg = ZR_CONFIG[zr];
+    return cfg.segmentWidthByStrich ? cfg.segmentWidthByStrich[strich] : undefined;
+  }
+
+  function computeWindow() {
+    var cfg = currentConfig();
+    var segDef = segDefFor(state.zr, state.strich);
+    if (!segDef) return { start: 0, end: cfg.max };
+    if (typeof segDef === "number") {
+      return { start: state.seg1, end: state.seg1 + segDef };
+    }
+    // two-level segmentation
+    return { start: state.seg2, end: state.seg2 + segDef[1] };
+  }
+
+  function buildZrButtons() {
+    els.zrButtons.innerHTML = "";
+    Object.keys(ZR_CONFIG).forEach(function (zr) {
+      var btn = document.createElement("button");
+      btn.className = "seg-btn" + (parseInt(zr, 10) === state.zr ? " active" : "");
+      btn.dataset.zr = zr;
+      btn.textContent = zr === "10" ? "ZR 10" : zr === "20" ? "ZR 20" : zr === "100" ? "ZR 100" : "ZR " + fmt(parseInt(zr, 10));
+      btn.addEventListener("click", function () { selectZr(parseInt(zr, 10)); });
+      els.zrButtons.appendChild(btn);
+    });
+  }
+
+  function selectZr(zr) {
+    state.zr = zr;
+    var cfg = currentConfig();
+    state.strich = cfg.strichOptions[0];
+    state.seg1 = 0;
+    state.seg2 = 0;
+    Array.from(els.zrButtons.children).forEach(function (btn) {
+      btn.classList.toggle("active", parseInt(btn.dataset.zr, 10) === zr);
+    });
+    rebuildStrichSelect();
+    onConfigChanged();
+  }
+
+  function rebuildStrichSelect() {
+    var cfg = currentConfig();
+    els.strichSelect.innerHTML = "";
+    cfg.strichOptions.forEach(function (s) {
+      var opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = fmt(s);
+      els.strichSelect.appendChild(opt);
+    });
+    els.strichSelect.value = state.strich;
+    els.strichField.style.display = cfg.strichOptions.length > 1 ? "" : "none";
+    rebuildSegmentSelects();
+  }
+
+  function rebuildSegmentSelects() {
+    var cfg = currentConfig();
+    var segDef = segDefFor(state.zr, state.strich);
+    if (!segDef) {
+      els.seg1Field.style.display = "none";
+      els.seg2Field.style.display = "none";
+      return;
+    }
+    var w1 = typeof segDef === "number" ? segDef : segDef[0];
+    els.seg1Field.style.display = "";
+    els.seg1Select.innerHTML = "";
+    for (var s = 0; s < cfg.max; s += w1) {
+      var opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = fmt(s) + " – " + fmt(s + w1);
+      els.seg1Select.appendChild(opt);
+    }
+    if (!Array.from(els.seg1Select.options).some(function (o) { return parseInt(o.value, 10) === state.seg1; })) {
+      state.seg1 = 0;
+    }
+    els.seg1Select.value = state.seg1;
+
+    if (typeof segDef === "number") {
+      els.seg2Field.style.display = "none";
+    } else {
+      els.seg2Field.style.display = "";
+      rebuildSeg2Select(segDef[1]);
+    }
+  }
+
+  function rebuildSeg2Select(w1Width) {
+    var segDef = segDefFor(state.zr, state.strich);
+    var w2 = segDef[1];
+    els.seg2Select.innerHTML = "";
+    for (var s = state.seg1; s < state.seg1 + segDef[0]; s += w2) {
+      var opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = fmt(s) + " – " + fmt(s + w2);
+      els.seg2Select.appendChild(opt);
+    }
+    if (!Array.from(els.seg2Select.options).some(function (o) { return parseInt(o.value, 10) === state.seg2; })) {
+      state.seg2 = state.seg1;
+    }
+    els.seg2Select.value = state.seg2;
+  }
+
+  els.strichSelect.addEventListener("change", function () {
+    state.strich = parseInt(els.strichSelect.value, 10);
+    state.seg1 = 0;
+    state.seg2 = 0;
+    rebuildSegmentSelects();
+    onConfigChanged();
+  });
+
+  els.seg1Select.addEventListener("change", function () {
+    state.seg1 = parseInt(els.seg1Select.value, 10);
+    state.seg2 = state.seg1;
+    var segDef = segDefFor(state.zr, state.strich);
+    if (segDef && typeof segDef !== "number") rebuildSeg2Select(segDef[0]);
+    onConfigChanged();
+  });
+
+  els.seg2Select.addEventListener("change", function () {
+    state.seg2 = parseInt(els.seg2Select.value, 10);
+    onConfigChanged();
+  });
+
+  function buildModeButtons() {
+    Array.from(els.modeButtons.children).forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.mode === state.mode);
+      btn.addEventListener("click", function () { selectMode(btn.dataset.mode); });
+    });
+  }
+
+  function selectMode(mode) {
+    state.mode = mode;
+    Array.from(els.modeButtons.children).forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.mode === mode);
+    });
+    els.zeigenControls.style.display = mode === "zeigen" ? "" : "none";
+    els.uebenControls.style.display = mode === "ueben" ? "" : "none";
+    if (mode === "zeigen") {
+      state.task = null;
+      state.markerValue = null;
+      renderLine();
+    } else {
+      neueAufgabe();
+    }
+  }
+
+  function onConfigChanged() {
+    state.markerValue = null;
+    if (state.mode === "zeigen") {
+      state.task = null;
+      renderLine();
+    } else {
+      neueAufgabe();
+    }
+  }
+
+  function updateRangeLabel(win) {
+    els.rangeLabel.textContent = fmt(win.start) + " – " + fmt(win.end) + "  ·  1 Strich = " + fmt(state.strich);
+  }
+
+  function renderLine(hiddenIndices, hideMode) {
+    var win = computeWindow();
+    updateRangeLabel(win);
+    var n = Math.round((win.end - win.start) / state.strich) + 1;
+    hideMode = hideMode || "input";
+
+    els.lineArea.innerHTML = '<div class="main-line"></div>';
+
+    for (var i = 0; i < n; i++) {
+      var value = win.start + i * state.strich;
+      var percent = (i / (n - 1)) * 100;
+      var tick = document.createElement("div");
+      tick.className = "tick" + (i === 0 || i === n - 1 ? " endpoint" : "");
+      tick.style.left = percent + "%";
+
+      var mark = document.createElement("div");
+      mark.className = "tick-mark";
+      tick.appendChild(mark);
+
+      var hidden = hiddenIndices && hiddenIndices.indexOf(i) !== -1;
+      if (hidden && hideMode === "input") {
+        var input = document.createElement("input");
+        input.type = "number";
+        input.className = "tick-input";
+        input.dataset.correct = value;
+        input.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            var inputs = Array.from(els.lineArea.querySelectorAll(".tick-input"));
+            var idx = inputs.indexOf(e.target);
+            if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
+            else e.target.blur();
+          }
+        });
+        tick.appendChild(input);
+      } else if (!hidden) {
+        var label = document.createElement("div");
+        label.className = "tick-label";
+        label.textContent = fmt(value);
+        tick.appendChild(label);
+      }
+      els.lineArea.appendChild(tick);
+    }
+
+    var maxLabelLen = fmt(Math.max(Math.abs(win.start), Math.abs(win.end))).length;
+    var inputFloor = hideMode === "input" && hiddenIndices && hiddenIndices.length ? 60 : 0;
+    var minTickWidth = Math.max(inputFloor, maxLabelLen * 11 + 16);
+    els.lineArea.style.width = "max(100%, " + (n * minTickWidth) + "px)";
+
+    if (state.markerValue !== null && state.mode === "zeigen") {
+      placeMarkerAtValue(state.markerValue);
+    }
+  }
+
+  function valueToPercent(value, win) {
+    var p = ((value - win.start) / (win.end - win.start)) * 100;
+    return Math.max(0, Math.min(100, p));
+  }
+
+  function removeMarkers() {
+    Array.from(els.lineArea.querySelectorAll(".marker")).forEach(function (m) { m.remove(); });
+  }
+
+  function placeMarkerAtValue(value, cls) {
+    var win = computeWindow();
+    var existing = els.lineArea.querySelector(".marker:not(.ghost)");
+    if (!existing) {
+      existing = document.createElement("div");
+      existing.className = "marker";
+      var dot = document.createElement("div");
+      dot.className = "marker-dot";
+      var label = document.createElement("div");
+      label.className = "marker-label";
+      existing.appendChild(label);
+      existing.appendChild(dot);
+      els.lineArea.appendChild(existing);
+      attachMarkerDrag(existing);
+    }
+    existing.className = "marker" + (cls ? " " + cls : "");
+    existing.style.left = valueToPercent(value, win) + "%";
+    existing.querySelector(".marker-label").textContent = fmt(value);
+    state.markerValue = value;
+  }
+
+  function showGhostMarker(value) {
+    var win = computeWindow();
+    var ghost = document.createElement("div");
+    ghost.className = "marker ghost";
+    var dot = document.createElement("div");
+    dot.className = "marker-dot";
+    var label = document.createElement("div");
+    label.className = "marker-label";
+    label.textContent = fmt(value);
+    ghost.appendChild(label);
+    ghost.appendChild(dot);
+    ghost.style.left = valueToPercent(value, win) + "%";
+    els.lineArea.appendChild(ghost);
+  }
+
+  function pointerValueFromEvent(e) {
+    var rect = els.lineArea.getBoundingClientRect();
+    var x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    var win = computeWindow();
+    return win.start + (x / rect.width) * (win.end - win.start);
+  }
+
+  function markerPlacementAllowed() {
+    if (state.mode === "zeigen") return true;
+    return state.task && state.task.type === "markieren" && !state.task.checked;
+  }
+
+  function attachMarkerDrag(markerEl) {
+    markerEl.style.pointerEvents = "auto";
+    markerEl.style.touchAction = "none";
+    markerEl.addEventListener("pointerdown", function (e) {
+      if (!markerPlacementAllowed()) return;
+      e.preventDefault();
+      markerEl.setPointerCapture(e.pointerId);
+      function move(ev) {
+        placeMarkerAtValue(pointerValueFromEvent(ev));
+      }
+      function up(ev) {
+        markerEl.removeEventListener("pointermove", move);
+        markerEl.removeEventListener("pointerup", up);
+      }
+      markerEl.addEventListener("pointermove", move);
+      markerEl.addEventListener("pointerup", up);
+    });
+  }
+
+  var tapStart = null;
+  els.lineArea.addEventListener("pointerdown", function (e) {
+    if (!markerPlacementAllowed()) return;
+    if (e.target.classList.contains("tick-input")) return;
+    tapStart = { x: e.clientX, y: e.clientY };
+  });
+  els.lineArea.addEventListener("pointerup", function (e) {
+    if (!markerPlacementAllowed()) return;
+    if (e.target.classList.contains("tick-input")) return;
+    if (!tapStart) return;
+    var dx = Math.abs(e.clientX - tapStart.x);
+    var dy = Math.abs(e.clientY - tapStart.y);
+    tapStart = null;
+    if (dx < 10 && dy < 10) {
+      placeMarkerAtValue(pointerValueFromEvent(e));
+    }
+  });
+
+  // ---- Zeigen-Modus ----
+  els.anzeigenBtn.addEventListener("click", function () {
+    els.anzeigenError.textContent = "";
+    var raw = els.anzeigenInput.value.replace(/\./g, "").replace(/\s/g, "");
+    var n = parseInt(raw, 10);
+    var cfg = currentConfig();
+    if (isNaN(n) || n < 0 || n > cfg.max) {
+      els.anzeigenError.textContent = "Bitte eine Zahl zwischen 0 und " + fmt(cfg.max) + " eingeben.";
+      return;
+    }
+    state.strich = cfg.strichOptions[0];
+    state.seg1 = 0;
+    state.seg2 = 0;
+    els.strichSelect.value = state.strich;
+    rebuildSegmentSelects();
+    renderLine();
+    placeMarkerAtValue(n);
+  });
+
+  els.anzeigenInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") els.anzeigenBtn.click();
+  });
+
+  els.clearMarkerBtn.addEventListener("click", function () {
+    state.markerValue = null;
+    removeMarkers();
+  });
+
+  // ---- Üben-Modus ----
+  function randomInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
+
+  function neueAufgabe() {
+    els.feedback.textContent = "";
+    els.feedback.className = "feedback";
+    var win = computeWindow();
+    var n = Math.round((win.end - win.start) / state.strich) + 1;
+    var taskType = Math.random() < 0.5 ? "luecken" : "markieren";
+
+    if (taskType === "luecken" && n <= 3) taskType = "markieren";
+
+    if (taskType === "luecken") {
+      var hiddenIndices = [];
+      for (var i = 1; i < n - 1; i++) {
+        if (Math.random() < 0.55) hiddenIndices.push(i);
+      }
+      if (hiddenIndices.length === 0) hiddenIndices.push(randomInt(1, n - 2));
+      state.task = { type: "luecken" };
+      state.markerValue = null;
+      renderLine(hiddenIndices);
+      els.aufgabeText.textContent = "Trage die fehlenden Zahlen ein.";
+    } else {
+      var targetIndex = randomInt(1, n - 2);
+      var target = win.start + targetIndex * state.strich;
+      var keepIndices = [0, n - 1];
+      var middle = Math.floor((n - 1) / 2);
+      if (keepIndices.indexOf(middle) === -1) keepIndices.push(middle);
+      var allIndices = [];
+      for (var j = 0; j < n; j++) if (keepIndices.indexOf(j) === -1) allIndices.push(j);
+      state.task = { type: "markieren", target: target, checked: false };
+      state.markerValue = null;
+      renderLine(allIndices, "blank");
+      els.aufgabeText.textContent = "Markiere die Zahl " + fmt(target) + " auf dem Zahlenstrahl.";
+    }
+  }
+
+  els.neueAufgabeBtn.addEventListener("click", neueAufgabe);
+
+  els.pruefenBtn.addEventListener("click", function () {
+    if (!state.task) return;
+    if (state.task.type === "luecken") {
+      var inputs = Array.from(els.lineArea.querySelectorAll(".tick-input"));
+      var correctCount = 0;
+      inputs.forEach(function (input) {
+        var ok = parseInt(input.value, 10) === parseInt(input.dataset.correct, 10);
+        input.classList.remove("correct", "wrong");
+        input.classList.add(ok ? "correct" : "wrong");
+        if (ok) correctCount++;
+      });
+      els.feedback.textContent = correctCount + " von " + inputs.length + " richtig.";
+      els.feedback.className = "feedback " + (correctCount === inputs.length ? "good" : "bad");
+    } else {
+      if (state.markerValue === null) {
+        els.feedback.textContent = "Setze zuerst einen Punkt auf den Strahl.";
+        els.feedback.className = "feedback bad";
+        return;
+      }
+      var tolerance = state.strich / 2;
+      var diff = Math.abs(state.markerValue - state.task.target);
+      var ok2 = diff <= tolerance;
+      state.task.checked = true;
+      placeMarkerAtValue(state.markerValue, ok2 ? "correct" : "wrong");
+      if (!ok2) showGhostMarker(state.task.target);
+      els.feedback.textContent = ok2 ? "Richtig!" : "Leider nicht – die richtige Stelle ist jetzt gestrichelt markiert.";
+      els.feedback.className = "feedback " + (ok2 ? "good" : "bad");
+    }
+  });
+
+  // ---- Init ----
+  buildZrButtons();
+  rebuildStrichSelect();
+  buildModeButtons();
+  renderLine();
+})();
+</script>
+</body>
+</html>
