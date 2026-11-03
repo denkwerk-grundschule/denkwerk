@@ -29,7 +29,25 @@
     font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
     padding: 18px 14px 60px;
   }
-  .wrap { max-width: 760px; margin: 0 auto; }
+  .wrap { max-width: 1500px; margin: 0 auto; }
+  .settings-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .settings-row > .card {
+    margin-bottom: 0;
+  }
+  .settings-row > .card.card-config {
+    flex: 2 1 420px;
+  }
+  .settings-row > .card.card-mode {
+    flex: 1 1 220px;
+  }
+  .line-card {
+    margin-top: 16px;
+  }
   h1 {
     font-size: 1.5rem;
     margin: 4px 0 2px;
@@ -115,13 +133,14 @@
   .line-scroll {
     overflow-x: auto;
     overflow-y: hidden;
-    padding-bottom: 4px;
+    padding: 0 34px 4px;
     -webkit-overflow-scrolling: touch;
   }
   .line-area {
     position: relative;
     height: 130px;
-    margin: 8px 20px 0;
+    width: 100%;
+    margin-top: 8px;
     touch-action: pan-x;
   }
   .main-line {
@@ -270,40 +289,42 @@
   <h1>Zahlenstrahl-Trainer</h1>
   <p class="sub">Zahlenraum, Strichwert und Ausschnitt frei wählen – zum Zeigen oder zum Üben.</p>
 
-  <div class="card">
-    <h2>Zahlenraum</h2>
-    <div class="segmented" id="zrButtons">
-      <button class="seg-btn" data-zr="10">ZR 10</button>
-      <button class="seg-btn" data-zr="20">ZR 20</button>
-      <button class="seg-btn" data-zr="100">ZR 100</button>
-      <button class="seg-btn" data-zr="10000">ZR 10.000</button>
-      <button class="seg-btn" data-zr="100000">ZR 100.000</button>
+  <div class="settings-row">
+    <div class="card card-config">
+      <h2>Zahlenraum</h2>
+      <div class="segmented" id="zrButtons">
+        <button class="seg-btn" data-zr="10">ZR 10</button>
+        <button class="seg-btn" data-zr="20">ZR 20</button>
+        <button class="seg-btn" data-zr="100">ZR 100</button>
+        <button class="seg-btn" data-zr="10000">ZR 10.000</button>
+        <button class="seg-btn" data-zr="100000">ZR 100.000</button>
+      </div>
+      <div class="row">
+        <div class="field" id="strichField">
+          <label for="strichSelect">1 Strich =</label>
+          <select id="strichSelect"></select>
+        </div>
+        <div class="field" id="seg1Field" style="display:none;">
+          <label for="seg1Select">Ausschnitt</label>
+          <select id="seg1Select"></select>
+        </div>
+        <div class="field" id="seg2Field" style="display:none;">
+          <label for="seg2Select">Feinerer Ausschnitt</label>
+          <select id="seg2Select"></select>
+        </div>
+      </div>
     </div>
-    <div class="row">
-      <div class="field" id="strichField">
-        <label for="strichSelect">1 Strich =</label>
-        <select id="strichSelect"></select>
-      </div>
-      <div class="field" id="seg1Field" style="display:none;">
-        <label for="seg1Select">Ausschnitt</label>
-        <select id="seg1Select"></select>
-      </div>
-      <div class="field" id="seg2Field" style="display:none;">
-        <label for="seg2Select">Feinerer Ausschnitt</label>
-        <select id="seg2Select"></select>
+
+    <div class="card card-mode">
+      <h2>Modus</h2>
+      <div class="segmented" id="modeButtons">
+        <button class="seg-btn" data-mode="zeigen">Zeigen</button>
+        <button class="seg-btn" data-mode="ueben">Üben</button>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <h2>Modus</h2>
-    <div class="segmented" id="modeButtons">
-      <button class="seg-btn" data-mode="zeigen">Zeigen</button>
-      <button class="seg-btn" data-mode="ueben">Üben</button>
-    </div>
-  </div>
-
-  <div class="card">
+  <div class="card line-card">
     <div class="range-label" id="rangeLabel"></div>
     <div class="line-scroll">
       <div class="line-area" id="lineArea">
