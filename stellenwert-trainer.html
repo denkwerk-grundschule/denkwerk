@@ -36,12 +36,21 @@
     justify-content: center;
     line-height: 1.5;
   }
-  .app { width: 100%; max-width: 760px; padding: 20px 16px 48px; }
+  .app { width: 100%; max-width: 1900px; padding: 20px 28px 48px; }
+
+  .settings-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; margin-bottom: 0; }
+  .settings-row > section.card { margin-bottom: 16px; }
+  .settings-row > section.card.card-range { flex: 2 1 420px; }
+  .settings-row > section.card.card-mode { flex: 1 1 220px; }
+  .exercise-card { margin: 0 auto 16px; }
+
+  .segmented span.stack { flex-direction: column; gap: 0; line-height: 1.25; }
+  .segmented span.stack small { display: block; font-size: 0.72rem; font-weight: 700; opacity: 0.7; margin-top: 1px; }
 
   header { text-align: center; margin-bottom: 14px; }
   .logo { font-size: 2.2rem; line-height: 1; margin-bottom: 4px; }
-  h1 { font-size: clamp(1.4rem, 4.4vw, 1.9rem); margin: 0; font-weight: 800; }
-  .subtitle { color: var(--ink-soft); font-size: 0.95rem; margin: 4px 0 0; }
+  h1 { font-size: clamp(1.5rem, 3.2vw, 2.8rem); margin: 0; font-weight: 800; }
+  .subtitle { color: var(--ink-soft); font-size: clamp(1rem, 1.3vw, 1.4rem); margin: 4px 0 0; }
 
   section.card {
     background: var(--card);
@@ -67,8 +76,8 @@
   .segmented input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
 
   .btn {
-    padding: 11px 20px; border-radius: 8px; border: 2px solid var(--border);
-    background: #fff; font-weight: 600; font-size: 0.92rem; cursor: pointer; color: var(--ink);
+    padding: clamp(12px, 1.4vw, 20px) clamp(22px, 2.6vw, 38px); border-radius: 8px; border: 2px solid var(--border);
+    background: #fff; font-weight: 600; font-size: clamp(1rem, 1.3vw, 1.4rem); cursor: pointer; color: var(--ink);
     font-family: inherit;
   }
   .btn:hover:not(:disabled) { background: #f4f0e2; }
@@ -84,7 +93,7 @@
   .score-row b { color: var(--ink); }
 
   .task-prompt {
-    text-align: center; font-size: 1.05rem; font-weight: 700; margin: 0 0 18px;
+    text-align: center; font-size: clamp(1.15rem, 2vw, 2rem); font-weight: 700; margin: 0 0 18px;
   }
 
   /* --- Stellenwerttafel --- */
@@ -92,11 +101,15 @@
   table.swt { border-collapse: collapse; margin: 0 auto; }
   table.swt th, table.swt td {
     border: 1px solid var(--border); text-align: center; padding: 0;
-    width: 48px; height: 40px;
+    width: clamp(56px, 7.5vw, 150px); height: clamp(48px, 7.5vw, 130px);
   }
   table.swt th {
-    font-size: 0.78rem; font-weight: 800; padding: 6px 2px;
+    font-size: clamp(0.8rem, 1.1vw, 1.3rem); font-weight: 800; padding: 6px 2px;
   }
+  .th-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .dienes-icon-wrap { display: inline-flex; align-items: flex-end; justify-content: center; }
+  .dienes-icon { display: block; width: auto; }
+  table.swt .dienes-icon { height: clamp(22px, 3.4vw, 54px); max-width: clamp(20px, 2.8vw, 46px); }
   table.swt th[data-col="m"] { background: var(--col-m); color: var(--col-m-ink); }
   table.swt th[data-col="ht"] { background: var(--col-ht); color: var(--col-ht-ink); }
   table.swt th[data-col="zt"] { background: var(--col-zt); color: var(--col-zt-ink); }
@@ -107,21 +120,24 @@
 
   table.swt input.cell-input {
     width: 100%; height: 100%; border: none; text-align: center;
-    font-size: 1.15rem; font-weight: 800; font-family: inherit; color: var(--ink);
+    font-size: clamp(1.3rem, 2.8vw, 3.2rem); font-weight: 800; font-family: inherit; color: var(--ink);
     background: transparent;
   }
   table.swt input.cell-input:focus { outline: 2px solid var(--focus); outline-offset: -2px; background: #eaf0fc; }
-  table.swt input.cell-input.disabled-cell { background: #f1ede0; color: var(--border); }
   table.swt input.cell-input.correct { background: var(--good-bg); color: var(--good); }
   table.swt input.cell-input.wrong { background: var(--bad-bg); color: var(--bad); }
 
   /* --- Karten (Stellenwert- und Zahlenkarten) --- */
-  .card-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 0 0 18px; }
+  .card-row { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; align-items: flex-end; margin: 0 0 18px; }
   .value-card {
-    border-radius: 10px; padding: 10px 16px; font-weight: 800; font-size: 1.05rem;
-    border: 1.5px solid rgba(0,0,0,0.15); min-width: 60px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    border-radius: 12px; padding: clamp(12px, 1.6vw, 20px); font-weight: 800;
+    border: 1.5px solid rgba(0,0,0,0.15); min-width: 70px; max-width: clamp(140px, 20vw, 280px); text-align: center;
   }
-  .value-card small { display: block; font-size: 0.65rem; font-weight: 700; opacity: 0.75; margin-top: 2px; }
+  .dienes-group { display: flex; flex-direction: column; align-items: center; gap: clamp(5px, 0.8vw, 10px); }
+  .dienes-row { display: flex; flex-wrap: nowrap; align-items: flex-end; justify-content: center; gap: clamp(3px, 0.5vw, 7px); }
+  .value-card .dienes-group .dienes-icon { height: clamp(26px, 3.6vw, 52px); max-width: clamp(22px, 2.8vw, 42px); }
+  .value-card small { display: block; font-size: clamp(0.75rem, 1.1vw, 1.2rem); font-weight: 700; opacity: 0.8; }
   .value-card[data-col="m"] { background: var(--col-m); color: var(--col-m-ink); }
   .value-card[data-col="ht"] { background: var(--col-ht); color: var(--col-ht-ink); }
   .value-card[data-col="zt"] { background: var(--col-zt); color: var(--col-zt-ink); }
@@ -131,10 +147,10 @@
   .value-card[data-col="e"] { background: var(--col-e); color: var(--col-e-ink); }
 
   /* --- Zahlenkarten zum Übereinanderlegen --- */
-  .drag-hint { text-align: center; font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 12px; }
-  .karten-play-area { position: relative; max-width: 340px; margin: 0 auto 10px; }
+  .drag-hint { text-align: center; font-size: clamp(0.9rem, 1.2vw, 1.25rem); color: var(--ink-soft); margin: 0 0 12px; }
+  .karten-play-area { position: relative; max-width: clamp(380px, 50vw, 900px); margin: 0 auto 10px; }
   .stack-zone {
-    position: relative; height: 150px; border: 2px dashed var(--border); border-radius: 10px;
+    position: relative; height: clamp(170px, 20vw, 320px); border: 2px dashed var(--border); border-radius: 10px;
     background: #fbf8f2; margin-bottom: 14px; overflow: visible;
   }
   .stack-zone.drag-over { border-color: var(--focus); background: #eaf0fc; }
@@ -147,15 +163,15 @@
     justify-content: center; align-content: flex-start;
   }
   .drag-card {
-    border-radius: 10px; padding: 18px 20px; font-weight: 800;
+    border-radius: 10px; padding: clamp(18px, 2.4vw, 32px) clamp(20px, 2.6vw, 38px); font-weight: 800;
     font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 2.1rem; border: 2px solid rgba(0,0,0,0.15); text-align: center;
+    font-size: clamp(2.3rem, 4vw, 5rem); border: 2px solid rgba(0,0,0,0.15); text-align: center;
     cursor: grab; touch-action: none; user-select: none;
     box-shadow: 0 2px 4px rgba(0,0,0,0.12);
     position: relative; transition: box-shadow 0.15s ease;
   }
   .drag-card.placed {
-    position: absolute; left: 20px; padding: 18px 0; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.22);
+    position: absolute; left: 20px; padding: clamp(18px, 2vw, 28px) 0; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.22);
     transition: left 0.25s ease, top 0.25s ease;
   }
   .drag-card.dragging { cursor: grabbing; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 999 !important; }
@@ -167,12 +183,12 @@
   .drag-card[data-col="z"] { background: var(--col-z); color: var(--col-z-ink); }
   .drag-card[data-col="e"] { background: var(--col-e); color: var(--col-e-ink); }
 
-  .answer-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; }
-  .answer-row label { font-weight: 700; font-size: 0.92rem; }
+  .answer-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 0 0 10px; }
+  .answer-row label { font-weight: 700; font-size: clamp(1rem, 1.3vw, 1.4rem); }
   .answer-row input[type="text"] {
-    padding: 10px 12px; border: 2px solid var(--border); border-radius: 8px;
-    font-family: inherit; font-size: 1.1rem; font-weight: 700; color: var(--ink);
-    width: 160px; text-align: center; letter-spacing: 0.05em;
+    padding: clamp(12px, 1.3vw, 18px) 14px; border: 2px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: clamp(1.25rem, 2vw, 2.1rem); font-weight: 700; color: var(--ink);
+    width: clamp(180px, 17vw, 300px); text-align: center; letter-spacing: 0.05em;
   }
   .answer-row input[type="text"]:focus { outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
 
@@ -201,29 +217,36 @@
   <header>
     <div class="logo">🔢</div>
     <h1>Stellenwert-Trainer</h1>
-    <p class="subtitle">Zahlen bis zur Million lesen, schreiben und in die Stellenwerttafel eintragen.</p>
+    <p class="subtitle">Zahlen vom Hunderterraum bis zur Million lesen, schreiben und in die Stellenwerttafel eintragen – für alle Jahrgangsstufen.</p>
   </header>
 
-  <section class="card">
-    <fieldset>
-      <legend>Zahlenbereich</legend>
-      <div class="segmented" id="range-group">
-        <label><input type="radio" name="range" value="5" checked><span>5-stellig</span></label>
-        <label><input type="radio" name="range" value="6"><span>6-stellig</span></label>
-        <label><input type="radio" name="range" value="7"><span>7-stellig</span></label>
-      </div>
-    </fieldset>
-    <fieldset>
-      <legend>Übungsart</legend>
-      <div class="segmented" id="mode-group">
-        <label><input type="radio" name="mode" value="eintragen" checked><span>Zahl eintragen</span></label>
-        <label><input type="radio" name="mode" value="ablesen"><span>Zahl ablesen</span></label>
-        <label><input type="radio" name="mode" value="karten"><span>Zahlenkarten</span></label>
-      </div>
-    </fieldset>
-  </section>
+  <div class="settings-row">
+    <section class="card card-range">
+      <fieldset>
+        <legend>Zahlenbereich</legend>
+        <div class="segmented" id="range-group">
+          <label><input type="radio" name="range" value="3" checked><span class="stack">ZR 100<small>3-stellig</small></span></label>
+          <label><input type="radio" name="range" value="4"><span class="stack">ZR 1.000<small>4-stellig</small></span></label>
+          <label><input type="radio" name="range" value="5"><span class="stack">ZR 10.000<small>5-stellig</small></span></label>
+          <label><input type="radio" name="range" value="6"><span class="stack">ZR 100.000<small>6-stellig</small></span></label>
+          <label><input type="radio" name="range" value="7"><span class="stack">ZR 1.000.000<small>7-stellig</small></span></label>
+        </div>
+      </fieldset>
+    </section>
 
-  <section class="card">
+    <section class="card card-mode">
+      <fieldset>
+        <legend>Übungsart</legend>
+        <div class="segmented" id="mode-group">
+          <label><input type="radio" name="mode" value="eintragen" checked><span>Zahl eintragen</span></label>
+          <label><input type="radio" name="mode" value="ablesen"><span>Zahl ablesen</span></label>
+          <label><input type="radio" name="mode" value="karten"><span>Zahlenkarten</span></label>
+        </div>
+      </fieldset>
+    </section>
+  </div>
+
+  <section class="card exercise-card">
     <div class="score-row">
       <span>Richtig: <b id="score-correct">0</b> / <b id="score-total">0</b></span>
       <span id="streak-label"></span>
@@ -281,6 +304,61 @@
   const COL_LABELS = { m: "M", ht: "HT", zt: "ZT", t: "T", h: "H", z: "Z", e: "E" };
   const COL_PLACE = { m: 1000000, ht: 100000, zt: 10000, t: 1000, h: 100, z: 10, e: 1 };
   const COL_WORD = { m: "Millionen", ht: "Hunderttausender", zt: "Zehntausender", t: "Tausender", h: "Hunderter", z: "Zehner", e: "Einer" };
+
+  /* Dienes-Material: Einer/Tausender/Million = Wuerfel (rot), Zehner/Zehntausender = Stange (blau),
+     Hunderter/Hunderttausender = Platte (gelb) - das Formen-Muster wiederholt sich alle drei Stellen. */
+  const COL_SHAPE = { m: "cube", ht: "plate", zt: "rod", t: "cube", h: "plate", z: "rod", e: "cube" };
+  const COL_INK = { m: "#8a2f2a", ht: "#7a5a0c", zt: "#254a85", t: "#8a2f2a", h: "#7a5a0c", z: "#254a85", e: "#8a2f2a" };
+
+  /* Anzahlen werden immer in Fuenferreihen strukturiert dargestellt (Fuenferstruktur/Subitizing),
+     nie als loser, breitenabhaengig umbrechender Haufen - so bleibt z.B. 9 immer "5 + 4" sichtbar. */
+  function diesesIconGroup(col, count) {
+    let rowsHtml = "";
+    for (let start = 0; start < count; start += 5) {
+      const rowCount = Math.min(5, count - start);
+      let rowIcons = "";
+      for (let i = 0; i < rowCount; i++) rowIcons += diesesIcon(col);
+      rowsHtml += '<div class="dienes-row">' + rowIcons + "</div>";
+    }
+    return rowsHtml;
+  }
+
+  function diesesIcon(col) {
+    const ink = COL_INK[col];
+    const shape = COL_SHAPE[col];
+    if (shape === "cube") {
+      return '<svg class="dienes-icon" viewBox="0 0 44 44" aria-hidden="true">' +
+        '<polygon points="10,16 22,9 34,14 22,21" fill="#ffffff" stroke="' + ink + '" stroke-width="2" stroke-linejoin="round"/>' +
+        '<polygon points="10,16 22,21 22,35 10,30" fill="#f1f1f1" stroke="' + ink + '" stroke-width="2" stroke-linejoin="round"/>' +
+        '<polygon points="22,21 34,14 34,28 22,35" fill="#e0e0e0" stroke="' + ink + '" stroke-width="2" stroke-linejoin="round"/>' +
+        "</svg>";
+    }
+    if (shape === "rod") {
+      // Zehnerstange: aufrecht, wirklich aus 10 einzelnen Einerwuerfeln aufgebaut
+      const cw = 24, ch = 9, gap = 1.5, w = cw + 4, h = (ch + gap) * 10 + gap + 2;
+      let cells = "";
+      for (let i = 0; i < 10; i++) {
+        const y = 2 + i * (ch + gap);
+        const shade = i % 2 === 0 ? "#ffffff" : "#eef1f6";
+        cells += '<rect x="2" y="' + y.toFixed(1) + '" width="' + cw + '" height="' + ch + '" rx="1.2" fill="' + shade + '" stroke="' + ink + '" stroke-width="1.4"/>';
+      }
+      return '<svg class="dienes-icon dienes-icon-rod" viewBox="0 0 ' + w + " " + h.toFixed(1) + '" aria-hidden="true">' + cells + "</svg>";
+    }
+    // Hunderterplatte: wirklich aus 100 einzelnen Einerwuerfeln (10x10-Raster)
+    const n = 10, cell = 10, pad = 1;
+    let cells = "";
+    for (let r = 0; r < n; r++) {
+      for (let c2 = 0; c2 < n; c2++) {
+        const x = pad + c2 * cell, y = pad + r * cell;
+        const shade = (r + c2) % 2 === 0 ? "#ffffff" : "#faf1cf";
+        cells += '<rect x="' + x + '" y="' + y + '" width="' + cell + '" height="' + cell + '" fill="' + shade + '" stroke="' + ink + '" stroke-width="0.6"/>';
+      }
+    }
+    const size = n * cell + pad * 2;
+    return '<svg class="dienes-icon dienes-icon-plate" viewBox="0 0 ' + size + " " + size + '" aria-hidden="true">' +
+      '<rect x="0.5" y="0.5" width="' + (size - 1) + '" height="' + (size - 1) + '" fill="none" stroke="' + ink + '" stroke-width="1.6"/>' +
+      cells + "</svg>";
+  }
 
   const els = {
     rangeGroup: document.getElementById("range-group"),
@@ -352,16 +430,15 @@
   /* ---------- Modus: Zahl eintragen ---------- */
   function buildSwtTable(activeCols, editable) {
     let headHtml = "<tr>";
-    COLS.forEach(function (c) {
-      headHtml += '<th data-col="' + c + '">' + COL_LABELS[c] + "</th>";
+    activeCols.forEach(function (c) {
+      headHtml += '<th data-col="' + c + '"><div class="th-inner"><span class="dienes-icon-wrap">' + diesesIcon(c) + '</span><span class="th-label">' + COL_LABELS[c] + "</span></div></th>";
     });
     headHtml += "</tr>";
 
     let bodyHtml = "<tr>";
-    COLS.forEach(function (c) {
-      const isActive = activeCols.indexOf(c) >= 0;
+    activeCols.forEach(function (c) {
       if (editable) {
-        bodyHtml += '<td><input type="text" inputmode="numeric" maxlength="1" class="cell-input' + (isActive ? "" : " disabled-cell") + '" data-col="' + c + '"' + (isActive ? "" : " disabled") + "></td>";
+        bodyHtml += '<td><input type="text" inputmode="numeric" maxlength="1" class="cell-input" data-col="' + c + '"></td>';
       } else {
         bodyHtml += '<td><input type="text" class="cell-input" data-col="' + c + '" value="" readonly></td>';
       }
@@ -370,7 +447,7 @@
     els.swtTable.innerHTML = headHtml + bodyHtml;
 
     if (editable) {
-      const inputs = Array.from(els.swtTable.querySelectorAll("input.cell-input:not([disabled])"));
+      const inputs = Array.from(els.swtTable.querySelectorAll("input.cell-input"));
       inputs.forEach(function (inp, idx) {
         inp.addEventListener("input", function () {
           inp.value = inp.value.replace(/[^0-9]/g, "").slice(0, 1);
@@ -389,7 +466,7 @@
     current = { mode: "eintragen", number: number, activeCols: activeCols };
     els.taskPrompt.textContent = "Trage die Zahl " + formatNumber(number) + " in die Stellenwerttafel ein.";
     buildSwtTable(activeCols, true);
-    const firstInput = els.swtTable.querySelector("input.cell-input:not([disabled])");
+    const firstInput = els.swtTable.querySelector("input.cell-input");
     if (firstInput) firstInput.focus();
   }
 
@@ -417,10 +494,9 @@
     const shownCols = activeCols.filter(function (c) { return digits[c] !== 0; });
     current = { mode: "ablesen", number: number };
     els.taskPrompt.textContent = "Welche Zahl ist das? Lies die Stellenwert-Karten und notiere die Zahl.";
-    const shuffled = shuffle(shownCols);
     let html = "";
-    shuffled.forEach(function (c) {
-      html += '<div class="value-card" data-col="' + c + '">' + digits[c] + " " + COL_LABELS[c] + "<small>" + COL_WORD[c] + "</small></div>";
+    shownCols.forEach(function (c) {
+      html += '<div class="value-card" data-col="' + c + '"><div class="dienes-group">' + diesesIconGroup(c, digits[c]) + "</div><small>" + COL_WORD[c] + "</small></div>";
     });
     els.ablesenCards.innerHTML = html;
     els.ablesenInput.value = "";
