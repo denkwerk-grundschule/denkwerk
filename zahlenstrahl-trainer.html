@@ -16,6 +16,8 @@
     --line-color: #3a332a;
     --tick-color: #3a332a;
     --tick-color-dim: #b9ada0;
+    --tier-red: #c0392b;
+    --tier-blue: #2a5db0;
     --good: #3f8f4a;
     --good-bg: #e8f5ea;
     --bad: #c0463a;
@@ -168,10 +170,67 @@
     background: var(--tick-color);
     border-radius: 1px;
   }
-  .tick.endpoint .tick-mark {
+  .tick.endpoint .tick-mark,
+  .tick.major .tick-mark,
+  .tick.centum .tick-mark {
     width: 4px;
     height: 26px;
     margin-top: 43px;
+  }
+  .tick.medium .tick-mark {
+    width: 3px;
+    height: 23px;
+    margin-top: 44.5px;
+  }
+  .tick.centum .tick-label {
+    font-weight: 900;
+    font-size: 1.18em;
+  }
+  .minor-tick {
+    position: absolute;
+    top: 0; bottom: 0;
+    transform: translateX(-50%);
+    pointer-events: none;
+    width: 1px;
+  }
+  .minor-tick .tick-mark {
+    width: 2px;
+    height: 13px;
+    margin-top: 49.5px;
+    background: var(--tick-color-dim);
+  }
+  /* Rot-Blau-Schema fuer kleine Zahlenraeume (ZR10/20/100): 10er rot, 5er blau */
+  .line-area.colorful .tick.endpoint .tick-mark,
+  .line-area.colorful .tick.major .tick-mark {
+    background: var(--tier-red);
+  }
+  .line-area.colorful .tick.endpoint .tick-label,
+  .line-area.colorful .tick.major .tick-label {
+    color: var(--tier-red);
+  }
+  .line-area.colorful .tick.medium .tick-mark {
+    background: var(--tier-blue);
+  }
+  .line-area.colorful .tick.medium .tick-label {
+    color: var(--tier-blue);
+  }
+  .shade-block {
+    position: absolute;
+    top: 30px;
+    bottom: 10px;
+    pointer-events: none;
+  }
+  .shade-block.odd {
+    background: rgba(58, 51, 42, 0.05);
+    border-radius: 4px;
+  }
+  .marker-gradient {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50px;
+    height: 12px;
+    border-radius: 6px;
+    pointer-events: none;
   }
   .tick-label {
     margin-top: 6px;
@@ -214,13 +273,24 @@
   .marker.wrong .marker-label { background: var(--bad); }
   .marker.correct .marker-label { background: var(--good); }
   .marker-dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    border-radius: 50% 50% 50% 0;
     background: var(--accent-dark);
     border: 3px solid #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    margin-top: 38px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    transform: rotate(-45deg);
+    margin-top: 31px;
+    position: relative;
+  }
+  .marker-dot::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 8px; height: 8px;
+    margin: -4px 0 0 -4px;
+    background: #fff;
+    border-radius: 50%;
   }
   .marker.wrong .marker-dot { background: var(--bad); }
   .marker.correct .marker-dot { background: var(--good); }
@@ -358,11 +428,22 @@
   "use strict";
 
   var ZR_CONFIG = {
-    10:     { max: 10,     strichOptions: [1] },
-    20:     { max: 20,     strichOptions: [1, 2] },
-    100:    { max: 100,    strichOptions: [10, 5, 1], segmentWidthByStrich: { 1: 10 } },
-    10000:  { max: 10000,  strichOptions: [1000, 100, 10], segmentWidthByStrich: { 100: 1000, 10: [1000, 100] } },
-    100000: { max: 100000, strichOptions: [10000, 1000, 100], segmentWidthByStrich: { 1000: 10000, 100: [10000, 1000] } }
+    10:      { max: 10,      strichOptions: [1] },
+    20:      { max: 20,      strichOptions: [1] },
+    100:     { max: 100,     strichOptions: [5] },
+    1000:    { max: 1000,    strichOptions: [10] },
+    10000:   { max: 10000,   strichOptions: [1000, 100, 10], segmentWidthByStrich: { 100: 1000, 10: [1000, 100] } },
+    100000:  { max: 100000,  strichOptions: [10000, 1000, 100], segmentWidthByStrich: { 1000: 10000, 100: [10000, 1000] } },
+    1000000: { max: 1000000, strichOptions: [100000, 10000, 1000], segmentWidthByStrich: { 10000: 100000, 1000: [100000, 10000] } }
+  };
+
+  /* Darstellungs-Stil je Zahlenraum, passend zu den Lehrwerk-Vorlagen:
+     ZR10/20/100 = Rot-Blau-Schema (10er rot, 5er blau), ZR1000 = Hunderter extra fett + abwechselnde Schattierung */
+  var ZR_STYLE = {
+    10: { colorScheme: "redblue" },
+    20: { colorScheme: "redblue" },
+    100: { colorScheme: "redblue" },
+    1000: { boldStride: 100, shadeBlockSize: 100 }
   };
 
   var state = {
@@ -566,14 +647,38 @@
     updateRangeLabel(win);
     var n = Math.round((win.end - win.start) / state.strich) + 1;
     hideMode = hideMode || "input";
+    var style = ZR_STYLE[state.zr] || {};
 
-    els.lineArea.innerHTML = '<div class="main-line"></div>';
+    var shadeHtml = "";
+    if (style.shadeBlockSize) {
+      var sz = style.shadeBlockSize;
+      var blockStart = Math.floor(win.start / sz) * sz;
+      for (var bs = blockStart; bs < win.end; bs += sz) {
+        var segStart = Math.max(bs, win.start);
+        var segEnd = Math.min(bs + sz, win.end);
+        var leftPct = ((segStart - win.start) / (win.end - win.start)) * 100;
+        var widthPct = ((segEnd - segStart) / (win.end - win.start)) * 100;
+        var blockIndex = Math.floor(bs / sz);
+        var shadeCls = blockIndex % 2 === 0 ? "even" : "odd";
+        shadeHtml += '<div class="shade-block ' + shadeCls + '" style="left:' + leftPct + '%;width:' + widthPct + '%;"></div>';
+      }
+    }
+    els.lineArea.innerHTML = shadeHtml + '<div class="main-line"></div>';
+    els.lineArea.classList.toggle("colorful", style.colorScheme === "redblue");
 
     for (var i = 0; i < n; i++) {
       var value = win.start + i * state.strich;
       var percent = (i / (n - 1)) * 100;
       var tick = document.createElement("div");
-      tick.className = "tick" + (i === 0 || i === n - 1 ? " endpoint" : "");
+      var tierClass = "";
+      if (style.colorScheme === "redblue") {
+        if (value % 10 === 0) tierClass = " major";
+        else if (value % 5 === 0) tierClass = " medium";
+      }
+      if (style.boldStride && value % style.boldStride === 0) {
+        tierClass += " centum";
+      }
+      tick.className = "tick" + (i === 0 || i === n - 1 ? " endpoint" : "") + tierClass;
       tick.style.left = percent + "%";
 
       var mark = document.createElement("div");
@@ -604,6 +709,26 @@
       els.lineArea.appendChild(tick);
     }
 
+    /* Zwischenstriche: jede Hauptluecke wird bis zur naechsten sinnvollen Stufe weiter unterteilt
+       (bei Strichwert <=10 bis auf die Einer, sonst auf ein Zehntel des Strichwerts) */
+    var minorSpacing = state.strich <= 10 ? 1 : state.strich / 10;
+    var numSubdivisions = state.strich / minorSpacing;
+    if (numSubdivisions > 1) {
+      for (var mi = 0; mi < n - 1; mi++) {
+        for (var k = 1; k < numSubdivisions; k++) {
+          var frac = k / numSubdivisions;
+          var midPercent = ((mi + frac) / (n - 1)) * 100;
+          var minorTick = document.createElement("div");
+          minorTick.className = "minor-tick";
+          minorTick.style.left = midPercent + "%";
+          var minorMark = document.createElement("div");
+          minorMark.className = "tick-mark";
+          minorTick.appendChild(minorMark);
+          els.lineArea.appendChild(minorTick);
+        }
+      }
+    }
+
     var maxLabelLen = fmt(Math.max(Math.abs(win.start), Math.abs(win.end))).length;
     var inputFloor = hideMode === "input" && hiddenIndices && hiddenIndices.length ? 60 : 0;
     var minTickWidth = Math.max(inputFloor, maxLabelLen * 11 + 16);
@@ -621,6 +746,20 @@
 
   function removeMarkers() {
     Array.from(els.lineArea.querySelectorAll(".marker")).forEach(function (m) { m.remove(); });
+    var band = els.lineArea.querySelector(".marker-gradient");
+    if (band) band.remove();
+  }
+
+  function updateMarkerGradient(value, win) {
+    var pct = valueToPercent(value, win);
+    var band = els.lineArea.querySelector(".marker-gradient");
+    if (!band) {
+      band = document.createElement("div");
+      band.className = "marker-gradient";
+      els.lineArea.insertBefore(band, els.lineArea.firstChild);
+    }
+    band.style.background = "linear-gradient(to right, rgba(169,205,240,0.45) 0%, rgba(169,205,240,0.45) " +
+      pct + "%, rgba(246,196,133,0.4) " + pct + "%, rgba(246,196,133,0.4) 100%)";
   }
 
   function placeMarkerAtValue(value, cls) {
@@ -638,6 +777,7 @@
       els.lineArea.appendChild(existing);
       attachMarkerDrag(existing);
     }
+    updateMarkerGradient(value, win);
     existing.className = "marker" + (cls ? " " + cls : "");
     existing.style.left = valueToPercent(value, win) + "%";
     existing.querySelector(".marker-label").textContent = fmt(value);
