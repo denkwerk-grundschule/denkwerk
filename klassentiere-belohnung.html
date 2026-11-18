@@ -92,6 +92,52 @@
     z-index: 2;
   }
 
+  /* ---------- Ziel erreicht ---------- */
+  #goal-banner {
+    position: absolute;
+    top: clamp(8px, 1.4vw, 16px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-14px);
+    background: rgba(250, 243, 231, 0.97);
+    border: 1.5px solid var(--accent);
+    color: #5a3c12;
+    padding: 9px 12px 9px 18px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: clamp(0.82rem, 1.3vw, 1rem);
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    white-space: nowrap;
+  }
+  #goal-banner.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  #goal-banner button {
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.82em;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    top: -14px;
+    width: 8px; height: 12px;
+    border-radius: 2px;
+    opacity: 0.95;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(260px) rotate(340deg); opacity: 0; }
+  }
+
   /* ---------- Status / HUD ---------- */
   #hud {
     position: fixed;
@@ -251,6 +297,10 @@
       <img id="hero-img" src="" alt="Klassentier">
       <div id="reward-layer"></div>
       <div id="reward-badge"></div>
+      <div id="goal-banner" hidden>
+        <span id="goal-banner-text"></span>
+        <button id="goal-banner-btn" type="button">Neue Runde starten</button>
+      </div>
     </div>
   </div>
 </div>
@@ -394,6 +444,9 @@
     heroImg: document.getElementById("hero-img"),
     rewardLayer: document.getElementById("reward-layer"),
     rewardBadge: document.getElementById("reward-badge"),
+    goalBanner: document.getElementById("goal-banner"),
+    goalBannerText: document.getElementById("goal-banner-text"),
+    goalBannerBtn: document.getElementById("goal-banner-btn"),
     statusDot: document.getElementById("status-dot"),
     statusLabel: document.getElementById("status-label"),
     panel: document.getElementById("panel"),
@@ -600,6 +653,38 @@
     return { left: left, top: rand(26, 68) };
   }
 
+  var goalReached = false;
+  var CONFETTI_COLORS = ["#d68a3e", "#c99a2e", "#3f8f4a", "#4a90b8", "#c0463a", "#8e5bc9"];
+
+  function spawnConfettiBurst() {
+    for (var i = 0; i < 26; i++) {
+      (function () {
+        var piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = rand(4, 96) + "%";
+        piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+        piece.style.animationDuration = rand(900, 1600) + "ms";
+        piece.style.animationDelay = rand(0, 300) + "ms";
+        els.rewardLayer.appendChild(piece);
+        window.setTimeout(function () { piece.remove(); }, 2200);
+      })();
+    }
+  }
+
+  function showGoalBanner() {
+    var t = THEMES[currentAnimal];
+    var noun = MAX_POPULATION === 1 ? t.rewardSingular : t.rewardPlural;
+    els.goalBannerText.textContent = "Geschafft! Ihr habt alle " + MAX_POPULATION + " " + noun + " gesammelt!";
+    els.goalBanner.hidden = false;
+    window.requestAnimationFrame(function () { els.goalBanner.classList.add("show"); });
+    spawnConfettiBurst();
+  }
+
+  function hideGoalBanner() {
+    els.goalBanner.classList.remove("show");
+    window.setTimeout(function () { els.goalBanner.hidden = true; }, 350);
+  }
+
   function spawnReward() {
     if (population.length >= MAX_POPULATION) return;
     var t = THEMES[currentAnimal];
@@ -613,9 +698,15 @@
     els.rewardLayer.appendChild(el);
     population.push(el);
     updateRewardBadge();
+    if (!goalReached && population.length >= MAX_POPULATION) {
+      goalReached = true;
+      showGoalBanner();
+    }
   }
 
   function clearTray(animated) {
+    goalReached = false;
+    hideGoalBanner();
     var toRemove = population.slice();
     population = [];
     updateRewardBadge();
@@ -662,6 +753,10 @@
     MAX_POPULATION = parseInt(els.maxPopSlider.value, 10);
     els.maxPopLabel.textContent = String(MAX_POPULATION);
     safeSet(STORAGE_MAXPOP, String(MAX_POPULATION));
+    if (goalReached && population.length < MAX_POPULATION) {
+      goalReached = false;
+      hideGoalBanner();
+    }
   });
 
   els.speedSlider.value = String(speedSec);
@@ -675,6 +770,7 @@
   });
 
   els.resetTrayBtn.addEventListener("click", function () { clearTray(true); });
+  els.goalBannerBtn.addEventListener("click", function () { clearTray(true); });
 
   /* ---------- Bedienfeld & Vollbild ---------- */
   els.panelToggle.addEventListener("click", function () { els.panel.classList.toggle("hidden"); });
