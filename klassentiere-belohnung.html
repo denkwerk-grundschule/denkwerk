@@ -92,6 +92,22 @@
     z-index: 2;
   }
 
+  #rounds-badge {
+    position: absolute;
+    top: clamp(8px, 1.4vw, 16px);
+    right: clamp(8px, 1.4vw, 16px);
+    background: rgba(20, 16, 8, 0.55);
+    backdrop-filter: blur(4px);
+    color: #ffd98a;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: clamp(0.85rem, 1.3vw, 1.05rem);
+    display: flex; align-items: center; gap: 6px;
+    z-index: 2;
+  }
+  #rounds-badge[hidden] { display: none; }
+
   /* ---------- Ziel erreicht ---------- */
   #goal-banner {
     position: absolute;
@@ -297,6 +313,7 @@
       <img id="hero-img" src="" alt="Klassentier">
       <div id="reward-layer"></div>
       <div id="reward-badge"></div>
+      <div id="rounds-badge" hidden></div>
       <div id="goal-banner" hidden>
         <span id="goal-banner-text"></span>
         <button id="goal-banner-btn" type="button">Neue Runde starten</button>
@@ -345,15 +362,18 @@
   <div class="row">
     <div class="threshold-row">
       <label><span>Maximale Anzahl Belohnungen</span><span id="maxpop-label">14</span></label>
-      <input type="range" id="maxpop-slider" min="3" max="24" value="14">
+      <input type="range" id="maxpop-slider" min="3" max="50" value="14">
     </div>
     <div class="threshold-row">
       <label><span>Sammel-Geschwindigkeit (Sek. pro Belohnung)</span><span id="speed-label">5.2</span></label>
-      <input type="range" id="speed-slider" min="1" max="10" step="0.2" value="5.2">
+      <input type="range" id="speed-slider" min="1" max="20" step="0.2" value="5.2">
     </div>
   </div>
   <div class="row">
     <button id="reset-tray-btn" style="background:#8a3a32; width:100%; color:#fff; border:none; padding:10px; border-radius:10px; font-weight:700; cursor:pointer;">Sammlung leeren</button>
+  </div>
+  <div class="row">
+    <button id="reset-rounds-btn" style="background:transparent; width:100%; color:var(--panel-ink); border:1.5px solid rgba(255,255,255,0.3); padding:9px; border-radius:10px; font-weight:700; cursor:pointer;">Tageszähler zurücksetzen</button>
   </div>
 </div>
 
@@ -369,6 +389,7 @@
   var STORAGE_ANIMAL = "klassentierBelohnungAnimal";
   var STORAGE_MAXPOP = "klassentierBelohnungMaxPop";
   var STORAGE_SPEED = "klassentierBelohnungSpeed";
+  var STORAGE_ROUNDS = "klassentierBelohnungRounds";
 
   /* ---------- Belohnungs-Icons (einfach, tiertypisch) ---------- */
   function appleSvg() {
@@ -444,6 +465,8 @@
     heroImg: document.getElementById("hero-img"),
     rewardLayer: document.getElementById("reward-layer"),
     rewardBadge: document.getElementById("reward-badge"),
+    roundsBadge: document.getElementById("rounds-badge"),
+    resetRoundsBtn: document.getElementById("reset-rounds-btn"),
     goalBanner: document.getElementById("goal-banner"),
     goalBannerText: document.getElementById("goal-banner-text"),
     goalBannerBtn: document.getElementById("goal-banner-btn"),
@@ -496,10 +519,39 @@
   };
   var SPEED_RATIO = 2200 / 5200;
   var speedSec = parseFloat(safeGet(STORAGE_SPEED, "5.2"));
-  if (!(speedSec >= 1 && speedSec <= 10)) speedSec = 5.2;
+  if (!(speedSec >= 1 && speedSec <= 20)) speedSec = 5.2;
   var SPAWN_INTERVAL_MS = { 0: speedSec * 1000 * SPEED_RATIO, 1: speedSec * 1000 };
   var MAX_POPULATION = parseInt(safeGet(STORAGE_MAXPOP, "14"), 10);
-  if (!(MAX_POPULATION >= 3 && MAX_POPULATION <= 24)) MAX_POPULATION = 14;
+  if (!(MAX_POPULATION >= 3 && MAX_POPULATION <= 50)) MAX_POPULATION = 14;
+
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+  var roundsData = { date: "", count: 0 };
+  try {
+    var storedRounds = JSON.parse(safeGet(STORAGE_ROUNDS, "{}"));
+    if (storedRounds && typeof storedRounds === "object") roundsData = storedRounds;
+  } catch (e) { roundsData = { date: "", count: 0 }; }
+  if (roundsData.date !== todayKey()) { roundsData = { date: todayKey(), count: 0 }; }
+
+  function persistRounds() { safeSet(STORAGE_ROUNDS, JSON.stringify(roundsData)); }
+  function updateRoundsBadge() {
+    if (roundsData.date !== todayKey()) { roundsData = { date: todayKey(), count: 0 }; persistRounds(); }
+    if (roundsData.count > 0) {
+      els.roundsBadge.textContent = "🏆 " + roundsData.count + "x heute voll";
+      els.roundsBadge.hidden = false;
+    } else {
+      els.roundsBadge.hidden = true;
+    }
+  }
+  function registerRoundCompleted() {
+    if (roundsData.date !== todayKey()) { roundsData = { date: todayKey(), count: 0 }; }
+    roundsData.count += 1;
+    persistRounds();
+    updateRoundsBadge();
+    return roundsData.count;
+  }
 
   var level = 0;
   var population = [];
@@ -674,7 +726,9 @@
   function showGoalBanner() {
     var t = THEMES[currentAnimal];
     var noun = MAX_POPULATION === 1 ? t.rewardSingular : t.rewardPlural;
-    els.goalBannerText.textContent = "Geschafft! Ihr habt alle " + MAX_POPULATION + " " + noun + " gesammelt!";
+    var roundNr = registerRoundCompleted();
+    var roundNote = roundNr > 1 ? " Das ist heute schon Runde " + roundNr + "!" : "";
+    els.goalBannerText.textContent = "Geschafft! Ihr habt alle " + MAX_POPULATION + " " + noun + " gesammelt!" + roundNote;
     els.goalBanner.hidden = false;
     window.requestAnimationFrame(function () { els.goalBanner.classList.add("show"); });
     spawnConfettiBurst();
@@ -770,6 +824,11 @@
   });
 
   els.resetTrayBtn.addEventListener("click", function () { clearTray(true); });
+  els.resetRoundsBtn.addEventListener("click", function () {
+    roundsData = { date: todayKey(), count: 0 };
+    persistRounds();
+    updateRoundsBadge();
+  });
   els.goalBannerBtn.addEventListener("click", function () { clearTray(true); });
 
   /* ---------- Bedienfeld & Vollbild ---------- */
@@ -787,6 +846,7 @@
   applyThresholdUI();
   updateHeroImage();
   updateRewardBadge();
+  updateRoundsBadge();
   setLevel(0);
 })();
 </script>
