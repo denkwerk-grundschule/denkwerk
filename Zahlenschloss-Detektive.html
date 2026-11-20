@@ -1,0 +1,592 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Zahlenschloss-Detektive</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: one case file at a time - tab strip of 5 cases, a combination-lock or
+   licence-plate display built from clicked digits, a sorted "evidence" grid of
+   codes found so far, and a reveal of the counting rule once the case is closed. */
+:root{
+  --bg:#eef2f0;
+  --surface:#ffffff;
+  --ink:#1f2d2a;
+  --ink-soft:#5c6b67;
+  --line:#d8e0dd;
+  --accent:#2b6e77;
+  --accent-soft:#dbebec;
+  --brass:#c9952e;
+  --brass-soft:#f6e9cc;
+  --good:#3f8f4a;
+  --good-soft:#dcf0e2;
+  --bad:#b3382c;
+  --bad-soft:#f6dede;
+  font-family:"Nunito",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#152220; --surface:#1d2e2b; --ink:#eaf2ef; --ink-soft:#9fb3ae;
+    --line:#2e423d; --accent:#6fc2cc; --accent-soft:#23403f;
+    --brass:#e0b35a; --brass-soft:#3a3120;
+    --good:#7fd89b; --good-soft:#1f3a2a; --bad:#e58080; --bad-soft:#402222;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#152220; --surface:#1d2e2b; --ink:#eaf2ef; --ink-soft:#9fb3ae;
+  --line:#2e423d; --accent:#6fc2cc; --accent-soft:#23403f;
+  --brass:#e0b35a; --brass-soft:#3a3120;
+  --good:#7fd89b; --good-soft:#1f3a2a; --bad:#e58080; --bad-soft:#402222;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); color:var(--ink);}
+h1,h2,h3,.display{font-family:"Baloo 2",system-ui,sans-serif;}
+.wrap{
+  max-width:720px; margin:0 auto;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+  padding-block:20px 48px;
+}
+header{text-align:center; margin-bottom:18px;}
+header h1{font-size:clamp(1.5rem,4vw,2.1rem); margin:0 0 6px; font-weight:700; text-wrap:balance;}
+header p{margin:0; color:var(--ink-soft); font-size:0.95rem; font-weight:600;}
+
+nav.tabs{
+  display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin:18px 0;
+}
+nav.tabs button{
+  border:2px solid var(--line); background:var(--surface); color:var(--ink-soft);
+  border-radius:14px; padding:9px 4px; font-family:"Nunito"; font-weight:800; font-size:0.78rem;
+  cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px;
+  min-width:0;
+}
+nav.tabs button .tab-num{
+  width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:var(--line); color:var(--ink); font-family:"Baloo 2"; font-weight:700; font-size:0.85rem;
+}
+nav.tabs button.active{border-color:var(--task-color,var(--accent)); background:var(--surface);}
+nav.tabs button.active .tab-num{background:var(--task-color,var(--accent)); color:#fff;}
+nav.tabs button .tab-check{color:var(--good); font-weight:800; font-size:0.85rem;}
+nav.tabs button span.tab-label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;}
+
+.card{
+  background:var(--surface); border:1.5px solid var(--line); border-radius:20px;
+  padding:clamp(16px,3vw,26px); box-shadow:0 1px 0 var(--line);
+}
+.case-head{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+.case-icon{
+  width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; background:var(--task-color-soft,var(--accent-soft)); flex:none;
+}
+.case-head h2{margin:0; font-size:1.25rem; font-weight:700;}
+.case-head .case-sub{margin:2px 0 0; font-size:0.8rem; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.3px;}
+
+.story{
+  background:var(--bg); border:1.5px dashed var(--line); border-radius:14px;
+  padding:12px 14px; font-size:0.95rem; line-height:1.5; margin:12px 0;
+}
+.instruction{font-weight:700; font-size:0.98rem; margin:0 0 16px;}
+
+/* ---------- Lock / plate display ---------- */
+.device-row{display:flex; justify-content:center; margin:18px 0 10px;}
+.lock{
+  display:inline-flex; align-items:center; gap:10px; background:#2a2521;
+  border-radius:16px; padding:10px 16px; box-shadow:0 4px 12px rgba(0,0,0,0.18);
+}
+.lock .shackle{
+  width:22px; height:30px; border:5px solid var(--brass); border-bottom:none;
+  border-radius:12px 12px 0 0; margin-right:-4px;
+}
+.slots{display:flex; gap:7px;}
+.slot{
+  width:clamp(40px,10vw,52px); height:clamp(50px,12vw,62px);
+  background:#f4efe2; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-family:"Baloo 2"; font-size:clamp(1.3rem,5vw,1.7rem); font-weight:700; color:#2a2521;
+  border:2px solid #0000; cursor:default; user-select:none;
+}
+.slot.clickable{cursor:pointer;}
+.slot.empty{color:#b9ae94;}
+.slot.fixed{background:#e4dcc4; color:#6b5f3f;}
+.slot.filled.clickable:hover{border-color:var(--bad);}
+
+.plate{
+  display:inline-flex; align-items:stretch; background:#fdfaf0; border:3px solid #1a1a1a;
+  border-radius:8px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.18);
+}
+.plate .plate-eu{
+  background:#1655a6; color:#fff; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; padding:6px 7px; font-size:0.65rem; font-weight:800; gap:2px;
+}
+.plate .plate-code{display:flex; align-items:center; gap:10px; padding:8px 14px;}
+.plate .plate-fixed{
+  font-family:"Baloo 2"; font-weight:700; font-size:clamp(1.1rem,4.4vw,1.5rem); color:#1a1a1a;
+  letter-spacing:1px;
+}
+.plate .slot{background:transparent; height:auto;}
+
+/* ---------- Pickers ---------- */
+.picker-label{font-size:0.8rem; font-weight:800; color:var(--ink-soft); text-align:center; margin:14px 0 6px; text-transform:uppercase; letter-spacing:.3px;}
+.card-tray{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
+.digit-card{
+  width:52px; height:62px; border-radius:10px; border:2px solid var(--task-color,var(--accent));
+  background:var(--surface); color:var(--ink); font-family:"Baloo 2"; font-weight:700; font-size:1.4rem;
+  cursor:pointer; box-shadow:0 2px 0 var(--task-color,var(--accent));
+}
+.digit-card:active{transform:translateY(2px); box-shadow:none;}
+
+.keypad-group{display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:10px;}
+.keypad{display:flex; flex-direction:column; align-items:center; gap:6px;}
+.keypad .keypad-title{font-size:0.78rem; font-weight:800; color:var(--ink-soft);}
+.keypad-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:5px; max-width:220px;}
+.key-btn{
+  width:36px; height:36px; border-radius:8px; border:1.5px solid var(--line); background:var(--surface);
+  color:var(--ink); font-family:"Nunito"; font-weight:800; font-size:0.9rem; cursor:pointer;
+}
+.key-btn.selected{background:var(--task-color,var(--accent)); border-color:var(--task-color,var(--accent)); color:#fff;}
+.key-btn.special{outline:2px dotted var(--brass); outline-offset:1px;}
+
+.action-row{display:flex; justify-content:center; gap:10px; margin:14px 0 6px; flex-wrap:wrap;}
+.btn{
+  border:none; border-radius:999px; padding:11px 22px; font-family:"Nunito"; font-weight:800;
+  font-size:0.9rem; cursor:pointer;
+}
+.btn-primary{background:var(--task-color,var(--accent)); color:#fff;}
+.btn-primary:disabled{opacity:0.4; cursor:not-allowed;}
+.btn-ghost{background:transparent; border:1.5px solid var(--line); color:var(--ink-soft);}
+
+.feedback{min-height:26px; text-align:center; font-weight:800; font-size:0.9rem; margin:4px 0 2px;}
+.feedback.good{color:var(--good);}
+.feedback.bad{color:var(--bad);}
+.feedback.dup{color:var(--brass);}
+
+/* ---------- Evidence / found grid ---------- */
+.evidence-head{display:flex; align-items:baseline; justify-content:space-between; margin:20px 0 8px;}
+.evidence-head h3{margin:0; font-size:1rem;}
+.evidence-count{font-weight:800; color:var(--task-color,var(--accent)); font-variant-numeric:tabular-nums;}
+.progress-track{height:8px; background:var(--line); border-radius:999px; overflow:hidden; margin-bottom:12px;}
+.progress-fill{height:100%; background:var(--task-color,var(--accent)); border-radius:999px; transition:width .3s ease;}
+.evidence-grid{display:flex; flex-wrap:wrap; gap:7px; min-height:34px;}
+.evidence-chip{
+  background:var(--bg); border:1.5px solid var(--line); border-radius:8px; padding:5px 10px;
+  font-family:"Baloo 2"; font-weight:700; font-size:0.95rem; letter-spacing:1px;
+  font-variant-numeric:tabular-nums;
+}
+.evidence-empty{color:var(--ink-soft); font-size:0.88rem; font-style:italic;}
+
+.solved-banner{
+  margin-top:16px; background:var(--good-soft); border:1.5px solid var(--good); border-radius:14px;
+  padding:14px 16px; text-align:center; position:relative; overflow:hidden;
+}
+.solved-banner strong{display:block; color:var(--good); font-size:1.05rem; margin-bottom:6px;}
+.solved-banner p{margin:0; font-size:0.92rem; line-height:1.5;}
+.confetti-piece{position:absolute; top:-10px; width:7px; height:11px; border-radius:2px; opacity:0.95; animation:confettiFall linear forwards;}
+@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg); opacity:1;} 100%{transform:translateY(160px) rotate(300deg); opacity:0;}}
+
+@media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>🔍 Zahlenschloss-Detektive</h1>
+    <p>Findet systematisch alle möglichen Codes – Fall für Fall.</p>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+  <div class="card" id="case-panel"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  function permute(arr){
+    if (arr.length <= 1) return [arr.slice()];
+    var out = [];
+    for (var i = 0; i < arr.length; i++){
+      var rest = arr.slice(0,i).concat(arr.slice(i+1));
+      permute(rest).forEach(function(p){ out.push([arr[i]].concat(p)); });
+    }
+    return out;
+  }
+
+  function enumerateValid(t){
+    if (t.type === "permutation"){
+      return permute(t.digits).map(function(a){ return a.join(""); });
+    }
+    var out = [];
+    for (var i = 0; i <= 9; i++){
+      for (var j = 0; j <= 9; j++){
+        if (i === t.specialDigit || j === t.specialDigit) out.push("" + t.fixedDigit + i + j);
+      }
+    }
+    return out;
+  }
+
+  var TASKS = [
+    {
+      id: 1, title: "Pauls Zahlenschloss", icon: "🔒", color: "#3f8f4a", colorSoft: "#dcf0e2",
+      sub: "Fall 1 · Ziffernkarten legen",
+      story: "Paul hat die Kombination seines Zahlenschlosses vergessen. Er weiß nur noch: Die Ziffern 2, 4 und 6 kommen vor – jede genau einmal.",
+      instruction: "Legt mit den Ziffernkarten alle möglichen dreistelligen Codes. Wie viele Möglichkeiten gibt es?",
+      type: "permutation", digits: [2,4,6], device: "lock",
+      explanation: "Für die erste Stelle gibt es 3 Ziffern zur Auswahl. Ist die erste Stelle belegt, bleiben für die zweite Stelle noch 2 Ziffern, und für die dritte Stelle bleibt nur noch 1 übrig: 3 · 2 · 1 = 6 Möglichkeiten."
+    },
+    {
+      id: 2, title: "Sarahs Zahlenschloss", icon: "🔒", color: "#2f6fa8", colorSoft: "#dbe8f2",
+      sub: "Fall 2 · Ziffernkarten legen",
+      story: "Sarah weiß noch, dass die Ziffern 3, 6 und 9 vorkommen – jede genau einmal.",
+      instruction: "Findet alle möglichen dreistelligen Codes. Wie viele Möglichkeiten gibt es?",
+      type: "permutation", digits: [3,6,9], device: "lock",
+      explanation: "Auch hier gibt es für die erste Stelle 3 Ziffern zur Auswahl, für die zweite Stelle bleiben noch 2 und für die dritte Stelle nur noch 1: 3 · 2 · 1 = 6 Möglichkeiten."
+    },
+    {
+      id: 3, title: "Tilos Zahlenschloss", icon: "🔒", color: "#c9952e", colorSoft: "#f6e9cc",
+      sub: "Fall 3 · Zahlencode knacken",
+      story: "An Tilos Zahlenschloss können an jeder der drei Stellen die Ziffern 0 bis 9 vorkommen. Tilo weiß noch: Die erste Ziffer ist die 3, und eine andere Ziffer ist die 9.",
+      instruction: "Findet alle möglichen Codes, auf die das zutrifft.",
+      type: "fixedPlusContains", fixedDigit: 3, specialDigit: 9, device: "lock",
+      explanation: "Die erste Stelle steht fest: 3 _ _. An zweiter und dritter Stelle kann jeweils eine Ziffer von 0 bis 9 stehen – aber mindestens eine davon muss die 9 sein. Steht die 9 an zweiter Stelle, gibt es für die dritte Stelle 10 Möglichkeiten. Steht die 9 an dritter Stelle, gibt es für die zweite Stelle 10 Möglichkeiten. Die Zahl 399 – bei der beide Stellen die 9 sind – wurde dabei doppelt gezählt: 10 + 10 − 1 = 19 Möglichkeiten."
+    },
+    {
+      id: 4, title: "Der gesuchte Autofahrer", icon: "🚗", color: "#b3382c", colorSoft: "#f6dede",
+      sub: "Fall 4 · Kennzeichen gesucht",
+      story: "Lisas Eltern suchen den Autofahrer, der ihr nach einem Fahrradsturz geholfen hat. Lisa erinnert sich nur noch an das Kennzeichen K-ER und dass die erste Ziffer die 2 war, eine andere Ziffer die 1.",
+      instruction: "Findet alle Kennzeichen, die zum gesuchten Auto passen könnten.",
+      type: "fixedPlusContains", fixedDigit: 2, specialDigit: 1, device: "plate",
+      explanation: "Genau wie bei Tilos Schloss steht die erste Ziffer fest (2 _ _), und mindestens eine der beiden anderen Stellen muss die 1 sein: 10 + 10 − 1 = 19 Möglichkeiten."
+    },
+    {
+      id: 5, title: "Johannes' Zahlenschloss", icon: "🔒", color: "#7a56a8", colorSoft: "#e9e0f2",
+      sub: "Fall 5 · Vierstelliger Code",
+      story: "Johannes hat ein vierstelliges Zahlenschloss. Er weiß noch, dass die Ziffern 1, 3, 5 und 7 vorkommen – jede genau einmal.",
+      instruction: "Findet alle möglichen vierstelligen Codes. Wie viele Möglichkeiten gibt es?",
+      type: "permutation", digits: [1,3,5,7], device: "lock",
+      explanation: "Für die erste Stelle gibt es 4 Ziffern zur Auswahl, für die zweite noch 3, für die dritte noch 2 und für die letzte nur noch 1: 4 · 3 · 2 · 1 = 24 Möglichkeiten."
+    }
+  ];
+
+  var TASKS_BY_ID = {};
+  TASKS.forEach(function(t){
+    t.allValid = enumerateValid(t);
+    t.total = t.allValid.length;
+    TASKS_BY_ID[t.id] = t;
+  });
+
+  function safeGet(key, fallback){ try { var v = localStorage.getItem(key); return v === null ? fallback : v; } catch(e){ return fallback; } }
+  function safeSet(key, val){ try { localStorage.setItem(key, val); } catch(e){} }
+  function storageKey(id){ return "zahlenschlossDetektiveV1_" + id; }
+
+  var state = {};
+  var activeId = 1;
+  var celebrated = {};
+
+  function initialSlots(t){
+    if (t.type === "permutation") return new Array(t.digits.length).fill(null);
+    return [t.fixedDigit, null, null];
+  }
+
+  function loadFoundFromStorage(id){
+    try {
+      var arr = JSON.parse(safeGet(storageKey(id), "[]"));
+      return Array.isArray(arr) ? arr : [];
+    } catch(e){ return []; }
+  }
+  function saveFound(id){
+    safeSet(storageKey(id), JSON.stringify(Array.from(state[id].found)));
+    snapshotNow();
+  }
+
+  function getSnapshot(){
+    var snap = {};
+    TASKS.forEach(function(t){ snap[t.id] = Array.from(state[t.id].found); });
+    return snap;
+  }
+  function snapshotNow(){
+    try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(getSnapshot()); } catch(e){}
+  }
+
+  function applyData(data){
+    TASKS.forEach(function(t){
+      var arr = (data && data[t.id]) ? data[t.id] : loadFoundFromStorage(t.id);
+      state[t.id] = { found: new Set(arr), slots: initialSlots(t) };
+      celebrated[t.id] = state[t.id].found.size >= t.total;
+    });
+  }
+
+  function formatCode(code){ return code.split("").join(" · "); }
+
+  var tabsEl = document.getElementById("tabs");
+  var panelEl = document.getElementById("case-panel");
+
+  function renderTabs(){
+    tabsEl.innerHTML = "";
+    TASKS.forEach(function(t){
+      var btn = document.createElement("button");
+      btn.className = "active" === (t.id === activeId ? "active" : "") ? "active" : (t.id === activeId ? "active" : "");
+      btn.className = t.id === activeId ? "active" : "";
+      btn.style.setProperty("--task-color", t.color);
+      var done = state[t.id].found.size >= t.total;
+      btn.innerHTML =
+        '<span class="tab-num">' + t.id + '</span>' +
+        '<span class="tab-label">' + (done ? '<span class="tab-check">✓</span> ' : '') + t.icon + '</span>';
+      btn.addEventListener("click", function(){ activeId = t.id; lastFeedback = { type: "", text: "" }; renderTabs(); renderPanel(); });
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  var feedbackTimer = null;
+  var lastFeedback = { type: "", text: "" };
+
+  function setFeedback(type, text){
+    lastFeedback = { type: type, text: text };
+  }
+
+  function clearSlotsFor(t){
+    state[t.id].slots = initialSlots(t);
+  }
+
+  function submitCode(t){
+    var st = state[t.id];
+    if (st.slots.some(function(s){ return s === null; })) return;
+    var code = st.slots.join("");
+    if (t.type === "fixedPlusContains"){
+      var ok = st.slots[1] === t.specialDigit || st.slots[2] === t.specialDigit;
+      if (!ok){
+        setFeedback("bad", "Das passt nicht: Weder an der zweiten noch an der dritten Stelle steht eine " + t.specialDigit + ".");
+        clearFreeSlots(t);
+        renderPanel();
+        return;
+      }
+    }
+    if (st.found.has(code)){
+      setFeedback("dup", formatCode(code) + " habt ihr schon gefunden!");
+    } else {
+      st.found.add(code);
+      saveFound(t.id);
+      setFeedback("good", formatCode(code) + " ist neu dazugekommen!");
+    }
+    if (t.type === "permutation") clearSlotsFor(t); else clearFreeSlots(t);
+    renderPanel();
+  }
+
+  function clearFreeSlots(t){
+    state[t.id].slots[1] = null;
+    state[t.id].slots[2] = null;
+  }
+
+  function revealOne(t){
+    var st = state[t.id];
+    var missing = t.allValid.filter(function(c){ return !st.found.has(c); });
+    if (missing.length === 0) return;
+    var pick = missing[Math.floor(Math.random() * missing.length)];
+    st.found.add(pick);
+    saveFound(t.id);
+    setFeedback("dup", "Tipp aufgedeckt: " + formatCode(pick));
+    renderPanel();
+  }
+
+  function resetCase(t){
+    state[t.id].found = new Set();
+    state[t.id].slots = initialSlots(t);
+    celebrated[t.id] = false;
+    saveFound(t.id);
+    setFeedback("", "");
+    renderPanel();
+  }
+
+  function renderDevice(t){
+    var st = state[t.id];
+    if (t.device === "plate"){
+      var slotsHtml = [1,2].map(function(i){
+        var v = st.slots[i];
+        var cls = "slot" + (v === null ? " empty clickable" : " filled clickable");
+        return '<div class="' + cls + '" data-slot="' + i + '">' + (v === null ? "·" : v) + '</div>';
+      }).join("");
+      return (
+        '<div class="plate">' +
+          '<div class="plate-eu"><span>D</span></div>' +
+          '<div class="plate-code">' +
+            '<span class="plate-fixed">K · ER</span>' +
+            '<span class="plate-fixed">' + t.fixedDigit + '</span>' +
+            slotsHtml +
+          '</div>' +
+        '</div>'
+      );
+    }
+    var slotsHtml = st.slots.map(function(v, i){
+      var fixed = (t.type === "fixedPlusContains" && i === 0);
+      var cls = "slot";
+      if (fixed) cls += " fixed";
+      else if (v === null) cls += " empty clickable";
+      else cls += " filled clickable";
+      var dataAttr = fixed ? "" : ' data-slot="' + i + '"';
+      return '<div class="' + cls + '"' + dataAttr + '>' + (v === null ? "·" : v) + '</div>';
+    }).join("");
+    return (
+      '<div class="lock">' +
+        '<div class="shackle"></div>' +
+        '<div class="slots">' + slotsHtml + '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderPicker(t){
+    var st = state[t.id];
+    if (t.type === "permutation"){
+      var used = st.slots.filter(function(v){ return v !== null; });
+      var available = t.digits.filter(function(d){ return used.indexOf(d) === -1; });
+      if (available.length === 0){
+        return '<p class="picker-label">Alle Karten liegen schon im Schloss – tippt ein Feld an, um eine Karte zurückzunehmen.</p>';
+      }
+      var cards = available.map(function(d){
+        return '<button class="digit-card" data-card="' + d + '">' + d + '</button>';
+      }).join("");
+      return '<p class="picker-label">Ziffernkarten</p><div class="card-tray">' + cards + '</div>';
+    }
+    function keypad(slotIndex, label){
+      var sel = st.slots[slotIndex];
+      var btns = "";
+      for (var d = 0; d <= 9; d++){
+        var cls = "key-btn" + (sel === d ? " selected" : "") + (d === t.specialDigit ? " special" : "");
+        btns += '<button class="' + cls + '" data-key="' + slotIndex + ':' + d + '">' + d + '</button>';
+      }
+      return (
+        '<div class="keypad">' +
+          '<span class="keypad-title">' + label + '</span>' +
+          '<div class="keypad-grid">' + btns + '</div>' +
+        '</div>'
+      );
+    }
+    return (
+      '<p class="picker-label">Zweite und dritte Stelle wählen</p>' +
+      '<div class="keypad-group">' + keypad(1, "2. Stelle") + keypad(2, "3. Stelle") + '</div>'
+    );
+  }
+
+  function renderPanel(){
+    var t = TASKS_BY_ID[activeId];
+    var st = state[t.id];
+    var canSubmit = st.slots.every(function(s){ return s !== null; });
+    var found = Array.from(st.found).sort(function(a,b){ return Number(a) - Number(b); });
+    var isDone = st.found.size >= t.total;
+
+    var evidenceHtml = found.length
+      ? found.map(function(c){ return '<span class="evidence-chip">' + formatCode(c) + '</span>'; }).join("")
+      : '<span class="evidence-empty">Noch keine Zahl gefunden.</span>';
+
+    var fbHtml = lastFeedback.text ? '<p class="feedback ' + lastFeedback.type + '">' + lastFeedback.text + '</p>' : '<p class="feedback"></p>';
+
+    var banner = "";
+    if (isDone){
+      banner =
+        '<div class="solved-banner" id="solved-banner">' +
+          '<strong>Fall gelöst! Ihr habt alle ' + t.total + ' Möglichkeiten gefunden.</strong>' +
+          '<p>' + t.explanation + '</p>' +
+        '</div>';
+    }
+
+    panelEl.style.setProperty("--task-color", t.color);
+    panelEl.style.setProperty("--task-color-soft", t.colorSoft);
+    panelEl.innerHTML =
+      '<div class="case-head">' +
+        '<div class="case-icon">' + t.icon + '</div>' +
+        '<div><p class="case-sub">' + t.sub + '</p><h2>' + t.title + '</h2></div>' +
+      '</div>' +
+      '<div class="story">' + t.story + '</div>' +
+      '<p class="instruction">' + t.instruction + '</p>' +
+      '<div class="device-row">' + renderDevice(t) + '</div>' +
+      renderPicker(t) +
+      '<div class="action-row">' +
+        '<button class="btn btn-primary" id="submit-btn" ' + (canSubmit ? "" : "disabled") + '>Eintragen</button>' +
+        '<button class="btn btn-ghost" id="tip-btn">Tipp: eine Zahl aufdecken</button>' +
+        '<button class="btn btn-ghost" id="reset-btn">Fall zurücksetzen</button>' +
+      '</div>' +
+      fbHtml +
+      '<div class="evidence-head"><h3>Gefundene Zahlen (sortiert)</h3><span class="evidence-count">' + st.found.size + ' von ' + t.total + '</span></div>' +
+      '<div class="progress-track"><div class="progress-fill" style="width:' + Math.round(st.found.size / t.total * 100) + '%"></div></div>' +
+      '<div class="evidence-grid">' + evidenceHtml + '</div>' +
+      banner;
+
+    // wire events
+    if (t.type === "permutation"){
+      Array.prototype.forEach.call(panelEl.querySelectorAll(".digit-card"), function(btn){
+        btn.addEventListener("click", function(){
+          var d = parseInt(btn.getAttribute("data-card"), 10);
+          var idx = st.slots.indexOf(null);
+          if (idx !== -1){ st.slots[idx] = d; renderPanel(); }
+        });
+      });
+      Array.prototype.forEach.call(panelEl.querySelectorAll(".slot.filled.clickable"), function(el){
+        el.addEventListener("click", function(){
+          var i = parseInt(el.getAttribute("data-slot"), 10);
+          st.slots[i] = null;
+          renderPanel();
+        });
+      });
+    } else {
+      Array.prototype.forEach.call(panelEl.querySelectorAll(".key-btn"), function(btn){
+        btn.addEventListener("click", function(){
+          var parts = btn.getAttribute("data-key").split(":");
+          var slotIndex = parseInt(parts[0], 10), d = parseInt(parts[1], 10);
+          st.slots[slotIndex] = (st.slots[slotIndex] === d) ? null : d;
+          renderPanel();
+        });
+      });
+      Array.prototype.forEach.call(panelEl.querySelectorAll(".slot.filled.clickable"), function(el){
+        el.addEventListener("click", function(){
+          var i = parseInt(el.getAttribute("data-slot"), 10);
+          st.slots[i] = null;
+          renderPanel();
+        });
+      });
+    }
+
+    var submitBtn = document.getElementById("submit-btn");
+    if (submitBtn) submitBtn.addEventListener("click", function(){ submitCode(t); });
+    var tipBtn = document.getElementById("tip-btn");
+    if (tipBtn) tipBtn.addEventListener("click", function(){ revealOne(t); });
+    var resetBtn = document.getElementById("reset-btn");
+    if (resetBtn) resetBtn.addEventListener("click", function(){ resetCase(t); });
+
+    if (isDone && !celebrated[t.id]){
+      celebrated[t.id] = true;
+      burstConfetti();
+    }
+    renderTabs();
+  }
+
+  var CONFETTI_COLORS = ["#2b6e77","#c9952e","#3f8f4a","#b3382c","#7a56a8"];
+  function burstConfetti(){
+    var banner = document.getElementById("solved-banner");
+    if (!banner) return;
+    for (var i = 0; i < 20; i++){
+      (function(){
+        var piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = (4 + Math.random() * 92) + "%";
+        piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+        piece.style.animationDuration = (800 + Math.random() * 700) + "ms";
+        piece.style.animationDelay = (Math.random() * 250) + "ms";
+        banner.appendChild(piece);
+        window.setTimeout(function(){ piece.remove(); }, 1800);
+      })();
+    }
+  }
+
+  function start(data){
+    applyData(data);
+    renderTabs();
+    renderPanel();
+  }
+
+  if (window.claude && window.claude.hot){
+    window.claude.hot.ready ? window.claude.hot.ready(start) : start(window.claude.hot.data || {});
+  } else {
+    start(null);
+  }
+})();
+</script>
+
+</body></html>
